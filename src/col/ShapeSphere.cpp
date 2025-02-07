@@ -11,5 +11,6 @@ void ShapeSphere::setMtx(const Matrix34f& mat) {
 }
 
 void ShapeSphere::getSupport(const Vector3f& dir, Vector3f& support) {
-    support = mCenter + mRadius * dir;
+    Vector3f unitDir = dir.normalize();
+    support = mCenter + mRadius * unitDir;
 }
