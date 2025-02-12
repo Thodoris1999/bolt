@@ -8,6 +8,7 @@
  */
 class Object3d {
 public:
+    Object3d();
     virtual ~Object3d();
 
     Drawable3d* drawable() { return mDrawable; }

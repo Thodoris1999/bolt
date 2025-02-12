@@ -82,7 +82,6 @@ DrawableSpheroid::DrawableSpheroid(float rX, float rY, float rZ, int slices, int
 }
 
 void DrawableSpheroid::draw() {
-    glUseProgram(mShaderProgram);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, (void*)(0 * sizeof(unsigned int)));
     glBindVertexArray(0);

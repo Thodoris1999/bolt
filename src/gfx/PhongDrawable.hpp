@@ -13,9 +13,6 @@ public:
     void setAmbient(const Color& color) { mAmbient = color; }
 
 protected:
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-
     Color mAmbient;
     Color mDiffuse;
     Color mSpecular;

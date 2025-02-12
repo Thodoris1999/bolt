@@ -7,6 +7,7 @@
 
 #include "obj/ObjectSphere.hpp"
 #include "obj/ObjectCuboid.hpp"
+#include "obj/ObjectMesh.hpp"
 
 #include <sstream>
 
@@ -50,8 +51,10 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
         float sx = std::stof(tokens[7]);
         float sy = std::stof(tokens[8]);
         float sz = std::stof(tokens[9]);
-        object = new ObjectCuboid(sx, sy, sz);;
+        object = new ObjectCuboid(sx, sy, sz);
         static_cast<PhongDrawable*>(object->drawable())->setAmbient(randomBrightColor(0.6));
+    } else if (tokens[0] == "model") {
+        object = new ObjectMesh(tokens[7].c_str());
     } else {
         DEBUG("Unknown object %s", tokens[0].c_str());
         object = nullptr;

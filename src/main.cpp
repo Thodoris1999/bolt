@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     cube.mtx().setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
     application.drawableManager().registerDrawable(&cube);
 
-    ObjectSphere sphere(0.6702);
+    ObjectSphere sphere(1.02);
     sphere.setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
     static_cast<PhongDrawable*>(sphere.drawable())->setAmbient(randomBrightColor(0.6));
     application.drawableManager().registerDrawable(sphere.drawable());

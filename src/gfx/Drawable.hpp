@@ -2,6 +2,8 @@
 
 #include "math/Matrix.hpp"
 
+#include "gfx/Shader.hpp"
+
 class Drawable {
 public:
     virtual ~Drawable() = 0;
@@ -16,11 +18,17 @@ public:
     /// send the model matrix to GPU
     virtual void onDraw();
 
-    int shaderProgram() { return mShaderProgram; }
-    void setMtx(const Matrix34f& mtx);
+    /// @beginGetters
+    Shader& shader() { return mShader; }
     Matrix44f& mtx() { return mMtx; }
+    /// @endGetters
+
+    /// @beginSetters
+    void setShader(const Shader& shader) { mShader = shader; }
+    void setMtx(const Matrix34f& mtx);
+    /// @endSetters
 
 protected:
-    unsigned int mShaderProgram;
+    Shader mShader;
     Matrix44f mMtx;
 };

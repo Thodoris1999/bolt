@@ -7,9 +7,8 @@ Drawable3d::Drawable3d() {
 }
 
 void Drawable3d::onDraw() {
-    glUseProgram(mShaderProgram);
-    int modelLoc = glGetUniformLocation(mShaderProgram, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_TRUE, (const GLfloat*)&mMtx);
+    mShader.use();
+    mShader.setMat4("model", mMtx);
 }
 
 void Drawable3d::setMtx(const Matrix34f& mtx) {

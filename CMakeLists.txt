@@ -10,6 +10,10 @@ endif ()
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 
+# Try to find system Assimp
+# TODO: should not be a requirement I think
+find_package(assimp REQUIRED)
+
 find_package(OpenGL REQUIRED)
 find_package(OpenGL REQUIRED COMPONENTS OpenGL)
 find_package(GLEW REQUIRED)
@@ -24,9 +28,12 @@ set(objectVis_SRC ${sources}
     src/gfx/DrawableTriangle.cpp
     src/gfx/DrawableArrow.cpp
     src/gfx/PhongDrawable.cpp
+    src/gfx/DrawableMesh.cpp
+    src/gfx/DrawableModel.cpp
     src/gfx/Drawable.cpp
     src/gfx/DrawableManager.cpp
     src/gfx/Camera.cpp
+    src/gfx/Shader.cpp
     src/gfx/Color.cpp
     src/gfx/GlUtils.cpp
 
@@ -39,6 +46,7 @@ set(objectVis_SRC ${sources}
     src/obj/Object.cpp
     src/obj/ObjectSphere.cpp
     src/obj/ObjectCuboid.cpp
+    src/obj/ObjectMesh.cpp
 
     src/ObjectManagerText.cpp
     src/SDLWindow.cpp
@@ -52,5 +60,5 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 add_executable(objectVis ${objectVis_SRC})
-target_include_directories(objectVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(objectVis PRIVATE SDL3::SDL3 ${GLEW_LIBRARIES} OpenGL::OpenGL ccd)
+target_include_directories(objectVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src vendored/stb)
+target_link_libraries(objectVis PRIVATE SDL3::SDL3 ${GLEW_LIBRARIES} OpenGL::OpenGL ccd assimp::assimp)

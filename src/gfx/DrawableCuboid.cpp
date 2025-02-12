@@ -73,7 +73,6 @@ DrawableCuboid::DrawableCuboid(float sizeX, float sizeY, float sizeZ) {
 }
 
 void DrawableCuboid::draw() {
-    glUseProgram(mShaderProgram);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);
     glBindVertexArray(0);

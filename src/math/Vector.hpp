@@ -2,6 +2,18 @@
 
 #include <cmath>
 
+struct Vector2f {
+    float x;
+    float y;
+
+    Vector2f() = default;
+
+    Vector2f(float x, float y) {
+        this->x = x;
+        this->y = y;
+    }
+};
+
 struct Vector3f {
     float x;
     float y;

@@ -30,7 +30,6 @@ DrawableTriangle3d::DrawableTriangle3d() {
 }
 
 void DrawableTriangle3d::draw() {
-    glUseProgram(mShaderProgram);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);

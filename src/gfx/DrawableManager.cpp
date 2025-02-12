@@ -20,16 +20,17 @@ void Drawable3dManager::draw() {
     for (const auto& drawable : mDrawables) {
         RUNTIME_ASSERT(drawable != nullptr, "null drawable");
         drawable->onDraw();
+        drawable->shader().use();
         drawable->draw();
     }
 }
 
 void Drawable3dManager::registerDrawable(Drawable3d* drawable) {
     // Bind uniform of camera projection and view matrices to 0
-    int shader = drawable->shaderProgram();
-    glUseProgram(shader);
-    unsigned int uniformIndex = glGetUniformBlockIndex(shader, "Matrices");
-    glUniformBlockBinding(shader, uniformIndex, 0);
+    Shader& shader = drawable->shader();
+    shader.use();
+    unsigned int uniformIndex = glGetUniformBlockIndex(shader.id(), "Matrices");
+    glUniformBlockBinding(shader.id(), uniformIndex, 0);
     glCheckError();
 
     mDrawables.push_back(drawable);

@@ -96,7 +96,6 @@ void DrawableArrow3d::generateVertices(float shaftLength, float tipLength, float
 }
 
 void DrawableArrow3d::draw() {
-    glUseProgram(mShaderProgram);
     glBindVertexArray(VAO);
 
     // Draw shaft

@@ -21,6 +21,12 @@
         } \
     } while (0)
 
+#define PANIC(m, ...) \
+    do { \
+        printf("[" FILE_NAME ":" TOSTRING(__LINE__) "] PANIC: " m "\n", ##__VA_ARGS__); \
+        abort(); \
+    } while (0)
+
 #ifndef NDEBUG
 #define DEBUG(m, ...) \
     do { \
