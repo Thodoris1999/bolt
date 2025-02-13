@@ -47,7 +47,7 @@ set(objectVis_SRC ${sources}
     src/obj/Object.cpp
     src/obj/ObjectSphere.cpp
     src/obj/ObjectCuboid.cpp
-    src/obj/ObjectMesh.cpp
+    src/obj/ObjectModel.cpp
 
     src/ObjectManagerText.cpp
     src/SDLWindow.cpp

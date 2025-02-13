@@ -1,7 +1,7 @@
-#include "ObjectMesh.hpp"
+#include "ObjectModel.hpp"
 
 #include "gfx/DrawableModel.hpp"
 
-ObjectMesh::ObjectMesh(const char* path) {
+ObjectModel::ObjectModel(const char* path) {
     mDrawable = new DrawableModel(path);
 }

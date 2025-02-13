@@ -7,7 +7,7 @@
 
 #include "obj/ObjectSphere.hpp"
 #include "obj/ObjectCuboid.hpp"
-#include "obj/ObjectMesh.hpp"
+#include "obj/ObjectModel.hpp"
 
 #include <sstream>
 
@@ -60,7 +60,7 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
     } else if (type == "model") {
         std::string filename;
         if (!(iss >> filename)) return nullptr;
-        object = new ObjectMesh(filename.c_str());
+        object = new ObjectModel(filename.c_str());
     } else {
         DEBUG("Unknown object %s", type.c_str());
         object = nullptr;
