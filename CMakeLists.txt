@@ -7,6 +7,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
    add_compile_options (-fcolor-diagnostics)
 endif ()
 
+option(SDL_LIBURING "Enable io_uring (Linux only)" OFF)
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 

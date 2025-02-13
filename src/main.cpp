@@ -14,6 +14,11 @@
 #include "math/math.h"
 #include "math/Vector.hpp"
 
+#include <chrono>
+
+#define TIME(X) auto X = std::chrono::steady_clock::now();
+#define P_DUR(X, Y) printf("(" #X " - " #Y ") Elapsed time: %.6f seconds\n", std::chrono::duration<double>(Y - X).count());
+
 int main(int argc, char** argv) {
     SDLApplication application;
 
@@ -42,6 +47,7 @@ int main(int argc, char** argv) {
     application.drawableManager().registerDrawable(sphere.drawable());
 
     RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
+    TIME(objmanstart);
     ObjectManagerText objManager;
     objManager.createObjects(argv[1]);
     objManager.registerDrawables(application.drawableManager());
@@ -49,8 +55,14 @@ int main(int argc, char** argv) {
     ColliderManager colliderManager;
     objManager.registerColliders(colliderManager);
     colliderManager.registerCollider(sphere.collider());
+
+    TIME(colstart);
     bool result = colliderManager.queryCollision(sphere.collider());
+    TIME(end);
     printf("Collision result: %d\n", result);
+
+    P_DUR(objmanstart, colstart);
+    P_DUR(colstart, end);
 
     application.run();
 

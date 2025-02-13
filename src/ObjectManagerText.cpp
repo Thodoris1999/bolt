@@ -34,29 +34,35 @@ ObjectManagerText::~ObjectManagerText() {
 }
 
 Object3d* ObjectManagerText::createObject(const std::string& text) {
-    Object3d* object;
+    Object3d* object = nullptr;
 
-    std::vector<std::string> tokens;
-    tokenize(text, tokens);
-    RUNTIME_ASSERT(tokens.size() >= 7, text.c_str());
+    std::istringstream iss(text);
+    std::string type;
+    float x, y, z, rx, ry, rz;
 
-    Vector3f pos(std::stof(tokens[1]), std::stof(tokens[2]), std::stof(tokens[3]));
-    Vector3f rot(std::stof(tokens[4]), std::stof(tokens[5]), std::stof(tokens[6]));
+    if (!(iss >> type >> x >> y >> z >> rx >> ry >> rz)) {
+        PANIC("Invalid object format: %s", text.c_str());
+    }
 
-    if (tokens[0] == "sphere") {
-        float radius = std::stof(tokens[7]);
+    Vector3f pos(x, y, z);
+    Vector3f rot(rx, ry, rz);
+
+    if (type == "sphere") {
+        float radius;
+        if (!(iss >> radius)) return nullptr;
         object = new ObjectSphere(radius);
         static_cast<PhongDrawable*>(object->drawable())->setAmbient(randomBrightColor(0.6));
-    } else if (tokens[0] == "cuboid") {
-        float sx = std::stof(tokens[7]);
-        float sy = std::stof(tokens[8]);
-        float sz = std::stof(tokens[9]);
+    } else if (type == "cuboid") {
+        float sx, sy, sz;
+        if (!(iss >> sx >> sy >> sz)) return nullptr;
         object = new ObjectCuboid(sx, sy, sz);
         static_cast<PhongDrawable*>(object->drawable())->setAmbient(randomBrightColor(0.6));
-    } else if (tokens[0] == "model") {
-        object = new ObjectMesh(tokens[7].c_str());
+    } else if (type == "model") {
+        std::string filename;
+        if (!(iss >> filename)) return nullptr;
+        object = new ObjectMesh(filename.c_str());
     } else {
-        DEBUG("Unknown object %s", tokens[0].c_str());
+        DEBUG("Unknown object %s", type.c_str());
         object = nullptr;
     }
 
@@ -75,15 +81,11 @@ void ObjectManagerText::createObjects(const std::string& text) {
 
     // For each line of input text
     while (std::getline(stream, line)) {
-        // Trim leading and trailing whitespace
-        line.erase(0, line.find_first_not_of(" \t\r\n"));
-        line.erase(line.find_last_not_of(" \t\r\n") + 1);
-
         // Skip empty lines
         if (!line.empty()) {
             Object3d* obj = createObject(line);
             if (obj != nullptr) {
-                mObjects.push_back(obj);
+                mObjects.emplace_back(obj);
             }
         }
     }
@@ -101,12 +103,14 @@ void ObjectManagerText::createObjects(const char* path) {
 
 void ObjectManagerText::registerDrawables(Drawable3dManager& drawableManager) {
     for (auto* object : mObjects) {
-        drawableManager.registerDrawable(object->drawable());
+        if (object->drawable() != nullptr)
+            drawableManager.registerDrawable(object->drawable());
     }
 }
 
 void ObjectManagerText::registerColliders(ColliderManager& colliderManager) {
     for (auto* object : mObjects) {
-        colliderManager.registerCollider(object->collider());
+        if (object->collider() != nullptr)
+            colliderManager.registerCollider(object->collider());
     }
 }
