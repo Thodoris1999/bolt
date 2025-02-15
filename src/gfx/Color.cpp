@@ -4,6 +4,9 @@
 
 #include <cstdlib>
 
+namespace bolt {
+namespace gfx {
+
 const Color COLOR_WHITE(1, 1, 1, 1);
 const Color COLOR_BLACK(0, 0, 0, 1);
 const Color COLOR_RED(1, 0, 0, 1);
@@ -23,3 +26,6 @@ Color randomBrightColor(float minBrightness) {
 
     return ret;
 }
+
+} // gfx
+} // bolt

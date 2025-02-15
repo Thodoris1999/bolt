@@ -2,6 +2,9 @@
 
 #include "gl_defines.h"
 
+namespace bolt {
+namespace gfx {
+
 Drawable3d::Drawable3d() {
     mMtx.makeHomogeneous();
 }
@@ -25,3 +28,6 @@ void Drawable3d::setMtx(const Matrix34f& mtx) {
     mMtx(2,2) = mtx(2,2);
     mMtx(2,3) = mtx(2,3);
 }
+
+} // gfx
+} // bolt

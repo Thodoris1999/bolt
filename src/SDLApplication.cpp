@@ -39,7 +39,7 @@ SDLApplication::SDLApplication() : mRunning(true) {
         // initialize debug output
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(GlUtils::glDebugOutputCallback, nullptr);
+        glDebugMessageCallback(bolt::gfx::openglDebugOutputCallback, nullptr);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     } else {
         printf("Expected opengl debug engabled!\n");

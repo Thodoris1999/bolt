@@ -2,6 +2,9 @@
 
 #include "gl_defines.h"
 
+namespace bolt {
+namespace gfx {
+
 DrawableMesh::DrawableMesh(std::vector<MeshVertex> vertices,
                            std::vector<unsigned int> indices,
                            std::vector<MeshTexture> textures) :
@@ -68,3 +71,6 @@ void DrawableMesh::draw() {
 
     glActiveTexture(GL_TEXTURE0);
 }
+
+} // gfx
+} // bolt

@@ -3,6 +3,9 @@
 #include "Drawable.hpp"
 #include "Color.hpp"
 
+namespace bolt {
+namespace gfx {
+
 class PhongDrawable : public Drawable3d {
 public:
     PhongDrawable();
@@ -16,3 +19,6 @@ protected:
     Color mDiffuse;
     Color mSpecular;
 };
+
+} // gfx
+} // bolt

@@ -5,6 +5,8 @@
 
 #include <vector>
 
+namespace bolt {
+namespace gfx {
 /**
  * Simple linear container for graphics objects
  */
@@ -15,6 +17,7 @@ public:
     void init();
     /// convenience function which calls Drawable3d::load() for all contained drawables
     void loadAll();
+    /// draw all registered drawables
     void draw();
     void registerDrawable(Drawable3d* drawable);
 
@@ -24,3 +27,5 @@ private:
     std::vector<Drawable3d*> mDrawables;
     Camera* mCamera;
 };
+} // gfx
+} // bolt

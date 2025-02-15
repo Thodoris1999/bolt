@@ -4,6 +4,9 @@
 
 #include "gl_defines.h"
 
+namespace bolt {
+namespace gfx {
+
 DrawableTriangle3d::DrawableTriangle3d() {
     float vertices[] = {
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f,
@@ -35,3 +38,6 @@ void DrawableTriangle3d::draw() {
     glBindVertexArray(0);
     glUseProgram(0);
 }
+
+} // gfx
+} // bolt

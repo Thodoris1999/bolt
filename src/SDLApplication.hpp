@@ -10,11 +10,11 @@ public:
     void run();
     void handleEvents();
 
-    Drawable3dManager& drawableManager() { return mDrawableManager; }
+    bolt::gfx::Drawable3dManager& drawableManager() { return mDrawableManager; }
 
 private:
     SDLWindow mWindow;
     SDL_GLContext mGlContext;
-    Drawable3dManager mDrawableManager;
+    bolt::gfx::Drawable3dManager mDrawableManager;
     bool mRunning;
 };

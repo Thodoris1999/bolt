@@ -4,6 +4,9 @@
 
 #include "gl_defines.h"
 
+namespace bolt {
+namespace gfx {
+
 DrawableCuboid::DrawableCuboid(float sizeX, float sizeY, float sizeZ) {
     float hx = sizeX / 2;
     float hy = sizeY / 2;
@@ -78,3 +81,6 @@ void DrawableCuboid::draw() {
     glBindVertexArray(0);
     glUseProgram(0);
 }
+
+} // gfx
+} // bolt

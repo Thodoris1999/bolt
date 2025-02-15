@@ -5,6 +5,9 @@
 
 #include <cmath>
 
+namespace bolt {
+namespace gfx {
+
 DrawableArrow3d::DrawableArrow3d(float shaftLength, float tipLength, float tipDiameter, unsigned int samples) {
     // Generate vertices and indices for the arrow
     generateVertices(shaftLength, tipLength, tipDiameter, samples);
@@ -109,3 +112,6 @@ void DrawableArrow3d::draw() {
     glBindVertexArray(0);
     glUseProgram(0);
 }
+
+} // gfx
+} // bolt

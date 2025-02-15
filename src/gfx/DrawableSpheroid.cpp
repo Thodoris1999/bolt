@@ -4,6 +4,9 @@
 
 #include "gl_defines.h"
 
+namespace bolt {
+namespace gfx {
+
 static std::vector<float> generateSphereVertices(float radiusX, float radiusY, float radiusZ, int slices, int stacks) {
     std::vector<float> vertices;
 
@@ -87,3 +90,6 @@ void DrawableSpheroid::draw() {
     glBindVertexArray(0);
     glUseProgram(0);
 }
+
+} // gfx
+} // bolt

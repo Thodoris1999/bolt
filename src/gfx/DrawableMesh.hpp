@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+namespace bolt {
+namespace gfx {
+
 struct MeshVertex {
     Vector3f position;
     Vector3f normal;
@@ -36,3 +39,6 @@ private:
     std::vector<unsigned int> mIndices;
     std::vector<MeshTexture>  mTextures;
 };
+
+} // gfx
+} // bolt

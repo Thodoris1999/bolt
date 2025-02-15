@@ -4,6 +4,9 @@
 
 #include "gl_defines.h"
 
+namespace bolt {
+namespace gfx {
+
 Camera::Camera() {
     mView.makeHomogeneous();
     // note that we're translating the scene in the reverse direction of where we want to move
@@ -68,3 +71,6 @@ void OrbitCamera::onDrag(float x, float y) {
     // Update the view matrix
     mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
+
+} // gfx
+} // bolt

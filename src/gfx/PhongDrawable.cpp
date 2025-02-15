@@ -2,6 +2,9 @@
 
 #include "Shader.hpp"
 
+namespace bolt {
+namespace gfx {
+
 PhongDrawable::PhongDrawable() {
     mShader = Shader("phong.vert", "phong.frag");
 }
@@ -13,3 +16,6 @@ void PhongDrawable::onDraw() {
     mShader.setColor("ambientColor", mAmbient);
     // Future: diffuse, maybe specular
 }
+
+} // gfx
+} // bolt

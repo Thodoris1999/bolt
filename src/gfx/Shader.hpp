@@ -5,7 +5,9 @@
 #include "Color.hpp"
 
 #include "gl_defines.h"
-#include "GlUtils.hpp"
+
+namespace bolt {
+namespace gfx {
 
 /**
  * Utility class for compiling and managing shaders
@@ -47,3 +49,6 @@ public:
 private:
     unsigned int mId;
 };
+
+} // gfx
+} // bolt

@@ -3,5 +3,5 @@
 #include "gfx/DrawableModel.hpp"
 
 ObjectModel::ObjectModel(const char* path) {
-    mDrawable = new DrawableModel(path);
+    mDrawable = new bolt::gfx::DrawableModel(path);
 }

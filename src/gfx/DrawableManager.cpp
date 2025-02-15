@@ -3,6 +3,9 @@
 #include "gl_defines.h"
 #include "common.h"
 
+namespace bolt {
+namespace gfx {
+
 Drawable3dManager::Drawable3dManager() {
 
 }
@@ -42,3 +45,6 @@ void Drawable3dManager::registerDrawable(Drawable3d* drawable) {
 
     mDrawables.push_back(drawable);
 }
+
+} // gfx
+} // bolt

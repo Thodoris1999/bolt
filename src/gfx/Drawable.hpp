@@ -4,6 +4,9 @@
 
 #include "gfx/Shader.hpp"
 
+namespace bolt {
+namespace gfx {
+
 class Drawable {
 public:
     virtual ~Drawable() = 0;
@@ -39,3 +42,6 @@ protected:
     Shader mShader;
     Matrix44f mMtx;
 };
+
+} // gfx
+} // bolt

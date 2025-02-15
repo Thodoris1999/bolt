@@ -8,6 +8,9 @@
 #include <vector>
 #include <string>
 
+namespace bolt {
+namespace gfx {
+
 class DrawableModel : public Drawable3d {
 public:
     DrawableModel(const char* path);
@@ -27,3 +30,6 @@ private:
     std::vector<MeshTexture> textures_loaded;
     char* mPath;
 };
+
+} // gfx
+} // bolt

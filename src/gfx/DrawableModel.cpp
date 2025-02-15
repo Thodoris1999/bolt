@@ -1,5 +1,6 @@
 #include "DrawableModel.hpp"
 
+#include "common.h"
 #include "gl_defines.h"
 
 #include <assimp/Importer.hpp>
@@ -8,6 +9,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+namespace bolt {
+namespace gfx {
 
 DrawableModel::DrawableModel(const char* path) {
     auto pathLength = strlen(path) + 1;
@@ -198,3 +202,6 @@ unsigned int TextureFromFile(const char *path, const std::string &directory) {
 
     return textureID;
 }
+
+} // gfx
+} // bolt

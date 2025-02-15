@@ -16,7 +16,7 @@ public:
     void createObjects(const char* path);
 
     // Register object shapes to a drawable manager
-    void registerDrawables(Drawable3dManager&);
+    void registerDrawables(bolt::gfx::Drawable3dManager&);
     // Register object shapes to a collider manager
     void registerColliders(ColliderManager&);
 

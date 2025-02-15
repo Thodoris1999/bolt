@@ -3,8 +3,10 @@
 #include <iostream>
 #include <chrono>
 
-namespace GlUtils {
-void glDebugOutputCallback(GLenum source,
+namespace bolt {
+namespace gfx {
+
+void openglDebugOutputCallback(GLenum source,
                             GLenum type,
                             unsigned int id,
                             GLenum severity,
@@ -65,4 +67,6 @@ void glDebugOutputCallback(GLenum source,
 
     std::cout << std::endl;
 }
-}
+
+} // gfx
+} // bolt

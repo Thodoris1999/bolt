@@ -3,6 +3,9 @@
 #include "math/Matrix.hpp"
 #include "math/Vector.hpp"
 
+namespace bolt {
+namespace gfx {
+
 class Camera {
 public:
     Camera();
@@ -34,3 +37,6 @@ private:
     Vector3f mFocus;
     float mFovy;
 };
+
+} // gfx
+} // bolt

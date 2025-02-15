@@ -1,5 +1,8 @@
 #pragma once
 
+namespace bolt {
+namespace gfx {
+
 struct Color {
     float r;
     float g;
@@ -17,3 +20,6 @@ extern const Color COLOR_BLACK;
 extern const Color COLOR_RED;
 extern const Color COLOR_GREEN;
 extern const Color COLOR_BLUE;
+
+} // gfx
+} // bolt

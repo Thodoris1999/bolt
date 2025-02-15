@@ -2,6 +2,9 @@
 
 #include "PhongDrawable.hpp"
 
+namespace bolt {
+namespace gfx {
+
 class DrawableTriangle3d : public PhongDrawable {
 public:
     DrawableTriangle3d();
@@ -12,3 +15,6 @@ private:
     unsigned int VBO;
     unsigned int VAO;
 };
+
+} // gfx
+} // bolt
