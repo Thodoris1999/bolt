@@ -11,9 +11,9 @@ namespace bolt {
 namespace gfx {
 
 struct MeshVertex {
-    Vector3f position;
-    Vector3f normal;
-    Vector2f texCoo;
+    math::Vector3f position;
+    math::Vector3f normal;
+    math::Vector2f texCoo;
 };
 
 struct MeshTexture {

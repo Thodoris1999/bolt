@@ -55,7 +55,7 @@ void DrawableArrow3d::generateVertices(float shaftLength, float tipLength, float
         vertices.push_back(y);
         vertices.push_back(tipBaseZ);
         // approximate normal
-        Vector3f coneNormal = Vector3f(x, y, tipLength).normalize();
+        math::Vector3f coneNormal = math::Vector3f(x, y, tipLength).normalize();
         vertices.push_back(coneNormal.x);
         vertices.push_back(coneNormal.y);
         vertices.push_back(coneNormal.z);

@@ -4,6 +4,11 @@
 
 #include <ccd/ccd.h>
 
+namespace bolt {
+namespace col {
+
+using namespace math;
+
 inline const Vector3f* ccd2vec(const ccd_vec3_t *ccd) {
     STATIC_ASSERT(sizeof(ccd_real_t) == sizeof(float));
     STATIC_ASSERT(sizeof(ccd_vec3_t) == 3 * sizeof(float));
@@ -30,3 +35,6 @@ bool checkConvexCollision(const ColliderConvex& c1, const ColliderConvex& c2) {
 
     return ccdGJKIntersect((void*)&c1, (void*)&c2, &ccd_info) != 0;
 }
+
+} // col
+} // bolt

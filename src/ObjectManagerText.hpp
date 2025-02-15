@@ -18,7 +18,7 @@ public:
     // Register object shapes to a drawable manager
     void registerDrawables(bolt::gfx::Drawable3dManager&);
     // Register object shapes to a collider manager
-    void registerColliders(ColliderManager&);
+    void registerColliders(bolt::col::ColliderManager&);
 
 private:
     Object3d* createObject(const std::string& text);

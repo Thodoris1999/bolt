@@ -2,6 +2,9 @@
 
 #include <cmath>
 
+namespace bolt {
+namespace math {
+
 void Matrix34f::setRotation(float r, float p, float y) {
     float cr = std::cos(r);
     float sr = std::sin(r);
@@ -115,3 +118,6 @@ Vector4f Matrix44f::operator*(const Vector4f& other) const {
     }
     return ret;
 }
+
+} // math
+} // bolt

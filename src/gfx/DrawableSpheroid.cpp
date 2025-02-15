@@ -27,7 +27,7 @@ static std::vector<float> generateSphereVertices(float radiusX, float radiusY, f
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
-            Vector3f normal(x, y, z);
+            math::Vector3f normal(x, y, z);
             normal.normalize();
             vertices.push_back(normal.x);
             vertices.push_back(normal.y);

@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+namespace bolt {
+namespace col {
+
 static bool dispatchCollision(const Collider* a, const Collider* b) {
     if (a->isConvex() && b->isConvex()) {
         return checkConvexCollision(*static_cast<const ColliderConvex*>(a), *static_cast<const ColliderConvex*>(b));
@@ -26,3 +29,6 @@ bool ColliderManager::queryCollision(const Collider* collider) {
 
     return false;
 }
+
+} // col
+} // bolt

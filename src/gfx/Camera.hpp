@@ -17,13 +17,13 @@ public:
     virtual void onScroll(float amount) {}
     virtual void onDrag(float x, float y) {}
 
-    Matrix44f& getView() { return mView; }
-    Matrix44f& getProjection() { return mProjection; }
+    math::Matrix44f& getView() { return mView; }
+    math::Matrix44f& getProjection() { return mProjection; }
 
 protected:
     unsigned int UBO;
-    Matrix44f mView;
-    Matrix44f mProjection;
+    math::Matrix44f mView;
+    math::Matrix44f mProjection;
 };
 
 class OrbitCamera : public Camera {
@@ -33,8 +33,8 @@ public:
     virtual void onDrag(float x, float y) override;
 
 private:
-    Vector3f mPos;
-    Vector3f mFocus;
+    math::Vector3f mPos;
+    math::Vector3f mFocus;
     float mFovy;
 };
 

@@ -2,6 +2,11 @@
 
 #include <float.h>
 
+namespace bolt {
+namespace col {
+
+using namespace math;
+
 ColliderConvexHull::ColliderConvexHull(std::vector<Vector3f> points) : mPoints(points) {
     mWorldPoints.resize(points.size());
 }
@@ -22,3 +27,6 @@ void ColliderConvexHull::getSupport(const Vector3f& dir, Vector3f& support) {
         }
     }
 }
+
+} // col
+} // bolt

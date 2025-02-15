@@ -12,14 +12,14 @@ public:
     virtual ~Object3d();
 
     bolt::gfx::Drawable3d* drawable() { return mDrawable; }
-    Collider* collider() { return mCollider; }
+    bolt::col::Collider* collider() { return mCollider; }
 
-    void setPose(Vector3f pos, Vector3f rot);
+    void setPose(bolt::math::Vector3f pos, bolt::math::Vector3f rot);
 
 protected:
     bolt::gfx::Drawable3d* mDrawable;
-    Collider* mCollider;
-    Matrix34f mMtx;
+    bolt::col::Collider* mCollider;
+    bolt::math::Matrix34f mMtx;
 
 private:
     void updateMatrix();

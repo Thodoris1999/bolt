@@ -5,5 +5,5 @@
 
 ObjectSphere::ObjectSphere(float radius) {
     mDrawable = new bolt::gfx::DrawableSpheroid(radius, radius, radius);
-    mCollider = new ShapeSphere(radius);
+    mCollider = new bolt::col::ShapeSphere(radius);
 }

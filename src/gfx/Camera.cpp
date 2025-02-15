@@ -7,6 +7,8 @@
 namespace bolt {
 namespace gfx {
 
+using namespace math;
+
 Camera::Camera() {
     mView.makeHomogeneous();
     // note that we're translating the scene in the reverse direction of where we want to move

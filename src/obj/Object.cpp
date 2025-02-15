@@ -1,5 +1,7 @@
 #include "Object.hpp"
 
+using namespace bolt::math;
+
 Object3d::Object3d() : mDrawable(nullptr), mCollider(nullptr) {}
 
 Object3d::~Object3d() {

@@ -30,17 +30,17 @@ public:
 
     /// @beginGetters
     Shader& shader() { return mShader; }
-    Matrix44f& mtx() { return mMtx; }
+    math::Matrix44f& mtx() { return mMtx; }
     /// @endGetters
 
     /// @beginSetters
     void setShader(const Shader& shader) { mShader = shader; }
-    void setMtx(const Matrix34f& mtx);
+    void setMtx(const math::Matrix34f& mtx);
     /// @endSetters
 
 protected:
     Shader mShader;
-    Matrix44f mMtx;
+    math::Matrix44f mMtx;
 };
 
 } // gfx

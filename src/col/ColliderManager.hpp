@@ -4,6 +4,9 @@
 
 #include <vector>
 
+namespace bolt {
+namespace col {
+
 /**
  * Simple collider container and collision query interface
  */
@@ -15,3 +18,6 @@ public:
 private:
     std::vector<Collider*> mColliders;
 };
+
+} // col
+} // bolt

@@ -32,7 +32,7 @@ public:
      * \name Functions for setting shader uniforms
      * \{
      */
-    void setVec4(const char* name, const Vector4f& value) {
+    void setVec4(const char* name, const math::Vector4f& value) {
         glUniform4fv(glGetUniformLocation(mId, name), 1, (const GLfloat*)&value);
     }
 
@@ -41,7 +41,7 @@ public:
     }
 
     // set matrix row-major (i.e. gets transposed in opengl)
-    void setMat4(const char* name, const Matrix44f& value) {
+    void setMat4(const char* name, const math::Matrix44f& value) {
         glUniformMatrix4fv(glGetUniformLocation(mId, name), 1, GL_TRUE, (const GLfloat*)&value);
     }
     /** \} */

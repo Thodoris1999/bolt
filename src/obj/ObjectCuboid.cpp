@@ -5,5 +5,5 @@
 
 ObjectCuboid::ObjectCuboid(float sizeX, float sizeY, float sizeZ) {
     mDrawable = new bolt::gfx::DrawableCuboid(sizeX, sizeY, sizeZ);
-    mCollider = new ShapeCuboid(sizeX, sizeY, sizeZ);
+    mCollider = new bolt::col::ShapeCuboid(sizeX, sizeY, sizeZ);
 }

@@ -10,6 +10,9 @@
 #define COLLIDER_FLAG_CONVEX 1
 ///@}
 
+namespace bolt {
+namespace col {
+
 /**
  * Base class representing a shape that has collision
  */
@@ -18,7 +21,7 @@ public:
     Collider(int flags) : mFlags(flags) {}
     virtual ~Collider() {}
 
-    virtual void setMtx(const Matrix34f&) = 0;
+    virtual void setMtx(const math::Matrix34f&) = 0;
 
     const int flags() const { return mFlags; }
     int& flags() { return mFlags; }
@@ -29,3 +32,6 @@ protected:
     /// about this collider, see \ref ColliderFlags
     int mFlags;
 };
+
+} // col
+} // bolt

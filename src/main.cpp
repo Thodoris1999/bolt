@@ -19,7 +19,9 @@
 #define TIME(X) auto X = std::chrono::steady_clock::now();
 #define P_DUR(X, Y) printf("(" #X " - " #Y ") Elapsed time: %.6f seconds\n", std::chrono::duration<double>(Y - X).count());
 
+using namespace bolt::math;
 using namespace bolt::gfx;
+using namespace bolt::col;
 
 int main(int argc, char** argv) {
     SDLApplication application;

@@ -2,6 +2,9 @@
 
 #include "Vector.hpp"
 
+namespace bolt {
+namespace math {
+
 struct Matrix34f {
     float data[3][4];
 
@@ -55,3 +58,6 @@ struct Matrix44f {
     Matrix44f operator*(const Matrix44f& other) const;
     Vector4f operator*(const Vector4f& other) const;
 };
+
+} // math
+} // bolt

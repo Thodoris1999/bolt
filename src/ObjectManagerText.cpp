@@ -11,7 +11,9 @@
 
 #include <sstream>
 
+using namespace bolt::math;
 using namespace bolt::gfx;
+using namespace bolt::col;
 
 static void tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters = " ") {
     // Skip delimiters at beginning.

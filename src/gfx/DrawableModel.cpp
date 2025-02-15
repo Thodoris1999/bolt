@@ -68,7 +68,7 @@ DrawableMesh DrawableModel::processMesh(aiMesh *mesh, const aiScene *scene) {
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
         MeshVertex vertex;
-        Vector3f vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
+        math::Vector3f vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
         // positions
         vector.x = mesh->mVertices[i].x;
         vector.y = mesh->mVertices[i].y;
@@ -85,7 +85,7 @@ DrawableMesh DrawableModel::processMesh(aiMesh *mesh, const aiScene *scene) {
         // texture coordinates
         if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
         {
-            Vector2f vec;
+            math::Vector2f vec;
             // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
             vec.x = mesh->mTextureCoords[0][i].x; 
             vec.y = mesh->mTextureCoords[0][i].y;
@@ -102,7 +102,7 @@ DrawableMesh DrawableModel::processMesh(aiMesh *mesh, const aiScene *scene) {
             vertex.Bitangent = vector;*/
         }
         else
-            vertex.texCoo = Vector2f(0.0f, 0.0f);
+            vertex.texCoo = math::Vector2f(0.0f, 0.0f);
 
         vertices.push_back(vertex);
     }

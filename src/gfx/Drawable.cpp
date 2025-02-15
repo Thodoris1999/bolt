@@ -14,7 +14,7 @@ void Drawable3d::onDraw() {
     mShader.setMat4("model", mMtx);
 }
 
-void Drawable3d::setMtx(const Matrix34f& mtx) {
+void Drawable3d::setMtx(const math::Matrix34f& mtx) {
     mMtx(0,0) = mtx(0,0);
     mMtx(0,1) = mtx(0,1);
     mMtx(0,2) = mtx(0,2);

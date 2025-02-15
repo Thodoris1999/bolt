@@ -2,6 +2,9 @@
 
 #include <cmath>
 
+namespace bolt {
+namespace math {
+
 struct Vector2f {
     float x;
     float y;
@@ -114,3 +117,6 @@ struct Vector4f {
         data[3] = w;
     }
 };
+
+} // math
+} // bolt

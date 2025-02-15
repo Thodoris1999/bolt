@@ -2,15 +2,21 @@
 
 #include "ColliderConvex.hpp"
 
+namespace bolt {
+namespace col {
+
 class ShapeSphere : public ColliderConvex {
 public:
     ShapeSphere(float radius);
     ~ShapeSphere() {}
 
-    virtual void getSupport(const Vector3f&, Vector3f&) override;
-    virtual void setMtx(const Matrix34f& mat) override;
+    virtual void getSupport(const math::Vector3f&, math::Vector3f&) override;
+    virtual void setMtx(const math::Matrix34f& mat) override;
 
 private:
-    Vector3f mCenter;
+    math::Vector3f mCenter;
     float mRadius;
 };
+
+} // col
+} // bolt

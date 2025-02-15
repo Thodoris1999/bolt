@@ -6,15 +6,21 @@
 
 #include <vector>
 
+namespace bolt {
+namespace col {
+
 class ColliderConvexHull : public ColliderConvex {
 public:
-    ColliderConvexHull(std::vector<Vector3f> points);
+    ColliderConvexHull(std::vector<math::Vector3f> points);
     ~ColliderConvexHull() {}
 
-    virtual void getSupport(const Vector3f&, Vector3f&) override;
-    virtual void setMtx(const Matrix34f& mat) override;
+    virtual void getSupport(const math::Vector3f&, math::Vector3f&) override;
+    virtual void setMtx(const math::Matrix34f& mat) override;
 
 protected:
-    std::vector<Vector3f> mPoints;
-    std::vector<Vector3f> mWorldPoints;
+    std::vector<math::Vector3f> mPoints;
+    std::vector<math::Vector3f> mWorldPoints;
 };
+
+} // col
+} // bolt
