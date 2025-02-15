@@ -13,6 +13,8 @@ public:
     Drawable3dManager();
     ~Drawable3dManager();
     void init();
+    /// convenience function which calls Drawable3d::load() for all contained drawables
+    void loadAll();
     void draw();
     void registerDrawable(Drawable3d* drawable);
 

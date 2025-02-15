@@ -11,6 +11,13 @@ void Drawable3dManager::init() {
     mCamera = new OrbitCamera;
 }
 
+void Drawable3dManager::loadAll() {
+    for (const auto& drawable : mDrawables) {
+        RUNTIME_ASSERT(drawable != nullptr, "null drawable");
+        drawable->load();
+    }
+}
+
 Drawable3dManager::~Drawable3dManager() {
     delete mCamera;
 }

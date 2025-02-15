@@ -10,8 +10,18 @@
 #include <stb_image.h>
 
 DrawableModel::DrawableModel(const char* path) {
+    auto pathLength = strlen(path) + 1;
+    mPath = (char*)malloc(pathLength * sizeof(char));
+    memcpy(mPath, path, pathLength);
+
     mShader = Shader("textured.vert", "textured.frag");
-    loadModel(path);
+}
+
+DrawableModel::~DrawableModel() { free(mPath); }
+
+void DrawableModel::load() {
+    printf("%s\n", mPath);
+    loadModel(mPath);
 }
 
 void DrawableModel::draw() {
@@ -23,7 +33,7 @@ void DrawableModel::draw() {
 
 void DrawableModel::loadModel(const char* path) {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals);
     RUNTIME_ASSERT(scene && (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == 0 && scene->mRootNode, importer.GetErrorString());
 
     std::string strPath(path);

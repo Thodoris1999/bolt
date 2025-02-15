@@ -9,7 +9,6 @@ public:
     virtual void onDraw() override;
 
     Color& ambient() { return mAmbient; }
-
     void setAmbient(const Color& color) { mAmbient = color; }
 
 protected:

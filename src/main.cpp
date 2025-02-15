@@ -31,26 +31,19 @@ int main(int argc, char** argv) {
     yAxis.setAmbient(COLOR_GREEN);
     zAxis.setAmbient(COLOR_BLUE);
 
-    application.drawableManager().registerDrawable(&zAxis);
-    application.drawableManager().registerDrawable(&yAxis);
-    application.drawableManager().registerDrawable(&xAxis);
-
     DrawableCuboid cube(1, 1, 1);
     cube.setAmbient(randomBrightColor(0.6));
     cube.mtx().setTranslation(1, 1, 4);
     cube.mtx().setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
-    application.drawableManager().registerDrawable(&cube);
 
     ObjectSphere sphere(1.02);
     sphere.setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
     static_cast<PhongDrawable*>(sphere.drawable())->setAmbient(randomBrightColor(0.6));
-    application.drawableManager().registerDrawable(sphere.drawable());
 
     RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
     TIME(objmanstart);
     ObjectManagerText objManager;
     objManager.createObjects(argv[1]);
-    objManager.registerDrawables(application.drawableManager());
 
     ColliderManager colliderManager;
     objManager.registerColliders(colliderManager);
@@ -63,6 +56,16 @@ int main(int argc, char** argv) {
 
     P_DUR(objmanstart, colstart);
     P_DUR(colstart, end);
+
+    application.drawableManager().registerDrawable(&zAxis);
+    application.drawableManager().registerDrawable(&yAxis);
+    application.drawableManager().registerDrawable(&xAxis);
+
+    application.drawableManager().registerDrawable(&cube);
+    application.drawableManager().registerDrawable(sphere.drawable());
+
+    objManager.registerDrawables(application.drawableManager());
+    application.drawableManager().loadAll();
 
     application.run();
 
