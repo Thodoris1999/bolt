@@ -15,10 +15,6 @@ add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 # TODO: should not be a requirement I think
 find_package(assimp REQUIRED)
 
-find_package(OpenGL REQUIRED)
-find_package(OpenGL REQUIRED COMPONENTS OpenGL)
-find_package(GLEW REQUIRED)
-
 set(objectVis_SRC ${sources}
     src/math/Matrix.cpp
 
@@ -37,6 +33,7 @@ set(objectVis_SRC ${sources}
     src/gfx/Shader.cpp
     src/gfx/Color.cpp
     src/gfx/GlUtils.cpp
+    src/gfx/glad/glad.c
 
     src/col/ColliderConvex.cpp
     src/col/ColliderConvexHull.cpp
@@ -62,4 +59,4 @@ endif()
 
 add_executable(objectVis ${objectVis_SRC})
 target_include_directories(objectVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src vendored/stb)
-target_link_libraries(objectVis PRIVATE SDL3::SDL3 ${GLEW_LIBRARIES} OpenGL::OpenGL ccd assimp::assimp)
+target_link_libraries(objectVis PRIVATE SDL3::SDL3 ccd assimp::assimp)

@@ -27,9 +27,9 @@ SDLApplication::SDLApplication() : mRunning(true) {
     mGlContext = SDL_GL_CreateContext(mWindow.getSdlWindow());
     RUNTIME_ASSERT(mGlContext, SDL_GetError());
 
-    // Initialize GLEW
-    auto glewInited = glewInit();
-    RUNTIME_ASSERT(glewInited == GLEW_OK, "Failed to initialize GLEW");
+    // Initialize GLAD
+    auto gladLoader = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
+    RUNTIME_ASSERT(gladLoader != 0, "Failed to initialize GLAD");
 
     DEBUG("OpenGL Version: %s", glGetString(GL_VERSION));
 #ifndef NDEBUG

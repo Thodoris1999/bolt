@@ -2,7 +2,7 @@
 
 #include "common.h"
 
-#include <GL/glew.h>
+#include "gfx/gl_defines.h"
 
 SDLWindow::SDLWindow() {
 

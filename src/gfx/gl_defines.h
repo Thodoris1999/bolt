@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
+#include "glad/glad.h"
 
 #ifndef NDEBUG
 GLenum glCheckError_(const char *file, int line);
