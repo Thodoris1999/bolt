@@ -1,8 +1,8 @@
-#include "DrawableSpheroid.hpp"
-#include "GlUtils.hpp"
-#include "math/math.h"
+#include "gfx/DrawableSpheroid.hpp"
+#include "gfx/GlUtils.hpp"
+#include "gfx/gl_defines.h"
 
-#include "gl_defines.h"
+#include "math/math.h"
 
 namespace bolt {
 namespace gfx {

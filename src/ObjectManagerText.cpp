@@ -1,7 +1,7 @@
 #include "ObjectManagerText.hpp"
 
-#include "common.h"
-#include "Filesystem.hpp"
+#include "util/common.h"
+#include "util/Filesystem.hpp"
 
 #include "gfx/PhongDrawable.hpp"
 

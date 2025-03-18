@@ -1,6 +1,5 @@
-#include "DrawableMesh.hpp"
-
-#include "gl_defines.h"
+#include "gfx/DrawableMesh.hpp"
+#include "gfx/gl_defines.h"
 
 namespace bolt {
 namespace gfx {

@@ -1,7 +1,8 @@
 #include "SDLApplication.hpp"
 
 #include "ObjectManagerText.hpp"
-#include "common.h"
+
+#include "util/common.h"
 
 #include "gfx/DrawableTriangle.hpp"
 #include "gfx/DrawableArrow.hpp"

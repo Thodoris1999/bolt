@@ -1,6 +1,6 @@
-#include "Color.hpp"
+#include "gfx/Color.hpp"
 
-#include "common.h"
+#include "util/common.h"
 
 #include <cstdlib>
 

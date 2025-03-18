@@ -1,8 +1,8 @@
-#include "DrawableTriangle.hpp"
-#include "GlUtils.hpp"
+#include "gfx/DrawableTriangle.hpp"
+#include "gfx/GlUtils.hpp"
 #include "math/math.h"
 
-#include "gl_defines.h"
+#include "gfx/gl_defines.h"
 
 namespace bolt {
 namespace gfx {

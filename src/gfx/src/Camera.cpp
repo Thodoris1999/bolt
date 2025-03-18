@@ -1,8 +1,7 @@
-#include "Camera.hpp"
+#include "gfx/Camera.hpp"
+#include "gfx/gl_defines.h"
 
 #include "math/math.h"
-
-#include "gl_defines.h"
 
 namespace bolt {
 namespace gfx {

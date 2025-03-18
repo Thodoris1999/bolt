@@ -1,6 +1,6 @@
-#include "PhongDrawable.hpp"
+#include "gfx/PhongDrawable.hpp"
 
-#include "Shader.hpp"
+#include "gfx/Shader.hpp"
 
 namespace bolt {
 namespace gfx {

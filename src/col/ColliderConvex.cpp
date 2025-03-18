@@ -1,6 +1,6 @@
 #include "ColliderConvex.hpp"
 
-#include "common.h"
+#include "util/common.h"
 
 #include <ccd/ccd.h>
 

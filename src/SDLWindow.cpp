@@ -1,6 +1,6 @@
 #include "SDLWindow.hpp"
 
-#include "common.h"
+#include "util/common.h"
 
 #include "gfx/gl_defines.h"
 

@@ -1,5 +1,5 @@
 #include "SDLApplication.hpp"
-#include "common.h"
+#include "util/common.h"
 
 #include <SDL3/SDL.h>
 

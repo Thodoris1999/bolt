@@ -8,6 +8,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif ()
 
 option(SDL_LIBURING "Enable io_uring (Linux only)" OFF)
+option(SDL_PIPEWIRE "Enable pipewire (Linux only)" OFF)
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 
@@ -15,26 +16,40 @@ add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 # TODO: should not be a requirement I think
 find_package(assimp REQUIRED)
 
-set(objectVis_SRC ${sources}
-    src/math/Matrix.cpp
+add_subdirectory(src/util EXCLUDE_FROM_ALL)
+add_subdirectory(src/math EXCLUDE_FROM_ALL)
+add_subdirectory(src/gfx EXCLUDE_FROM_ALL)
 
-    src/Filesystem.cpp
+# ----------- Create pacakge
+include(CMakePackageConfigHelpers)
 
-    src/gfx/DrawableCuboid.cpp
-    src/gfx/DrawableSpheroid.cpp
-    src/gfx/DrawableTriangle.cpp
-    src/gfx/DrawableArrow.cpp
-    src/gfx/PhongDrawable.cpp
-    src/gfx/DrawableMesh.cpp
-    src/gfx/DrawableModel.cpp
-    src/gfx/Drawable.cpp
-    src/gfx/DrawableManager.cpp
-    src/gfx/Camera.cpp
-    src/gfx/Shader.cpp
-    src/gfx/Color.cpp
-    src/gfx/GlUtils.cpp
-    src/gfx/glad/glad.c
+# set version
+set(version 3.4.1)
 
+# generate the version file for the config file
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/boltConfigVersion.cmake"
+  VERSION "${version}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+# create config file
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/boltConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/bolt
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+
+# install config files
+install(FILES
+          "${CMAKE_CURRENT_BINARY_DIR}/boltConfig.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/boltConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/bolt
+)
+# ----------- End Create pacakge
+
+# colvis executable
+set(objectVis_SRC
     src/col/ColliderConvex.cpp
     src/col/ColliderConvexHull.cpp
     src/col/ShapeSphere.cpp
@@ -53,10 +68,6 @@ set(objectVis_SRC ${sources}
     src/main.cpp
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND objectVis_SRC src/gfx/gl_defines.cpp)
-endif()
-
 add_executable(objectVis ${objectVis_SRC})
 target_include_directories(objectVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src vendored/stb)
-target_link_libraries(objectVis PRIVATE SDL3::SDL3 ccd assimp::assimp)
+target_link_libraries(objectVis PRIVATE SDL3::SDL3 ccd assimp::assimp bolt::math bolt::gfx)

@@ -1,7 +1,7 @@
 #include "ColliderManager.hpp"
 #include "ColliderConvex.hpp"
 
-#include "common.h"
+#include "util/common.h"
 
 namespace bolt {
 namespace col {

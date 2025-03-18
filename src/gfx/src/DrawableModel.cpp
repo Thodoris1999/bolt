@@ -1,7 +1,7 @@
-#include "DrawableModel.hpp"
+#include "gfx/DrawableModel.hpp"
 
-#include "common.h"
-#include "gl_defines.h"
+#include "util/common.h"
+#include "gfx/gl_defines.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

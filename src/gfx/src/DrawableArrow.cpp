@@ -1,7 +1,7 @@
-#include "DrawableArrow.hpp"
-#include "GlUtils.hpp"
+#include "gfx/DrawableArrow.hpp"
+#include "gfx/GlUtils.hpp"
+#include "gfx/gl_defines.h"
 #include "math/math.h"
-#include "gl_defines.h"
 
 #include <cmath>
 

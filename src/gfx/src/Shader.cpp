@@ -1,6 +1,5 @@
-#include "Shader.hpp"
-
-#include "GlUtils.hpp"
+#include "gfx/Shader.hpp"
+#include "gfx/GlUtils.hpp"
 
 namespace bolt {
 namespace gfx {

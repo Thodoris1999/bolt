@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Filesystem.hpp"
-#include "common.h"
+#include "util/Filesystem.hpp"
+#include "util/common.h"
 
 #include "gl_defines.h"
 

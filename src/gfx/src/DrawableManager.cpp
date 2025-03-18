@@ -1,7 +1,7 @@
-#include "DrawableManager.hpp"
+#include "gfx/DrawableManager.hpp"
+#include "gfx/gl_defines.h"
 
-#include "gl_defines.h"
-#include "common.h"
+#include "util/common.h"
 
 namespace bolt {
 namespace gfx {
