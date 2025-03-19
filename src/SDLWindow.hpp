@@ -12,6 +12,7 @@ public:
     void endFrame();
 
     SDL_Window* getSdlWindow() const { return mSdlWindow; }
+    void onResize(int width, int height);
 
 private:
     SDL_Window* mSdlWindow;

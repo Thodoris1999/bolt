@@ -1,8 +1,6 @@
 #include "gfx/Camera.hpp"
 #include "gfx/gl_defines.h"
 
-#include "math/math.h"
-
 namespace bolt {
 namespace gfx {
 
@@ -33,8 +31,8 @@ void Camera::onDraw() {
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(45) {
-    mProjection.setPerspective(DEG2RAD(mFovy), 1, 0.1, 100);
+OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(45), mAspectRatio(1) {
+    updatePerspectiveMat();
     mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
 
@@ -43,7 +41,7 @@ void OrbitCamera::onScroll(float amount) {
     mFovy = mFovy < 0 ? 0 : mFovy;
     mFovy = mFovy > 120 ? 120 : mFovy;
 
-    mProjection.setPerspective(DEG2RAD(mFovy), 1, 0.1, 100);
+    updatePerspectiveMat();
 }
 
 void OrbitCamera::onDrag(float x, float y) {

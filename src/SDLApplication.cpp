@@ -49,6 +49,7 @@ SDLApplication::SDLApplication() : mRunning(true) {
 
     mWindow.init();
     mDrawableManager.init();
+    mDrawableManager.camera()->setAspectRatio(1);
 }
 
 SDLApplication::~SDLApplication() {
@@ -79,6 +80,10 @@ void SDLApplication::handleEvents() {
         switch (event.type) {
         case SDL_EVENT_QUIT:
             mRunning = false;
+            break;
+        case SDL_EVENT_WINDOW_RESIZED:
+            mWindow.onResize(event.window.data1, event.window.data2);
+            mDrawableManager.camera()->setAspectRatio(event.window.data1 / (float) event.window.data2);
             break;
         case SDL_EVENT_MOUSE_WHEEL:
             // zoom
