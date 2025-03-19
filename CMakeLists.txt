@@ -16,15 +16,15 @@ add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 # TODO: should not be a requirement I think
 find_package(assimp REQUIRED)
 
-add_subdirectory(src/util EXCLUDE_FROM_ALL)
-add_subdirectory(src/math EXCLUDE_FROM_ALL)
-add_subdirectory(src/gfx EXCLUDE_FROM_ALL)
+add_subdirectory(bolt/util EXCLUDE_FROM_ALL)
+add_subdirectory(bolt/math EXCLUDE_FROM_ALL)
+add_subdirectory(bolt/gfx EXCLUDE_FROM_ALL)
 
 # ----------- Create pacakge
 include(CMakePackageConfigHelpers)
 
 # set version
-set(version 3.4.1)
+set(version 1.0.0)
 
 # generate the version file for the config file
 write_basic_package_version_file(
