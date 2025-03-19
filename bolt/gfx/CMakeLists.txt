@@ -17,6 +17,7 @@ set(gfx_SRC
     src/Drawable.cpp
     src/DrawableManager.cpp
     src/Camera.cpp
+    src/Framebuffer.cpp
     src/Shader.cpp
     src/Color.cpp
     src/GlUtils.cpp
