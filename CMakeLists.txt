@@ -16,39 +16,40 @@ add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 # TODO: should not be a requirement I think
 find_package(assimp REQUIRED)
 
-add_subdirectory(bolt/util EXCLUDE_FROM_ALL)
-add_subdirectory(bolt/math EXCLUDE_FROM_ALL)
-add_subdirectory(bolt/gfx EXCLUDE_FROM_ALL)
+add_subdirectory(bolt EXCLUDE_FROM_ALL)
+#add_subdirectory(bolt/util EXCLUDE_FROM_ALL)
+#add_subdirectory(bolt/math EXCLUDE_FROM_ALL)
+#add_subdirectory(bolt/gfx EXCLUDE_FROM_ALL)
+#
+## ----------- Create package
+#include(CMakePackageConfigHelpers)
+#
+## set version
+#set(version 1.0.0)
+#
+## generate the version file for the config file
+#write_basic_package_version_file(
+#  "${CMAKE_CURRENT_BINARY_DIR}/boltConfigVersion.cmake"
+#  VERSION "${version}"
+#  COMPATIBILITY AnyNewerVersion
+#)
+#
+## create config file
+#configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+#  "${CMAKE_CURRENT_BINARY_DIR}/boltConfig.cmake"
+#  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/bolt
+#  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+#)
+#
+## install config files
+#install(FILES
+#          "${CMAKE_CURRENT_BINARY_DIR}/boltConfig.cmake"
+#          "${CMAKE_CURRENT_BINARY_DIR}/boltConfigVersion.cmake"
+#        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/bolt
+#)
+# ----------- End Create package
 
-# ----------- Create pacakge
-include(CMakePackageConfigHelpers)
-
-# set version
-set(version 1.0.0)
-
-# generate the version file for the config file
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/boltConfigVersion.cmake"
-  VERSION "${version}"
-  COMPATIBILITY AnyNewerVersion
-)
-
-# create config file
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/boltConfig.cmake"
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/bolt
-  NO_CHECK_REQUIRED_COMPONENTS_MACRO
-)
-
-# install config files
-install(FILES
-          "${CMAKE_CURRENT_BINARY_DIR}/boltConfig.cmake"
-          "${CMAKE_CURRENT_BINARY_DIR}/boltConfigVersion.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/bolt
-)
-# ----------- End Create pacakge
-
-# colvis executable
+# objectvis executable
 set(objectVis_SRC
     src/col/ColliderConvex.cpp
     src/col/ColliderConvexHull.cpp
@@ -71,3 +72,6 @@ set(objectVis_SRC
 add_executable(objectVis ${objectVis_SRC})
 target_include_directories(objectVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src vendored/stb)
 target_link_libraries(objectVis PRIVATE SDL3::SDL3 ccd assimp::assimp bolt::math bolt::gfx)
+
+# example executables
+add_subdirectory(examples)

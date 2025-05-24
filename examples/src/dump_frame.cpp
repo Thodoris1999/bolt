@@ -9,6 +9,7 @@
 #include "gfx/DrawableCuboid.hpp"
 #include "gfx/DrawableSpheroid.hpp"
 #include "gfx/Color.hpp"
+#include "gfx/Framebuffer.hpp"
 
 #include "obj/ObjectSphere.hpp"
 
@@ -22,9 +23,31 @@
 #define TIME(X) auto X = std::chrono::steady_clock::now();
 #define P_DUR(X, Y) printf("(" #X " - " #Y ") Elapsed time: %.6f seconds\n", std::chrono::duration<double>(Y - X).count());
 
+void writeToFile(const char* name, const void* buffer, int bufferSize) {
+    // Open the file in binary mode and truncate it if it already exists
+    std::ofstream outFile(name, std::ios::binary | std::ios::trunc);
+
+    if (!outFile) {
+        std::cerr << "Error: Could not open file " << name << " for writing." << std::endl;
+        return;
+    }
+
+    // Write the buffer to the file
+    outFile.write(static_cast<const char*>(buffer), bufferSize);
+
+    if (!outFile) {
+        std::cerr << "Error: Failed to write data to file " << name << "." << std::endl;
+    } else {
+        std::cout << "Successfully wrote " << bufferSize << " bytes to file " << name << "." << std::endl;
+    }
+
+    // Close the file
+    outFile.close();
+}
+
+
 using namespace bolt::math;
 using namespace bolt::gfx;
-using namespace bolt::col;
 
 int main(int argc, char** argv) {
     SDLApplication application;
@@ -52,18 +75,6 @@ int main(int argc, char** argv) {
     ObjectManagerText objManager;
     objManager.createObjects(argv[1]);
 
-    ColliderManager colliderManager;
-    objManager.registerColliders(colliderManager);
-    colliderManager.registerCollider(sphere.collider());
-
-    TIME(colstart);
-    bool result = colliderManager.queryCollision(sphere.collider());
-    TIME(end);
-    printf("Collision result: %d\n", result);
-
-    P_DUR(objmanstart, colstart);
-    P_DUR(colstart, end);
-
     application.drawableManager().registerDrawable(&zAxis);
     application.drawableManager().registerDrawable(&yAxis);
     application.drawableManager().registerDrawable(&xAxis);
@@ -74,7 +85,17 @@ int main(int argc, char** argv) {
     objManager.registerDrawables(application.drawableManager());
     application.drawableManager().loadAll();
 
+    // This will draw frames on an external frambuffer, and write it to frame.bin once the application is closed
+    Framebuffer fb(1000, 1000);
+    fb.use();
+
     application.run();
+
+    int fbSize = fb.bufferSize();
+    void* frame = malloc(fbSize);
+    fb.readBuffer(frame);
+    writeToFile("frame.bin", frame, fbSize);
+    free(frame);
 
     return 0;
 }

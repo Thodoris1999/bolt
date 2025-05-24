@@ -30,6 +30,13 @@ struct Vector3f {
         this->z = z;
     }
 
+    Vector3f& operator+=(const Vector3f& rhs) {
+        x += rhs.x;
+        y += rhs.y;
+        z += rhs.z;
+        return *this;
+    }
+
     Vector3f operator+(const Vector3f& other) const {
         Vector3f res;
         res.x = x + other.x;
@@ -58,6 +65,14 @@ struct Vector3f {
         res.x = x * scalar;
         res.y = y * scalar;
         res.z = z * scalar;
+        return res;
+    }
+
+    Vector3f operator/(float scalar) const {
+        Vector3f res;
+        res.x = x / scalar;
+        res.y = y / scalar;
+        res.z = z / scalar;
         return res;
     }
 
