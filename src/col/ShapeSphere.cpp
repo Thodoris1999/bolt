@@ -18,5 +18,9 @@ void ShapeSphere::getSupport(const math::Vector3f& dir, math::Vector3f& support)
     support = mCenter + mRadius * unitDir;
 }
 
+void ShapeSphere::getCenter(math::Vector3f& center) {
+    center = mCenter;
+}
+
 } // col
 } // bolt

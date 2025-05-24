@@ -14,6 +14,8 @@ public:
     virtual ~ColliderConvex() {}
 
     virtual void getSupport(const math::Vector3f&, math::Vector3f&) = 0;
+    /// Shape center used by MPR
+    virtual void getCenter(math::Vector3f&) = 0;
 };
 
 bool checkConvexCollision(const ColliderConvex& c1, const ColliderConvex& c2);

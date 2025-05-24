@@ -15,6 +15,7 @@ public:
     ~ColliderConvexHull() {}
 
     virtual void getSupport(const math::Vector3f&, math::Vector3f&) override;
+    virtual void getCenter(math::Vector3f&) override;
     virtual void setMtx(const math::Matrix34f& mat) override;
 
 protected:

@@ -28,5 +28,13 @@ void ColliderConvexHull::getSupport(const Vector3f& dir, Vector3f& support) {
     }
 }
 
+void ColliderConvexHull::getCenter(Vector3f& center) {
+    int pointCount = mWorldPoints.size();
+    center = mWorldPoints[0] / pointCount;
+    for (int i = 1; i < pointCount; i++) {
+        center += mWorldPoints[i] / pointCount;
+    }
+}
+
 } // col
 } // bolt
