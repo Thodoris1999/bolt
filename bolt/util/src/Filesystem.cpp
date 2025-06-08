@@ -6,13 +6,6 @@
 
 using namespace std;
 
-void* Filesystem::loadResource(const char* path, unsigned int& size) {
-    filesystem::path root = "./res";
-    filesystem::path fullpath = root / path;
-
-    return loadFile(fullpath, size);
-}
-
 void* Filesystem::loadFile(const filesystem::path& fullpath, unsigned int& size) {
     std::ifstream file(fullpath, std::ios::binary | std::ios::ate);
     RUNTIME_ASSERT(!!file, ("Could not open file " + fullpath.string()).c_str());

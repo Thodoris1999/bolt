@@ -37,6 +37,7 @@ target_include_directories(gfx
     vendored/stb
 )
 target_link_libraries(gfx PRIVATE assimp::assimp bolt::math PUBLIC bolt::util glad)
+target_compile_definitions(gfx PRIVATE BOLT_GFX_ROOT="${PROJECT_SOURCE_DIR}")
 
 install(TARGETS gfx glad
         EXPORT gfxTargets

@@ -2,6 +2,7 @@
 
 #include "util/common.h"
 #include "gfx/gl_defines.h"
+#include "gfx/common.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -18,7 +19,7 @@ DrawableModel::DrawableModel(const char* path) {
     mPath = (char*)malloc(pathLength * sizeof(char));
     memcpy(mPath, path, pathLength);
 
-    mShader = Shader("textured.vert", "textured.frag");
+    mShader = Shader(BOLT_GFX_RES("textured.vert"), BOLT_GFX_RES("textured.frag"));
 }
 
 DrawableModel::~DrawableModel() { free(mPath); }
