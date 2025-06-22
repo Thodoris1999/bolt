@@ -21,7 +21,9 @@ SDLApplication::SDLApplication() : mRunning(true) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
 
-    mWindow.create();
+    int initWidth = 1000;
+    int initHeight = 1000;
+    mWindow.create(initWidth, initHeight);
 
     // Create OpenGL context
     mGlContext = SDL_GL_CreateContext(mWindow.getSdlWindow());
@@ -49,7 +51,8 @@ SDLApplication::SDLApplication() : mRunning(true) {
 
     mWindow.init();
     mDrawableManager.init();
-    mDrawableManager.camera()->setAspectRatio(1);
+    mDrawableManager.camera()->setAspectRatio(initWidth / (float)initHeight);
+
 }
 
 SDLApplication::~SDLApplication() {
@@ -83,7 +86,7 @@ void SDLApplication::handleEvents() {
             break;
         case SDL_EVENT_WINDOW_RESIZED:
             mWindow.onResize(event.window.data1, event.window.data2);
-            mDrawableManager.camera()->setAspectRatio(event.window.data1 / (float) event.window.data2);
+            mDrawableManager.camera()->setAspectRatio(event.window.data1 / (float)event.window.data2);
             break;
         case SDL_EVENT_MOUSE_WHEEL:
             // zoom

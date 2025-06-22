@@ -8,11 +8,13 @@ SDLWindow::SDLWindow() {
 
 }
 
-void SDLWindow::create() {
+void SDLWindow::create(int width, int height) {
+    mWidth = width;
+    mHeight = height;
     mSdlWindow = SDL_CreateWindow(
         "Object Visualizer",
-        1000,
-        1000,
+        width,
+        height,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
 
@@ -24,7 +26,7 @@ void SDLWindow::destroy() {
 }
 
 void SDLWindow::init() {
-    glViewport(0, 0, 1000, 1000);
+    glViewport(0, 0, mWidth, mHeight);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 }

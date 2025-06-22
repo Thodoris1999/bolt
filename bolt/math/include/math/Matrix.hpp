@@ -41,6 +41,13 @@ struct Matrix44f {
         data[2][0] = data[2][1] = data[2][2] = data[2][3] = 0;
         data[3][0] = data[3][1] = data[3][2] = data[3][3] = 0;
     }
+    void setIdentity() {
+        setZero();
+        data[0][0] = 1;
+        data[1][1] = 1;
+        data[2][2] = 1;
+        data[3][3] = 1;
+    }
     void setTranslation(float x, float y, float z) {
         data[0][3] = x;
         data[1][3] = y;

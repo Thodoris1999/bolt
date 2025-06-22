@@ -8,7 +8,7 @@
 namespace bolt {
 namespace gfx {
 /**
- * Simple linear container for graphics objects
+ * Simple linear container for graphics objects with a simple camera. Useful for prototyping PoC
  */
 class Drawable3dManager {
 public:
