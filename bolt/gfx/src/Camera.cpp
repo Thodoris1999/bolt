@@ -1,6 +1,8 @@
 #include "gfx/Camera.hpp"
 #include "gfx/gl_defines.h"
 
+#include "math/math.h"
+
 namespace bolt {
 namespace gfx {
 
@@ -31,8 +33,37 @@ void Camera::onDraw() {
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(45), mAspectRatio(1) {
+OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(DEG2RAD(45)), mAspectRatio(1) {
     updatePerspectiveMat();
+    mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+}
+
+void OrbitCamera::setPos(const math::Vector3f& pos) {
+    mPos = pos;
+    mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+}
+
+void OrbitCamera::setRot(const math::Quatf& rot) {
+    float qw = rot.w;
+    float qx = rot.x;
+    float qy = rot.y;
+    float qz = rot.z;
+
+    mView(0,0) = 1.0f - 2.0f*qy*qy - 2.0f*qz*qz;
+    mView(0,1) = 2.0f*qx*qy - 2.0f*qz*qw;
+    mView(0,2) = 2.0f*qx*qz + 2.0f*qy*qw;
+
+    mView(1,0) = 2.0f*qx*qy + 2.0f*qz*qw;
+    mView(1,1) = 1.0f - 2.0f*qx*qx - 2.0f*qz*qz;
+    mView(1,2) = 2.0f*qy*qz - 2.0f*qx*qw;
+
+    mView(2,0) = 2.0f*qx*qz - 2.0f*qy*qw;
+    mView(2,1) = 2.0f*qy*qz + 2.0f*qx*qw;
+    mView(2,2) = 1.0f - 2.0f*qx*qx - 2.0f*qy*qy;
+}
+
+void OrbitCamera::setFocus(const math::Vector3f& focus) {
+    mFocus = focus;
     mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
 

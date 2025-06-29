@@ -6,6 +6,9 @@
 
 using namespace std;
 
+namespace bolt {
+namespace util {
+
 void* Filesystem::loadFile(const filesystem::path& fullpath, unsigned int& size) {
     std::ifstream file(fullpath, std::ios::binary | std::ios::ate);
     RUNTIME_ASSERT(!!file, ("Could not open file " + fullpath.string()).c_str());
@@ -21,3 +24,6 @@ void* Filesystem::loadFile(const filesystem::path& fullpath, unsigned int& size)
 
     return buffer;
 }
+
+} // util
+} // bolt

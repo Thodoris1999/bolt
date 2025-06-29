@@ -6,7 +6,7 @@ namespace gfx {
 
 void loadShader(const char* name, unsigned int& shader, GLenum type) {
     unsigned int size;
-    void* source = Filesystem::loadFile(name, size);
+    void* source = util::Filesystem::loadFile(name, size);
 
     shader = glCreateShader(type);
     glShaderSource(shader, 1, (const GLchar* const*)&source, (const GLint*)&size);

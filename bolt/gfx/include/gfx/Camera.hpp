@@ -2,7 +2,7 @@
 
 #include "math/Matrix.hpp"
 #include "math/Vector.hpp"
-#include "math/math.h"
+#include "math/Quat.hpp"
 
 namespace bolt {
 namespace gfx {
@@ -31,13 +31,17 @@ protected:
 class OrbitCamera : public Camera {
 public:
     OrbitCamera();
+    void setFocus(const math::Vector3f& focus);
     virtual void onScroll(float amount) override;
     virtual void onDrag(float x, float y) override;
 
-    void setAspectRatio(float aspectRatio) { mAspectRatio = aspectRatio; updatePerspectiveMat(); }
+    void setAspectRatio(float aspectRatio) override { mAspectRatio = aspectRatio; updatePerspectiveMat(); }
+
+    void setPos(const math::Vector3f& pos);
+    void setRot(const math::Quatf& rot);
 
 private:
-    void updatePerspectiveMat() { mProjection.setPerspective(DEG2RAD(mFovy), mAspectRatio, 0.1, 100); }
+    void updatePerspectiveMat() { mProjection.setPerspective(mFovy, mAspectRatio, 0.1, 100); }
 
     math::Vector3f mPos;
     math::Vector3f mFocus;

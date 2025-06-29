@@ -90,7 +90,7 @@ void SDLApplication::handleEvents() {
             break;
         case SDL_EVENT_MOUSE_WHEEL:
             // zoom
-            mDrawableManager.camera()->onScroll(event.wheel.y);
+            mDrawableManager.camera()->onScroll(0.1 * event.wheel.y);
             break;
         case SDL_EVENT_MOUSE_MOTION:
             // drag
