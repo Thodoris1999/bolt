@@ -16,16 +16,14 @@ set(gfx_SRC
     src/DrawableModel.cpp
     src/Drawable.cpp
     src/DrawableManager.cpp
+    src/SceneNode.cpp
     src/Camera.cpp
     src/Framebuffer.cpp
     src/Shader.cpp
     src/Color.cpp
     src/GlUtils.cpp
+    src/gl_defines.cpp
 )
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND gfx_SRC src/gl_defines.cpp)
-endif()
 
 add_library(gfx ${gfx_SRC})
 add_library(bolt::gfx ALIAS gfx)
