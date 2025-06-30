@@ -10,8 +10,8 @@ PhongDrawable::PhongDrawable() {
     mShader = Shader(BOLT_GFX_RES("phong.vert"), BOLT_GFX_RES("phong.frag"));
 }
 
-void PhongDrawable::onDraw() {
-    this->Drawable3d::onDraw();
+void PhongDrawable::setAmbient(const Color& color) {
+    mAmbient = color;
 
     mShader.use();
     mShader.setColor("ambientColor", mAmbient);

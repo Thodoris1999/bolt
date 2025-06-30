@@ -119,5 +119,12 @@ Vector4f Matrix44f::operator*(const Vector4f& other) const {
     return ret;
 }
 
+const Matrix44f Matrix44f::IDENTITY = {{
+    {1, 0, 0, 0},
+    {0, 1, 0, 0},
+    {0, 0, 1, 0},
+    {0, 0, 0, 1}
+}};
+
 } // math
 } // bolt

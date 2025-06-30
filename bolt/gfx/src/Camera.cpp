@@ -20,11 +20,11 @@ Camera::Camera() {
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
     glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(Matrix44f), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, UBO, 0, 2 * sizeof(Matrix44f));
     glCheckError();
 }
 
 void Camera::onDraw() {
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, UBO, 0, 2 * sizeof(Matrix44f));
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Matrix44f), &mProjection);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);

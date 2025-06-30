@@ -9,10 +9,9 @@ namespace gfx {
 class PhongDrawable : public Drawable3d {
 public:
     PhongDrawable();
-    virtual void onDraw() override;
 
     Color& ambient() { return mAmbient; }
-    void setAmbient(const Color& color) { mAmbient = color; }
+    void setAmbient(const Color& color);
 
 protected:
     Color mAmbient;

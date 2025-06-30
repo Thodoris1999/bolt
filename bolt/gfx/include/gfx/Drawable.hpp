@@ -13,21 +13,16 @@ public:
     virtual ~Drawable() = 0;
     /// Perform all heavy preparation necessary for draw() to work, e.g. load data from disk, send data to GPU. Must be called once defore the first draw() call
     virtual void load();
-    /// Perform per-frame pre-draw preparations, e.g. select shader program and set its uniform variables
-    virtual void onDraw();
     /// Perform a draw operation
     virtual void draw() = 0;
 };
 
 inline Drawable::~Drawable() {}
 inline void Drawable::load() {};
-inline void Drawable::onDraw() {};
 
 class Drawable3d : public Drawable, public SceneNode {
 public:
     Drawable3d();
-
-    virtual void onDraw() override;
 
     /// @beginGetters
     Shader& shader() { return mShader; }

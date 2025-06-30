@@ -8,6 +8,11 @@ SceneNode::SceneNode() {
     mWorldDirty = true;
 }
 
+SceneNode::SceneNode(math::Matrix44f mtx) : mMtx(mtx) {
+    mParent = nullptr;
+    mWorldDirty = true;
+}
+
 void SceneNode::addChild(SceneNode* node) {
     node->mParent = this;
     mChildren.push_back(node);

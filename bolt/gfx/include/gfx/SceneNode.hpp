@@ -11,6 +11,7 @@ class SceneNode {
 public:
     // dtors/ctors
     SceneNode();
+    SceneNode(math::Matrix44f mtx);
     virtual ~SceneNode() {}
 
     /// @beginGetters

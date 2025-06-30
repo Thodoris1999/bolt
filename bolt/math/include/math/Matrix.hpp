@@ -64,6 +64,8 @@ struct Matrix44f {
     void setLookAt(const Vector3f& pos, const Vector3f& focus, const Vector3f& up);
     Matrix44f operator*(const Matrix44f& other) const;
     Vector4f operator*(const Vector4f& other) const;
+
+    static const Matrix44f IDENTITY;
 };
 
 } // math
