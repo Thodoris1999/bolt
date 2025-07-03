@@ -15,8 +15,8 @@ set(gfx_SRC
     src/DrawableMesh.cpp
     src/DrawableModel.cpp
     src/Drawable.cpp
-    src/DrawableManager.cpp
     src/SceneNode.cpp
+    src/SceneManager.cpp
     src/Camera.cpp
     src/Framebuffer.cpp
     src/Shader.cpp

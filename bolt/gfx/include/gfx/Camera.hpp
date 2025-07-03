@@ -4,10 +4,12 @@
 #include "math/Vector.hpp"
 #include "math/Quat.hpp"
 
+#include "gfx/SceneNode.hpp"
+
 namespace bolt {
 namespace gfx {
 
-class Camera {
+class Camera : public SceneNode {
 public:
     Camera();
     virtual ~Camera() {}
@@ -19,12 +21,10 @@ public:
     virtual void onDrag(float x, float y) {}
     virtual void setAspectRatio(float aspectRatio) {}
 
-    math::Matrix44f& getView() { return mView; }
     math::Matrix44f& getProjection() { return mProjection; }
 
 protected:
     unsigned int UBO;
-    math::Matrix44f mView;
     math::Matrix44f mProjection;
 };
 
@@ -37,7 +37,7 @@ public:
 
     void setAspectRatio(float aspectRatio) override { mAspectRatio = aspectRatio; updatePerspectiveMat(); }
 
-    void setPos(const math::Vector3f& pos);
+    void setPos(const math::Vector3f& rot);
     void setRot(const math::Quatf& rot);
 
 private:

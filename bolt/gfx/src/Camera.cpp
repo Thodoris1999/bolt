@@ -9,10 +9,10 @@ namespace gfx {
 using namespace math;
 
 Camera::Camera() {
-    mView.makeHomogeneous();
+    mMtx.makeHomogeneous();
     // note that we're translating the scene in the reverse direction of where we want to move
-    mView.setRotation(0, 0, 0);
-    mView.setTranslation(0, 0, -3);
+    mMtx.setRotation(0, 0, 0);
+    mMtx.setTranslation(0, 0, -3);
 
     mProjection.setPerspective(DEG2RAD(45), 1, 0.1, 100);
 
@@ -29,18 +29,18 @@ void Camera::onDraw() {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Matrix44f), &mProjection);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Matrix44f), sizeof(Matrix44f), &mView);
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Matrix44f), sizeof(Matrix44f), &mMtx);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(DEG2RAD(45)), mAspectRatio(1) {
     updatePerspectiveMat();
-    mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
 
 void OrbitCamera::setPos(const math::Vector3f& pos) {
     mPos = pos;
-    mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
 
 void OrbitCamera::setRot(const math::Quatf& rot) {
@@ -49,22 +49,22 @@ void OrbitCamera::setRot(const math::Quatf& rot) {
     float qy = rot.y;
     float qz = rot.z;
 
-    mView(0,0) = 1.0f - 2.0f*qy*qy - 2.0f*qz*qz;
-    mView(0,1) = 2.0f*qx*qy - 2.0f*qz*qw;
-    mView(0,2) = 2.0f*qx*qz + 2.0f*qy*qw;
+    mMtx(0,0) = 1.0f - 2.0f*qy*qy - 2.0f*qz*qz;
+    mMtx(0,1) = 2.0f*qx*qy - 2.0f*qz*qw;
+    mMtx(0,2) = 2.0f*qx*qz + 2.0f*qy*qw;
 
-    mView(1,0) = 2.0f*qx*qy + 2.0f*qz*qw;
-    mView(1,1) = 1.0f - 2.0f*qx*qx - 2.0f*qz*qz;
-    mView(1,2) = 2.0f*qy*qz - 2.0f*qx*qw;
+    mMtx(1,0) = 2.0f*qx*qy + 2.0f*qz*qw;
+    mMtx(1,1) = 1.0f - 2.0f*qx*qx - 2.0f*qz*qz;
+    mMtx(1,2) = 2.0f*qy*qz - 2.0f*qx*qw;
 
-    mView(2,0) = 2.0f*qx*qz - 2.0f*qy*qw;
-    mView(2,1) = 2.0f*qy*qz + 2.0f*qx*qw;
-    mView(2,2) = 1.0f - 2.0f*qx*qx - 2.0f*qy*qy;
+    mMtx(2,0) = 2.0f*qx*qz - 2.0f*qy*qw;
+    mMtx(2,1) = 2.0f*qy*qz + 2.0f*qx*qw;
+    mMtx(2,2) = 1.0f - 2.0f*qx*qx - 2.0f*qy*qy;
 }
 
 void OrbitCamera::setFocus(const math::Vector3f& focus) {
     mFocus = focus;
-    mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
 
 void OrbitCamera::onScroll(float amount) {
@@ -99,7 +99,7 @@ void OrbitCamera::onDrag(float x, float y) {
     mPos = mFocus + direction;
 
     // Update the view matrix
-    mView.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
 }
 
 } // gfx

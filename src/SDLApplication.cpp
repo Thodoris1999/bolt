@@ -8,7 +8,7 @@
 
 #include <chrono>
 
-SDLApplication::SDLApplication() : mRunning(true) {
+SDLApplication::SDLApplication(int initWidth, int initHeight) : mRunning(true) {
     // Initialize SDL
     bool videoInit = SDL_InitSubSystem(SDL_INIT_VIDEO);
     RUNTIME_ASSERT(videoInit, SDL_GetError());
@@ -21,8 +21,6 @@ SDLApplication::SDLApplication() : mRunning(true) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 #endif
 
-    int initWidth = 1000;
-    int initHeight = 1000;
     mWindow.create(initWidth, initHeight);
 
     // Create OpenGL context
@@ -50,9 +48,6 @@ SDLApplication::SDLApplication() : mRunning(true) {
 #endif
 
     mWindow.init();
-    mDrawableManager.init();
-    mDrawableManager.camera()->setAspectRatio(initWidth / (float)initHeight);
-
 }
 
 SDLApplication::~SDLApplication() {
@@ -67,7 +62,7 @@ void SDLApplication::run() {
         handleEvents();
 
         mWindow.beginFrame();
-        mDrawableManager.draw();
+        mRunner();
         mWindow.endFrame();
         auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -84,20 +79,8 @@ void SDLApplication::handleEvents() {
         case SDL_EVENT_QUIT:
             mRunning = false;
             break;
-        case SDL_EVENT_WINDOW_RESIZED:
-            mWindow.onResize(event.window.data1, event.window.data2);
-            mDrawableManager.camera()->setAspectRatio(event.window.data1 / (float)event.window.data2);
-            break;
-        case SDL_EVENT_MOUSE_WHEEL:
-            // zoom
-            mDrawableManager.camera()->onScroll(0.1 * event.wheel.y);
-            break;
-        case SDL_EVENT_MOUSE_MOTION:
-            // drag
-            if ((event.motion.state & SDL_BUTTON_MIDDLE) != 0) {
-                mDrawableManager.camera()->onDrag(event.motion.xrel, event.motion.yrel);
-            }
-            break;
+        default:
+            if (mEventHandler) mEventHandler(event);
         }
     }
 }

@@ -18,6 +18,11 @@ void SceneNode::addChild(SceneNode* node) {
     mChildren.push_back(node);
 }
 
+void SceneNode::setPose(const math::Vector3f& pos, const math::Vector3f& rot) {
+    mMtx.setTranslation(pos.x, pos.y, pos.z);
+    mMtx.setRotation(rot.x, rot.y, rot.z);
+}
+
 void SceneNode::setMtx(const bolt::math::Matrix34f& mtx) {
     mMtx(0,0) = mtx(0,0);
     mMtx(0,1) = mtx(0,1);
@@ -36,7 +41,11 @@ void SceneNode::setMtx(const bolt::math::Matrix34f& mtx) {
 
 void SceneNode::updateWorldTransforms() {
     if (mWorldDirty) {
-        mWorldMtx = mParent->worldMtx() * mMtx;
+        if (mParent != nullptr) {
+            mWorldMtx = mParent->worldMtx() * mMtx;
+        } else {
+            mWorldMtx = mMtx;
+        }
         for (SceneNode* child : mChildren) {
             child->updateWorldTransforms();
         }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/Matrix.hpp"
+#include "math/Vector.hpp"
 
 #include <vector>
 
@@ -21,6 +22,7 @@ public:
 
     /// @beginSetters
     void setMtx(const math::Matrix34f& mtx);
+    void setPose(const math::Vector3f& pos, const math::Vector3f& rot);
     /// @endSetters
 
     // graph editing

@@ -1,20 +1,26 @@
 #pragma once
 
 #include "SDLWindow.hpp"
-#include "gfx/DrawableManager.hpp"
+
+#include <functional>
 
 class SDLApplication {
 public:
-    SDLApplication();
+    using EventHandler = std::function<void(const SDL_Event&)>;
+    using Runner = std::function<void()>;
+
+    SDLApplication(int width, int height);
     ~SDLApplication();
     void run();
     void handleEvents();
 
-    bolt::gfx::Drawable3dManager& drawableManager() { return mDrawableManager; }
+    void setEventHandler(EventHandler handler) { mEventHandler = handler; }
+    void setRunner(Runner handler) { mRunner = handler; }
 
 private:
     SDLWindow mWindow;
     SDL_GLContext mGlContext;
-    bolt::gfx::Drawable3dManager mDrawableManager;
+    EventHandler mEventHandler;
+    Runner mRunner;
     bool mRunning;
 };

@@ -11,8 +11,6 @@
 #include "gfx/Color.hpp"
 #include "gfx/Framebuffer.hpp"
 
-#include "obj/ObjectSphere.hpp"
-
 #include "math/math.h"
 #include "math/Vector.hpp"
 
@@ -50,40 +48,66 @@ using namespace bolt::math;
 using namespace bolt::gfx;
 
 int main(int argc, char** argv) {
-    SDLApplication application;
+    int initialWidth = 1000;
+    int initialHeight = 1000;
+    SDLApplication application(initialWidth, initialHeight);
 
-    DrawableArrow3d zAxis(1, 0.2, 0.08);
-    DrawableArrow3d yAxis(1, 0.2, 0.08);
-    DrawableArrow3d xAxis(1, 0.2, 0.08);
-    xAxis.mtx().setRotation(0, DEG2RAD(90), 0);
-    yAxis.mtx().setRotation(DEG2RAD(-90), 0, 0);
-    xAxis.setAmbient(COLOR_RED);
-    yAxis.setAmbient(COLOR_GREEN);
-    zAxis.setAmbient(COLOR_BLUE);
+    SceneManager scene;
+    SceneNode& sceneRoot = scene.root();
+    OrbitCamera* camera = scene.createOrbitCamera();
 
-    DrawableCuboid cube(1, 1, 1);
-    cube.setAmbient(randomBrightColor(0.6));
-    cube.mtx().setTranslation(1, 1, 4);
-    cube.mtx().setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
+    application.setEventHandler([camera](const SDL_Event& event) {
+        switch (event.type) {
+        case SDL_EVENT_WINDOW_RESIZED:
+            //mWindow.onResize(event.window.data1, event.window.data2);
+            camera->setAspectRatio(event.window.data1 / (float)event.window.data2);
+            break;
+        case SDL_EVENT_MOUSE_WHEEL:
+            // zoom
+            camera->onScroll(0.1 * event.wheel.y);
+            break;
+        case SDL_EVENT_MOUSE_MOTION:
+            // drag
+            if ((event.motion.state & SDL_BUTTON_MIDDLE) != 0) {
+                camera->onDrag(event.motion.xrel, event.motion.yrel);
+            }
+            break;
+        }
+    });
+    application.setRunner([&scene]() { scene.draw(); });
 
-    ObjectSphere sphere(1.02);
-    sphere.setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
-    static_cast<PhongDrawable*>(sphere.drawable())->setAmbient(randomBrightColor(0.6));
+    auto* zAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
+    auto* yAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
+    auto* xAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
+
+    xAxis->mtx().setRotation(0, DEG2RAD(90), 0);
+    yAxis->mtx().setRotation(DEG2RAD(-90), 0, 0);
+    xAxis->setAmbient(COLOR_RED);
+    yAxis->setAmbient(COLOR_GREEN);
+    zAxis->setAmbient(COLOR_BLUE);
+
+    auto* cube = scene.createDrawable<DrawableCuboid>(1, 1, 1);
+    cube->setAmbient(randomBrightColor(0.6));
+    cube->mtx().setTranslation(1, 1, 4);
+    cube->mtx().setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
+
+    auto* sphere = scene.createDrawable<DrawableSpheroid>(1.02, 1.02, 1.02);
+    sphere->setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
+    sphere->setAmbient(randomBrightColor(0.6));
 
     RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
     TIME(objmanstart);
-    ObjectManagerText objManager;
+    ObjectManagerText objManager(&scene);
     objManager.createObjects(argv[1]);
 
-    application.drawableManager().registerDrawable(&zAxis);
-    application.drawableManager().registerDrawable(&yAxis);
-    application.drawableManager().registerDrawable(&xAxis);
+    sceneRoot.addChild(zAxis);
+    sceneRoot.addChild(yAxis);
+    sceneRoot.addChild(xAxis);
+    sceneRoot.addChild(camera);
+    sceneRoot.addChild(cube);
+    sceneRoot.addChild(sphere);
 
-    application.drawableManager().registerDrawable(&cube);
-    application.drawableManager().registerDrawable(sphere.drawable());
-
-    objManager.registerDrawables(application.drawableManager());
-    application.drawableManager().loadAll();
+    scene.loadAll();
 
     // This will draw frames on an external frambuffer, and write it to frame.bin once the application is closed
     Framebuffer fb(1000, 1000);

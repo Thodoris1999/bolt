@@ -9,6 +9,10 @@
 #include "obj/ObjectCuboid.hpp"
 #include "obj/ObjectModel.hpp"
 
+#include "gfx/DrawableSpheroid.hpp"
+#include "gfx/DrawableCuboid.hpp"
+#include "gfx/DrawableModel.hpp"
+
 #include <sstream>
 
 using namespace bolt::math;
@@ -74,6 +78,43 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
     if (object != nullptr) {
         object->setPose(pos, rot);
     }
+
+    // TODO: make object not owning of drawables and use this instead of the rest of the func
+    if (mScene != nullptr) {
+        Drawable3d* drawable;
+        std::istringstream iss(text);
+        std::string type;
+        float x, y, z, rx, ry, rz;
+
+        if (!(iss >> type >> x >> y >> z >> rx >> ry >> rz)) {
+            PANIC("Invalid object format: %s", text.c_str());
+        }
+
+        Vector3f pos(x, y, z);
+        Vector3f rot(rx, ry, rz);
+
+        if (type == "sphere") {
+            float radius;
+            if (!(iss >> radius)) return nullptr;
+            drawable = mScene->createDrawable<DrawableSpheroid>(radius, radius, radius);
+        } else if (type == "cuboid") {
+            float sx, sy, sz;
+            if (!(iss >> sx >> sy >> sz)) return nullptr;
+            drawable = mScene->createDrawable<DrawableCuboid>(sx, sy, sz);
+            static_cast<PhongDrawable*>(drawable)->setAmbient(randomBrightColor(0.6));
+        } else if (type == "model") {
+            std::string filename;
+            if (!(iss >> filename)) return nullptr;
+            drawable = mScene->createDrawable<DrawableModel>(filename.c_str());
+        } else {
+            DEBUG("Unknown object %s", type.c_str());
+            object = nullptr;
+            }
+
+        if (object != nullptr) {
+            drawable->setPose(pos, rot);
+        }
+    }
     
     return object;
 }
@@ -104,13 +145,6 @@ void ObjectManagerText::createObjects(const char* path) {
     createObjects(text);
 
     free(data);
-}
-
-void ObjectManagerText::registerDrawables(Drawable3dManager& drawableManager) {
-    for (auto* object : mObjects) {
-        if (object->drawable() != nullptr)
-            drawableManager.registerDrawable(object->drawable());
-    }
 }
 
 void ObjectManagerText::registerColliders(ColliderManager& colliderManager) {
