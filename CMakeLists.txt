@@ -65,6 +65,7 @@ set(objectVis_SRC
     src/ObjectManagerText.cpp
     src/SDLWindow.cpp
     src/SDLApplication.cpp
+    src/SDLApplication3d.cpp
 
     src/main.cpp
 )

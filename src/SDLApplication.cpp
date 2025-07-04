@@ -62,7 +62,6 @@ void SDLApplication::run() {
         handleEvents();
 
         mWindow.beginFrame();
-        mRunner();
         mWindow.endFrame();
         auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
@@ -80,7 +79,7 @@ void SDLApplication::handleEvents() {
             mRunning = false;
             break;
         default:
-            if (mEventHandler) mEventHandler(event);
+            handleEvent(event);
         }
     }
 }

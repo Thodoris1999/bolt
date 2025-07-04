@@ -1,4 +1,4 @@
-#include "SDLApplication.hpp"
+#include "SDLApplication3d.hpp"
 
 #include "ObjectManagerText.hpp"
 
@@ -30,31 +30,10 @@ using namespace bolt::col;
 int main(int argc, char** argv) {
     int initialWidth = 1000;
     int initialHeight = 1000;
-    SDLApplication application(initialWidth, initialHeight);
+    SDLApplication3d application(initialWidth, initialHeight);
 
-    SceneManager scene;
+    SceneManager& scene = application.scene();
     SceneNode& sceneRoot = scene.root();
-    OrbitCamera* camera = scene.createOrbitCamera();
-
-    application.setEventHandler([camera](const SDL_Event& event) {
-        switch (event.type) {
-        case SDL_EVENT_WINDOW_RESIZED:
-            //mWindow.onResize(event.window.data1, event.window.data2);
-            camera->setAspectRatio(event.window.data1 / (float)event.window.data2);
-            break;
-        case SDL_EVENT_MOUSE_WHEEL:
-            // zoom
-            camera->onScroll(0.1 * event.wheel.y);
-            break;
-        case SDL_EVENT_MOUSE_MOTION:
-            // drag
-            if ((event.motion.state & SDL_BUTTON_MIDDLE) != 0) {
-                camera->onDrag(event.motion.xrel, event.motion.yrel);
-            }
-            break;
-        }
-    });
-    application.setRunner([&scene]() { scene.draw(); });
 
     auto* zAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
     auto* yAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
@@ -97,7 +76,6 @@ int main(int argc, char** argv) {
     sceneRoot.addChild(zAxis);
     sceneRoot.addChild(yAxis);
     sceneRoot.addChild(xAxis);
-    sceneRoot.addChild(camera);
     sceneRoot.addChild(cube);
     sceneRoot.addChild(sphere);
 
