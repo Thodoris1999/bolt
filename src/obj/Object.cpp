@@ -2,10 +2,9 @@
 
 using namespace bolt::math;
 
-Object3d::Object3d() : mDrawable(nullptr), mCollider(nullptr) {}
+Object3d::Object3d() : mSceneNode(nullptr), mCollider(nullptr) {}
 
 Object3d::~Object3d() {
-    delete mDrawable;
     delete mCollider;
 }
 
@@ -16,8 +15,8 @@ void Object3d::setPose(Vector3f pos, Vector3f rot) {
 }
 
 void Object3d::updateMatrix() {
-    if (mDrawable != nullptr)
-        mDrawable->setMtx(mMtx);
+    if (mSceneNode != nullptr)
+        mSceneNode->setMtx(mMtx);
     if (mCollider != nullptr)
         mCollider->setMtx(mMtx);
 }

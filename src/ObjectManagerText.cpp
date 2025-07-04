@@ -60,12 +60,10 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
         float radius;
         if (!(iss >> radius)) return nullptr;
         object = new ObjectSphere(radius);
-        static_cast<PhongDrawable*>(object->drawable())->setAmbient(randomBrightColor(0.6));
     } else if (type == "cuboid") {
         float sx, sy, sz;
         if (!(iss >> sx >> sy >> sz)) return nullptr;
         object = new ObjectCuboid(sx, sy, sz);
-        static_cast<PhongDrawable*>(object->drawable())->setAmbient(randomBrightColor(0.6));
     } else if (type == "model") {
         std::string filename;
         if (!(iss >> filename)) return nullptr;
@@ -79,43 +77,6 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
         object->setPose(pos, rot);
     }
 
-    // TODO: make object not owning of drawables and use this instead of the rest of the func
-    if (mScene != nullptr) {
-        Drawable3d* drawable;
-        std::istringstream iss(text);
-        std::string type;
-        float x, y, z, rx, ry, rz;
-
-        if (!(iss >> type >> x >> y >> z >> rx >> ry >> rz)) {
-            PANIC("Invalid object format: %s", text.c_str());
-        }
-
-        Vector3f pos(x, y, z);
-        Vector3f rot(rx, ry, rz);
-
-        if (type == "sphere") {
-            float radius;
-            if (!(iss >> radius)) return nullptr;
-            drawable = mScene->createDrawable<DrawableSpheroid>(radius, radius, radius);
-        } else if (type == "cuboid") {
-            float sx, sy, sz;
-            if (!(iss >> sx >> sy >> sz)) return nullptr;
-            drawable = mScene->createDrawable<DrawableCuboid>(sx, sy, sz);
-            static_cast<PhongDrawable*>(drawable)->setAmbient(randomBrightColor(0.6));
-        } else if (type == "model") {
-            std::string filename;
-            if (!(iss >> filename)) return nullptr;
-            drawable = mScene->createDrawable<DrawableModel>(filename.c_str());
-        } else {
-            DEBUG("Unknown object %s", type.c_str());
-            object = nullptr;
-            }
-
-        if (object != nullptr) {
-            drawable->setPose(pos, rot);
-        }
-    }
-    
     return object;
 }
 
@@ -145,6 +106,13 @@ void ObjectManagerText::createObjects(const char* path) {
     createObjects(text);
 
     free(data);
+}
+
+void ObjectManagerText::createVisuals(SceneManager& scene) {
+    for (auto* object : mObjects) {
+        object->createVisuals(scene);
+        scene.root().addChild(object->sceneNode());
+    }
 }
 
 void ObjectManagerText::registerColliders(ColliderManager& colliderManager) {

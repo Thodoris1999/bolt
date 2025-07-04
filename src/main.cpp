@@ -80,6 +80,7 @@ int main(int argc, char** argv) {
     TIME(objmanstart);
     ObjectManagerText objManager(&scene);
     objManager.createObjects(argv[1]);
+    objManager.createVisuals(scene);
 
     ColliderManager colliderManager;
     objManager.registerColliders(colliderManager);

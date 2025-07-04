@@ -16,6 +16,7 @@ public:
     void createObjects(const std::string&);
     void createObjects(const char* path);
 
+    void createVisuals(bolt::gfx::SceneManager& scene);
     // Register object shapes to a collider manager
     void registerColliders(bolt::col::ColliderManager&);
 
