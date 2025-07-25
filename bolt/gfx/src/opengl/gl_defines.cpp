@@ -1,4 +1,4 @@
-#include "gfx/gl_defines.h"
+#include "gfx/opengl/gl_defines.h"
 
 #include "stdio.h"
 

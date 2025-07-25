@@ -1,12 +1,9 @@
 #include "gfx/Drawable.hpp"
 
-#include "gfx/gl_defines.h"
-
 namespace bolt {
 namespace gfx {
 
-Drawable3d::Drawable3d() {
-    mMtx.makeHomogeneous();
+Drawable3d::Drawable3d() : SceneNode(SceneNode::NODE_TYPE_DRAWABLE) {
 }
 
 } // gfx

@@ -3,12 +3,13 @@
 namespace bolt {
 namespace gfx {
 
-SceneNode::SceneNode() {
+SceneNode::SceneNode(Type type) : mType(type) {
     mParent = nullptr;
     mWorldDirty = true;
+    mMtx.setIdentity();
 }
 
-SceneNode::SceneNode(math::Matrix44f mtx) : mMtx(mtx) {
+SceneNode::SceneNode(math::Matrix44f mtx, Type type) : mMtx(mtx), mType(type) {
     mParent = nullptr;
     mWorldDirty = true;
 }
@@ -21,6 +22,17 @@ void SceneNode::addChild(SceneNode* node) {
 void SceneNode::setPose(const math::Vector3f& pos, const math::Vector3f& rot) {
     mMtx.setTranslation(pos.x, pos.y, pos.z);
     mMtx.setRotation(rot.x, rot.y, rot.z);
+    mWorldDirty = true;
+}
+
+void SceneNode::setRotation(float x, float y, float z) {
+    mMtx.setRotation(x, y, z);
+    mWorldDirty = true;
+}
+
+void SceneNode::setTranslation(float x, float y, float z) {
+    mMtx.setTranslation(x, y, z);
+    mWorldDirty = true;
 }
 
 void SceneNode::setMtx(const bolt::math::Matrix34f& mtx) {
@@ -46,11 +58,12 @@ void SceneNode::updateWorldTransforms() {
         } else {
             mWorldMtx = mMtx;
         }
-        for (SceneNode* child : mChildren) {
-            child->updateWorldTransforms();
-        }
         
         mWorldDirty = false;
+    }
+
+    for (SceneNode* child : mChildren) {
+        child->updateWorldTransforms();
     }
 }
 

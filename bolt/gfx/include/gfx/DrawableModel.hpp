@@ -11,23 +11,23 @@
 namespace bolt {
 namespace gfx {
 
-class DrawableModel : public Drawable3d {
+class DrawableModel : public SceneNode {
 public:
     DrawableModel(const char* path);
     ~DrawableModel();
     
-    virtual void load() override;
-    virtual void draw() override;
+    void load();
+
+    std::vector<DrawableMesh>& meshes() { return mMeshes; }
 
 private:
     void loadModel(const char* path);
     void processNode(aiNode *node, const aiScene *scene);
     DrawableMesh processMesh(aiMesh *mesh, const aiScene *scene);
-    std::vector<MeshTexture> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
+    std::vector<TextureDescriptor> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
 
     std::vector<DrawableMesh> mMeshes;
     std::string mDirectory;
-    std::vector<MeshTexture> textures_loaded;
     char* mPath;
 };
 

@@ -7,6 +7,8 @@ find_package(assimp REQUIRED)
 add_subdirectory(vendored/glad)
 
 set(gfx_SRC
+    src/DrawableLine.cpp
+    src/DrawableCone.cpp
     src/DrawableCuboid.cpp
     src/DrawableSpheroid.cpp
     src/DrawableTriangle.cpp
@@ -19,10 +21,13 @@ set(gfx_SRC
     src/SceneManager.cpp
     src/Camera.cpp
     src/Framebuffer.cpp
-    src/Shader.cpp
     src/Color.cpp
-    src/GlUtils.cpp
-    src/gl_defines.cpp
+
+    src/opengl/OpenglRenderSystem.cpp
+    src/opengl/OpenglProgram.cpp
+    src/opengl/OpenglTexture.cpp
+    src/opengl/GlUtils.cpp
+    src/opengl/gl_defines.cpp
 )
 
 add_library(gfx ${gfx_SRC})

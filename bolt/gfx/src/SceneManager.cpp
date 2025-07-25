@@ -1,12 +1,14 @@
 #include "gfx/SceneManager.hpp"
 
+#include "gfx/opengl/OpenglRenderSystem.hpp"
+
 #include "util/common.h"
 
 namespace bolt {
 namespace gfx {
 
 SceneManager::SceneManager() : mSceneRoot(math::Matrix44f::IDENTITY) {
-
+    mRenderSystem = new OpenglRenderSystem;
 }
 
 SceneManager::~SceneManager() {
@@ -16,6 +18,7 @@ SceneManager::~SceneManager() {
     for (Drawable3d* drawable : mDrawables) {
         delete drawable;
     }
+    delete mRenderSystem;
 }
 
 OrbitCamera* SceneManager::createOrbitCamera() {
@@ -25,29 +28,24 @@ OrbitCamera* SceneManager::createOrbitCamera() {
 }
 
 void SceneManager::loadAll() {
-    for (Drawable3d* drawable : mDrawables) {
-        RUNTIME_ASSERT(drawable != nullptr, "null drawable");
-        drawable->load();
+    addDrawableRecurse(&mSceneRoot);
 
-        // Bind uniform of camera projection and view matrices to 0
-        // TODO: Can drawables share shaders?
-        Shader& shader = drawable->shader();
-        shader.use();
-        unsigned int uniformIndex = glGetUniformBlockIndex(shader.id(), "Matrices");
-        glUniformBlockBinding(shader.id(), uniformIndex, 0);
-        glCheckError();
+    mRenderSystem->load();
+}
+
+void SceneManager::addDrawableRecurse(SceneNode* node) {
+    RUNTIME_ASSERT(node != nullptr, "null node");
+    if (node->type() == SceneNode::NODE_TYPE_DRAWABLE) {
+        mRenderSystem->addDrawable(static_cast<Drawable3d*>(node));
+    }
+    for (int i = 0; i < node->childCount(); i++) {
+        addDrawableRecurse(node->child(i));
     }
 }
 
 void SceneManager::draw(Camera* camera) {
     mSceneRoot.updateWorldTransforms();
-    camera->onDraw();
-    for (const auto& drawable : mDrawables) {
-        RUNTIME_ASSERT(drawable != nullptr, "null drawable");
-        drawable->shader().use();
-        drawable->shader().setMat4("model", drawable->mtx());
-        drawable->draw();
-    }
+    mRenderSystem->renderFrame(*camera);
 }
 
 void SceneManager::draw() {

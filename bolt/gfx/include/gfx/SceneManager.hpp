@@ -3,6 +3,7 @@
 #include "gfx/Camera.hpp"
 #include "gfx/Drawable.hpp"
 #include "gfx/SceneNode.hpp"
+#include "gfx/RenderSystem.hpp"
 
 #include <vector>
 
@@ -16,6 +17,7 @@ public:
 
     /// @beginGetters
     SceneNode& root() { return mSceneRoot; }
+    RenderSystem* renderSystem() { return mRenderSystem; }
     /// @endGetters
 
     template <typename T, typename... Args>
@@ -34,7 +36,10 @@ public:
     void draw();
 
 private:
+    void addDrawableRecurse(SceneNode* node);
+
     SceneNode mSceneRoot;
+    RenderSystem* mRenderSystem;
     std::vector<Drawable3d*> mDrawables;
     std::vector<Camera*> mCameras;
 };

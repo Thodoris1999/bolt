@@ -3,8 +3,8 @@
 
 #include <SDL3/SDL.h>
 
-#include "gfx/gl_defines.h"
-#include "gfx/GlUtils.hpp"
+#include "gfx/opengl/gl_defines.h"
+#include "gfx/opengl/GlUtils.hpp"
 
 #include <chrono>
 
@@ -42,12 +42,10 @@ SDLApplication::SDLApplication(int initWidth, int initHeight) : mRunning(true) {
         glDebugMessageCallback(bolt::gfx::openglDebugOutputCallback, nullptr);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
     } else {
-        printf("Expected opengl debug engabled!\n");
+        printf("Expected opengl debug enabled!\n");
         std::abort();
     }
 #endif
-
-    mWindow.init();
 }
 
 SDLApplication::~SDLApplication() {
@@ -58,16 +56,9 @@ SDLApplication::~SDLApplication() {
 
 void SDLApplication::run() {
     while (mRunning) {
-        auto start = std::chrono::steady_clock::now();
         handleEvents();
-
-        mWindow.beginFrame();
-        mWindow.endFrame();
-        auto end = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-        // Print the elapsed time
-        //std::cout << "Elapsed time: " << duration.count() << " microseconds" << std::endl;
+        // do more interesting stuff in subclasses like physics, rendering and windsurfing
+        mWindow.swapBuffers();
     }
 }
 

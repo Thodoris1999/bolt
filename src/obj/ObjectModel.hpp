@@ -2,6 +2,8 @@
 
 #include "Object.hpp"
 
+#include "gfx/DrawableModel.hpp"
+
 class ObjectModel : public Object3d {
 public:
     ObjectModel(const char* path);
@@ -9,5 +11,5 @@ public:
     virtual void createVisuals(bolt::gfx::SceneManager& scene) override;
 
 private:
-    char* mPath;
+    bolt::gfx::DrawableModel mModel;
 };

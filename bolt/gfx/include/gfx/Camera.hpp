@@ -13,8 +13,6 @@ class Camera : public SceneNode {
 public:
     Camera();
     virtual ~Camera() {}
-    /// send view and projection matrices to GPU
-    void onDraw();
 
     // controls
     virtual void onScroll(float amount) {}
@@ -22,9 +20,9 @@ public:
     virtual void setAspectRatio(float aspectRatio) {}
 
     math::Matrix44f& getProjection() { return mProjection; }
+    const math::Matrix44f& getProjection() const { return mProjection; }
 
 protected:
-    unsigned int UBO;
     math::Matrix44f mProjection;
 };
 

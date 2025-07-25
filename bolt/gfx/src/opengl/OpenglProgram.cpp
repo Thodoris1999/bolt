@@ -1,10 +1,10 @@
-#include "gfx/Shader.hpp"
-#include "gfx/GlUtils.hpp"
+#include "gfx/opengl/OpenglProgram.hpp"
+#include "gfx/opengl/GlUtils.hpp"
 
 namespace bolt {
 namespace gfx {
 
-void loadShader(const char* name, unsigned int& shader, GLenum type) {
+static void loadShader(const char* name, GLuint& shader, GLenum type) {
     unsigned int size;
     void* source = util::Filesystem::loadFile(name, size);
 
@@ -27,8 +27,8 @@ void loadShader(const char* name, unsigned int& shader, GLenum type) {
     free(source);
 }
 
-Shader::Shader(const char* vtxShader, const char* fragShader) {
-    unsigned int vertexShader, fragmentShader;
+OpenglProgram::OpenglProgram(const char* vtxShader, const char* fragShader) {
+    GLuint vertexShader, fragmentShader;
     loadShader(vtxShader, vertexShader, GL_VERTEX_SHADER);
     loadShader(fragShader, fragmentShader, GL_FRAGMENT_SHADER);
 
@@ -42,6 +42,7 @@ Shader::Shader(const char* vtxShader, const char* fragShader) {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 }
+
 
 } // gfx
 } // bolt

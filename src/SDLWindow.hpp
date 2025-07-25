@@ -9,16 +9,11 @@ public:
     void create(int width, int height);
     /// Destroys the window using the underlying platform's windowing system
     void destroy();
-    /// Performs any neccessary graphics initialization for subsequent rendering. Required to be called once before beingFrame() is called
-    void init();
-    void beginFrame();
-    void endFrame();
+    /// Switches in rendered frame buffer to be presented
+    void swapBuffers();
 
     SDL_Window* getSdlWindow() const { return mSdlWindow; }
-    void onResize(int width, int height);
 
 private:
-    int mWidth;
-    int mHeight;
     SDL_Window* mSdlWindow;
 };

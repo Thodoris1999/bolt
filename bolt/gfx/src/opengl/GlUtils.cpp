@@ -1,4 +1,4 @@
-#include "gfx/GlUtils.hpp"
+#include "gfx/opengl/GlUtils.hpp"
 
 #include <iostream>
 #include <chrono>

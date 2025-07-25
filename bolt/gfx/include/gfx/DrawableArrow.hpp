@@ -1,27 +1,24 @@
 #pragma once
 
-#include "PhongDrawable.hpp"
-
-#include <vector>
+#include "gfx/SceneNode.hpp"
+#include "gfx/DrawableLine.hpp"
+#include "gfx/DrawableCone.hpp"
 
 namespace bolt {
 namespace gfx {
 
-class DrawableArrow3d : public PhongDrawable {
+class DrawableArrow3d : public SceneNode {
 public:
-    DrawableArrow3d(float shaftLength, float tipLength, float tipDiameter, unsigned int samples = 10);
-    virtual ~DrawableArrow3d() {}
-    virtual void draw();
+    DrawableArrow3d(float shaftLength, float tipLength, float tipDiameter, unsigned int samples = 8);
+
+    void setAmbient(const Color& color) {
+        mShaft.setAmbient(color);
+        mTip.setAmbient(color);
+    }
 
 private:
-    void generateVertices(float shaftLength, float tipLength, float tipDiameter, unsigned int samples);
-
-    unsigned int VBO;
-    unsigned int EBO;
-    unsigned int VAO;
-
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
+    DrawableLine mShaft;
+    DrawableCone mTip;
 };
 
 } // gfx

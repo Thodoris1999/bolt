@@ -1,5 +1,4 @@
 #include "gfx/Camera.hpp"
-#include "gfx/gl_defines.h"
 
 #include "math/math.h"
 
@@ -8,29 +7,13 @@ namespace gfx {
 
 using namespace math;
 
-Camera::Camera() {
+Camera::Camera() : SceneNode(SceneNode::NODE_TYPE_CAMERA) {
     mMtx.makeHomogeneous();
     // note that we're translating the scene in the reverse direction of where we want to move
     mMtx.setRotation(0, 0, 0);
     mMtx.setTranslation(0, 0, -3);
 
     mProjection.setPerspective(DEG2RAD(45), 1, 0.1, 100);
-
-    glGenBuffers(1, &UBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(Matrix44f), NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glCheckError();
-}
-
-void Camera::onDraw() {
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, UBO, 0, 2 * sizeof(Matrix44f));
-    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Matrix44f), &mProjection);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Matrix44f), sizeof(Matrix44f), &mMtx);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(DEG2RAD(45)), mAspectRatio(1) {
@@ -41,6 +24,7 @@ OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(DEG2RAD(45
 void OrbitCamera::setPos(const math::Vector3f& pos) {
     mPos = pos;
     mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mWorldDirty = true;
 }
 
 void OrbitCamera::setRot(const math::Quatf& rot) {
@@ -60,17 +44,20 @@ void OrbitCamera::setRot(const math::Quatf& rot) {
     mMtx(2,0) = 2.0f*qx*qz - 2.0f*qy*qw;
     mMtx(2,1) = 2.0f*qy*qz + 2.0f*qx*qw;
     mMtx(2,2) = 1.0f - 2.0f*qx*qx - 2.0f*qy*qy;
+    mWorldDirty = true;
 }
 
 void OrbitCamera::setFocus(const math::Vector3f& focus) {
     mFocus = focus;
     mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mWorldDirty = true;
 }
 
 void OrbitCamera::onScroll(float amount) {
     mFovy += -amount;
     mFovy = mFovy < 0 ? 0 : mFovy;
-    mFovy = mFovy > 120 ? 120 : mFovy;
+    float maxFov = 4 * M_PI / 5;
+    mFovy = mFovy > maxFov ? maxFov : mFovy;
 
     updatePerspectiveMat();
 }
@@ -100,6 +87,7 @@ void OrbitCamera::onDrag(float x, float y) {
 
     // Update the view matrix
     mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
+    mWorldDirty = true;
 }
 
 } // gfx

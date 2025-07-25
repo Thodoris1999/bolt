@@ -35,20 +35,20 @@ int main(int argc, char** argv) {
     SceneManager& scene = application.scene();
     SceneNode& sceneRoot = scene.root();
 
-    auto* zAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
-    auto* yAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
-    auto* xAxis = scene.createDrawable<DrawableArrow3d>(1, 0.2, 0.08);
+    auto zAxis = DrawableArrow3d(1, 0.2, 0.08);
+    auto yAxis = DrawableArrow3d(1, 0.2, 0.08);
+    auto xAxis = DrawableArrow3d(1, 0.2, 0.08);
 
-    xAxis->mtx().setRotation(0, DEG2RAD(90), 0);
-    yAxis->mtx().setRotation(DEG2RAD(-90), 0, 0);
-    xAxis->setAmbient(COLOR_RED);
-    yAxis->setAmbient(COLOR_GREEN);
-    zAxis->setAmbient(COLOR_BLUE);
+    xAxis.setRotation(0, DEG2RAD(90), 0);
+    yAxis.setRotation(DEG2RAD(-90), 0, 0);
+    xAxis.setAmbient(COLOR_RED);
+    yAxis.setAmbient(COLOR_GREEN);
+    zAxis.setAmbient(COLOR_BLUE);
 
     auto* cube = scene.createDrawable<DrawableCuboid>(1, 1, 1);
     cube->setAmbient(randomBrightColor(0.6));
-    cube->mtx().setTranslation(1, 1, 4);
-    cube->mtx().setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
+    cube->setTranslation(1, 1, 4);
+    cube->setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
 
     auto* sphere = scene.createDrawable<DrawableSpheroid>(1.02, 1.02, 1.02);
     sphere->setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
@@ -73,9 +73,9 @@ int main(int argc, char** argv) {
     P_DUR(objmanstart, colstart);
     P_DUR(colstart, end);
 
-    sceneRoot.addChild(zAxis);
-    sceneRoot.addChild(yAxis);
-    sceneRoot.addChild(xAxis);
+    sceneRoot.addChild(&zAxis);
+    sceneRoot.addChild(&yAxis);
+    sceneRoot.addChild(&xAxis);
     sceneRoot.addChild(cube);
     sceneRoot.addChild(sphere);
 

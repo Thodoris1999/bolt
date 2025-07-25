@@ -1,5 +1,5 @@
 #include "gfx/Framebuffer.hpp"
-#include "gfx/gl_defines.h"
+#include "gfx/opengl/gl_defines.h"
 
 #include "util/common.h"
 
