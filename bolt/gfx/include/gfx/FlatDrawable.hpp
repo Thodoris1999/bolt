@@ -7,27 +7,24 @@
 namespace bolt {
 namespace gfx {
 
-struct PhongDrawableVertex {
+struct FlatDrawableVertex {
     math::Vector3f pos;
-    math::Vector3f nrm;
 };
 
-class PhongDrawable : public Drawable3d {
+class FlatDrawable : public Drawable3d {
 public:
-    PhongDrawable() = default;
+    FlatDrawable() = default;
 
     virtual const VertexAttribute* attributes() const override;
     virtual int attributeCount() const override;
     virtual const ProgramDescriptor& programDescriptor() const override;
     virtual void onDraw() override;
 
-    Color& ambient() { return mAmbient; }
-    void setAmbient(const Color& color) { mAmbient = color; }
+    Color& color() { return mColor; }
+    void setColor(const Color& color) { mColor = color; }
 
 protected:
-    Color mAmbient;
-    Color mDiffuse;
-    Color mSpecular;
+    Color mColor;
 };
 
 } // gfx

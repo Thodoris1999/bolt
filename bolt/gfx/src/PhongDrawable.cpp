@@ -32,10 +32,6 @@ const ProgramDescriptor& PhongDrawable::programDescriptor() const {
     return PHONG_PROG_DESC;
 }
 
-void PhongDrawable::setAmbient(const Color& color) {
-    mAmbient = color;
-}
-
 void PhongDrawable::onDraw() {
     this->Drawable3d::onDraw();
 

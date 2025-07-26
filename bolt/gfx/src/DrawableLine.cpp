@@ -7,8 +7,8 @@ namespace gfx {
 
 DrawableLine::DrawableLine(math::Vector3f start, math::Vector3f end) {
     mVertices = {
-        {start, (start - end).normalize()},
-        {end,   (end - start).normalize()},
+        {start},
+        {end},
     };
 
     mMtx.setRotation(DEG2RAD(0), 0, 0);

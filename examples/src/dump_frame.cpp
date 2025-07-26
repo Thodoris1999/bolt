@@ -61,9 +61,9 @@ int main(int argc, char** argv) {
 
     xAxis.setRotation(0, DEG2RAD(90), 0);
     yAxis.setRotation(DEG2RAD(-90), 0, 0);
-    xAxis.setAmbient(COLOR_RED);
-    yAxis.setAmbient(COLOR_GREEN);
-    zAxis.setAmbient(COLOR_BLUE);
+    xAxis.setColor(COLOR_RED);
+    yAxis.setColor(COLOR_GREEN);
+    zAxis.setColor(COLOR_BLUE);
 
     auto* cube = scene.createDrawable<DrawableCuboid>(1, 1, 1);
     cube->setAmbient(randomBrightColor(0.6));

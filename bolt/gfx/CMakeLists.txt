@@ -8,12 +8,13 @@ add_subdirectory(vendored/glad)
 
 set(gfx_SRC
     src/Drawable.cpp
+    src/FlatDrawable.cpp
     src/DrawableLine.cpp
+    src/PhongDrawable.cpp
     src/DrawableCone.cpp
     src/DrawableCuboid.cpp
     src/DrawableSpheroid.cpp
     src/DrawableTriangle.cpp
-    src/PhongDrawable.cpp
     src/DrawableMesh.cpp
 
     src/AssimpModel.cpp

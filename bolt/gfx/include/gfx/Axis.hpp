@@ -11,8 +11,8 @@ class Axis : public SceneNode {
 public:
     Axis(float shaftLength, float tipLength, float tipDiameter, unsigned int samples = 8);
 
-    void setAmbient(const Color& color) {
-        mShaft.setAmbient(color);
+    void setColor(const Color& color) {
+        mShaft.setColor(color);
         mTip.setAmbient(color);
     }
 

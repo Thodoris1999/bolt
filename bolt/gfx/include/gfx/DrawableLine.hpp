@@ -1,13 +1,13 @@
 #pragma once
 
-#include "PhongDrawable.hpp"
+#include "FlatDrawable.hpp"
 
 #include <vector>
 
 namespace bolt {
 namespace gfx {
 
-class DrawableLine : public PhongDrawable {
+class DrawableLine : public FlatDrawable {
 public:
     DrawableLine(math::Vector3f start, math::Vector3f end);
 
@@ -17,7 +17,7 @@ public:
     virtual PrimitiveType primitiveType() const { return BOLT_GFX_LINE; }
 
 private:
-    std::vector<PhongDrawableVertex> mVertices;
+    std::vector<FlatDrawableVertex> mVertices;
 };
 
 } // gfx
