@@ -5,7 +5,7 @@
 #include "util/common.h"
 
 #include "gfx/DrawableTriangle.hpp"
-#include "gfx/DrawableArrow.hpp"
+#include "gfx/Axis.hpp"
 #include "gfx/DrawableCuboid.hpp"
 #include "gfx/DrawableSpheroid.hpp"
 #include "gfx/Color.hpp"
@@ -35,9 +35,9 @@ int main(int argc, char** argv) {
     SceneManager& scene = application.scene();
     SceneNode& sceneRoot = scene.root();
 
-    auto zAxis = DrawableArrow3d(1, 0.2, 0.08);
-    auto yAxis = DrawableArrow3d(1, 0.2, 0.08);
-    auto xAxis = DrawableArrow3d(1, 0.2, 0.08);
+    auto zAxis = Axis(1, 0.2, 0.08);
+    auto yAxis = Axis(1, 0.2, 0.08);
+    auto xAxis = Axis(1, 0.2, 0.08);
 
     xAxis.setRotation(0, DEG2RAD(90), 0);
     yAxis.setRotation(DEG2RAD(-90), 0, 0);

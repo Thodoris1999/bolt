@@ -11,7 +11,6 @@
 
 #include "gfx/DrawableSpheroid.hpp"
 #include "gfx/DrawableCuboid.hpp"
-#include "gfx/DrawableModel.hpp"
 
 #include <sstream>
 

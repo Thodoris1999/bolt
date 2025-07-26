@@ -1,4 +1,4 @@
-#include "gfx/DrawableModel.hpp"
+#include "gfx/AssimpModel.hpp"
 
 #include "util/common.h"
 #include "gfx/common.h"
@@ -10,15 +10,15 @@
 namespace bolt {
 namespace gfx {
 
-DrawableModel::DrawableModel(const char* path) {
+AssimpModel::AssimpModel(const char* path) {
     auto pathLength = strlen(path) + 1;
     mPath = (char*)malloc(pathLength * sizeof(char));
     memcpy(mPath, path, pathLength);
 }
 
-DrawableModel::~DrawableModel() { free(mPath); }
+AssimpModel::~AssimpModel() { free(mPath); }
 
-void DrawableModel::load() {
+void AssimpModel::load() {
     printf("%s\n", mPath);
     loadModel(mPath);
 
@@ -27,7 +27,7 @@ void DrawableModel::load() {
     }
 }
 
-void DrawableModel::loadModel(const char* path) {
+void AssimpModel::loadModel(const char* path) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals);
     RUNTIME_ASSERT(scene && (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == 0 && scene->mRootNode, importer.GetErrorString());
@@ -38,7 +38,7 @@ void DrawableModel::loadModel(const char* path) {
     processNode(scene->mRootNode, scene);
 }
 
-void DrawableModel::processNode(aiNode *node, const aiScene *scene) {
+void AssimpModel::processNode(aiNode *node, const aiScene *scene) {
     for(unsigned int i = 0; i < node->mNumMeshes; i++) {
         // the node object only contains indices to index the actual objects in the scene. 
         // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
@@ -52,7 +52,7 @@ void DrawableModel::processNode(aiNode *node, const aiScene *scene) {
     }
 }
 
-DrawableMesh DrawableModel::processMesh(aiMesh *mesh, const aiScene *scene) {
+DrawableMesh AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene) {
     std::vector<MeshVertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<TextureDescriptor> textures;
@@ -130,7 +130,7 @@ DrawableMesh DrawableModel::processMesh(aiMesh *mesh, const aiScene *scene) {
     return DrawableMesh(vertices, indices, textures);
 }
 
-std::vector<TextureDescriptor> DrawableModel::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName) {
+std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName) {
     std::vector<TextureDescriptor> textures;
     for(unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;

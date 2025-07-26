@@ -11,10 +11,10 @@
 namespace bolt {
 namespace gfx {
 
-class DrawableModel : public SceneNode {
+class AssimpModel : public SceneNode {
 public:
-    DrawableModel(const char* path);
-    ~DrawableModel();
+    AssimpModel(const char* path);
+    ~AssimpModel();
     
     void load();
 

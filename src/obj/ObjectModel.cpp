@@ -1,7 +1,5 @@
 #include "ObjectModel.hpp"
 
-#include "gfx/DrawableModel.hpp"
-
 #include <string.h>
 
 using namespace bolt;

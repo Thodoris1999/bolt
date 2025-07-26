@@ -2,7 +2,7 @@
 
 #include "Object.hpp"
 
-#include "gfx/DrawableModel.hpp"
+#include "gfx/AssimpModel.hpp"
 
 class ObjectModel : public Object3d {
 public:
@@ -11,5 +11,5 @@ public:
     virtual void createVisuals(bolt::gfx::SceneManager& scene) override;
 
 private:
-    bolt::gfx::DrawableModel mModel;
+    bolt::gfx::AssimpModel mModel;
 };

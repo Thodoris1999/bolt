@@ -1,9 +1,9 @@
-#include "gfx/DrawableArrow.hpp"
+#include "gfx/Axis.hpp"
 
 namespace bolt {
 namespace gfx {
 
-DrawableArrow3d::DrawableArrow3d(float shaftLength, float tipLength, float tipDiameter, unsigned int samples)
+Axis::Axis(float shaftLength, float tipLength, float tipDiameter, unsigned int samples)
     : mShaft({0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, shaftLength}),
       mTip(tipLength, tipDiameter * 0.5f, samples) {
 

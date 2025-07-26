@@ -7,9 +7,9 @@
 namespace bolt {
 namespace gfx {
 
-class DrawableArrow3d : public SceneNode {
+class Axis : public SceneNode {
 public:
-    DrawableArrow3d(float shaftLength, float tipLength, float tipDiameter, unsigned int samples = 8);
+    Axis(float shaftLength, float tipLength, float tipDiameter, unsigned int samples = 8);
 
     void setAmbient(const Color& color) {
         mShaft.setAmbient(color);

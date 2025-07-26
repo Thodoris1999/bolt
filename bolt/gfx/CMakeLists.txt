@@ -7,16 +7,18 @@ find_package(assimp REQUIRED)
 add_subdirectory(vendored/glad)
 
 set(gfx_SRC
+    src/Drawable.cpp
     src/DrawableLine.cpp
     src/DrawableCone.cpp
     src/DrawableCuboid.cpp
     src/DrawableSpheroid.cpp
     src/DrawableTriangle.cpp
-    src/DrawableArrow.cpp
     src/PhongDrawable.cpp
     src/DrawableMesh.cpp
-    src/DrawableModel.cpp
-    src/Drawable.cpp
+
+    src/AssimpModel.cpp
+    src/Axis.cpp
+
     src/SceneNode.cpp
     src/SceneManager.cpp
     src/Camera.cpp
