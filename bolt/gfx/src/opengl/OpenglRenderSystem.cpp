@@ -121,6 +121,8 @@ void OpenglRenderSystem::load() {
     glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(math::Matrix44f), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glCheckError();
+    // bind buffer to binding point
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, mCameraMatUBO, 0, 2 * sizeof(math::Matrix44f));
     
     for (auto& d : mDrawables) {
         // load program
@@ -154,7 +156,6 @@ void OpenglRenderSystem::renderFrame(const Camera& camera) {
     // set uniforms blocks
     // currently only one for camera matrices located at binding point 0
     // it would be nice to allow flexibility for custom uniform block bindings
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, mCameraMatUBO, 0, 2 * sizeof(math::Matrix44f));
     glBindBuffer(GL_UNIFORM_BUFFER, mCameraMatUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(math::Matrix44f), &camera.getProjection());
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
