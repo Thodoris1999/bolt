@@ -1,4 +1,4 @@
-#include "gfx/Framebuffer.hpp"
+#include "gfx/opengl/OpenglFramebuffer.hpp"
 #include "gfx/opengl/gl_defines.h"
 
 #include "util/common.h"
@@ -6,7 +6,7 @@
 namespace bolt {
 namespace gfx {
 
-Framebuffer::Framebuffer(int width, int height) : mWidth(width), mHeight(height) {
+OpenglFramebuffer::OpenglFramebuffer(int width, int height) : mWidth(width), mHeight(height) {
     glGenFramebuffers(1, &fbo);
 
     // color render buffer
@@ -29,7 +29,7 @@ Framebuffer::Framebuffer(int width, int height) : mWidth(width), mHeight(height)
     glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
 }
 
-Framebuffer::~Framebuffer() {
+OpenglFramebuffer::~OpenglFramebuffer() {
     // deattach render buffers
     GLint previousFBO;
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFBO);
@@ -44,15 +44,15 @@ Framebuffer::~Framebuffer() {
     glDeleteFramebuffers(1, &fbo);
 }
 
-void Framebuffer::use() {
+void OpenglFramebuffer::use() {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
 }
 
-void Framebuffer::useEmbedded() {
+void OpenglFramebuffer::useEmbedded() {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::readBuffer(void* data) {
+void OpenglFramebuffer::readBuffer(void* data) {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
     glReadPixels(0, 0, mWidth, mHeight, GL_RGB, GL_FLOAT, data);
 }

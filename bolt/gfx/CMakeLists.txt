@@ -23,12 +23,12 @@ set(gfx_SRC
     src/SceneNode.cpp
     src/SceneManager.cpp
     src/Camera.cpp
-    src/Framebuffer.cpp
     src/Color.cpp
 
     src/opengl/OpenglRenderSystem.cpp
     src/opengl/OpenglProgram.cpp
     src/opengl/OpenglTexture.cpp
+    src/opengl/OpenglFramebuffer.cpp
     src/opengl/GlUtils.cpp
     src/opengl/gl_defines.cpp
 )

@@ -9,7 +9,7 @@
 #include "gfx/DrawableCuboid.hpp"
 #include "gfx/DrawableSpheroid.hpp"
 #include "gfx/Color.hpp"
-#include "gfx/Framebuffer.hpp"
+#include "gfx/opengl/OpenglFramebuffer.hpp"
 
 #include "math/math.h"
 #include "math/Vector.hpp"
@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
     scene.loadAll();
 
     // This will draw frames on an external frambuffer, and write it to frame.bin once the application is closed
-    Framebuffer fb(1000, 1000);
+    OpenglFramebuffer fb(1000, 1000);
     fb.use();
 
     application.run();

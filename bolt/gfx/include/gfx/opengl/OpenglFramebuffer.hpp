@@ -6,10 +6,10 @@ namespace gfx {
 /**
  * Represents an external framebuffer we can perform draw calls on, and then read the data as image
  */
-class Framebuffer {
+class OpenglFramebuffer {
 public:
-    Framebuffer(int width, int height);
-    ~Framebuffer();
+    OpenglFramebuffer(int width, int height);
+    ~OpenglFramebuffer();
     /// Binds this framebuffer, so that all subsequent draw calls write to it
     void use();
     /// Binds the embedded framebuffer. This is the framebuffer used by default, but in order to revert to it this function can be called
