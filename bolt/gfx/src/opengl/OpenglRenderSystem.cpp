@@ -112,17 +112,15 @@ void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& d
     }
 }
 
+struct CameraData {
+    math::Matrix44f projection;
+    math::Matrix44f view;
+};
+
 void OpenglRenderSystem::load() {
     // create uniform blocks
     // currently only one for camera matrices located at binding point 0
-    // it would be nice to allow flexibility for custom uniform block bindings
-    glGenBuffers(1, &mCameraMatUBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, mCameraMatUBO);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(math::Matrix44f), NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glCheckError();
-    // bind buffer to binding point
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, mCameraMatUBO, 0, 2 * sizeof(math::Matrix44f));
+    mUniforms.emplace_back(sizeof(CameraData), 0);
     
     for (auto& d : mDrawables) {
         // load program
@@ -139,13 +137,6 @@ void OpenglRenderSystem::load() {
 
         // load drawable buffers (vertices and indices)
         d.load();
-
-        // bind uniforms blocks
-        // currently only one for camera matrices located at binding point 0
-        // it would be nice to allow flexibility for custom uniform block bindings
-        unsigned int uniformIndex = glGetUniformBlockIndex(openglProgram->id(), "Matrices");
-        glUniformBlockBinding(openglProgram->id(), uniformIndex, 0);
-        glCheckError();
     }
     glUseProgram(0);
 }
@@ -156,12 +147,10 @@ void OpenglRenderSystem::renderFrame(const Camera& camera) {
     // set uniforms blocks
     // currently only one for camera matrices located at binding point 0
     // it would be nice to allow flexibility for custom uniform block bindings
-    glBindBuffer(GL_UNIFORM_BUFFER, mCameraMatUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(math::Matrix44f), &camera.getProjection());
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBuffer(GL_UNIFORM_BUFFER, mCameraMatUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(math::Matrix44f), sizeof(math::Matrix44f), &camera.worldMtx());
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    CameraData cameraData;
+    cameraData.projection = camera.getProjection();
+    cameraData.view = camera.worldMtx();
+    mUniforms[0].writeData(&cameraData, 0, sizeof(cameraData));
 
     for (const auto& d : mDrawables) {
         // configure program

@@ -28,6 +28,7 @@ set(gfx_SRC
     src/opengl/OpenglRenderSystem.cpp
     src/opengl/OpenglProgram.cpp
     src/opengl/OpenglTexture.cpp
+    src/opengl/OpenglUniformBuffer.cpp
     src/opengl/OpenglFramebuffer.cpp
     src/opengl/GlUtils.cpp
     src/opengl/gl_defines.cpp
