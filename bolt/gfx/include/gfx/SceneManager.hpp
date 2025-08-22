@@ -2,6 +2,7 @@
 
 #include "gfx/Camera.hpp"
 #include "gfx/Drawable.hpp"
+#include "gfx/DirLight.hpp"
 #include "gfx/SceneNode.hpp"
 #include "gfx/RenderSystem.hpp"
 
@@ -42,6 +43,7 @@ private:
     RenderSystem* mRenderSystem;
     std::vector<Drawable3d*> mDrawables;
     std::vector<Camera*> mCameras;
+    DirLightParams mDirLightParams;
 };
 
 } // gfx

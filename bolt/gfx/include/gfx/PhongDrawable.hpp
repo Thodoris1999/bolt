@@ -14,20 +14,25 @@ struct PhongDrawableVertex {
 
 class PhongDrawable : public Drawable3d {
 public:
-    PhongDrawable() = default;
+    PhongDrawable();
 
     virtual const VertexAttribute* attributes() const override;
     virtual int attributeCount() const override;
     virtual const ProgramDescriptor& programDescriptor() const override;
     virtual void onDraw() override;
 
-    Color& ambient() { return mAmbient; }
-    void setAmbient(const Color& color) { mAmbient = color; }
+    math::Vector3f& ambient() { return mAmbient; }
+    void setAmbient(const Color& color) { mAmbient = math::Vector3f(color.r, color.g, color.b); mDiffuse = math::Vector3f(color.r, color.g, color.b); mSpecular = math::Vector3f(color.r, color.g, color.b); mShininess = 32.0f; }
+    void setAmbient(const math::Vector3f& color) { mAmbient = color; }
+    void setDiffuse(const math::Vector3f& color) { mDiffuse = color; }
+    void setSpecular(const math::Vector3f& color) { mSpecular = color; }
+    void setShininess(float shininess) { mShininess = shininess; }
 
 protected:
-    Color mAmbient;
-    Color mDiffuse;
-    Color mSpecular;
+    math::Vector3f mAmbient;
+    math::Vector3f mDiffuse;
+    math::Vector3f mSpecular;
+    float mShininess;
 };
 
 } // gfx

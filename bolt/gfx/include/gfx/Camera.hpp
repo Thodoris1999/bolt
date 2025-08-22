@@ -19,6 +19,7 @@ public:
     virtual void onDrag(float x, float y) {}
     virtual void setAspectRatio(float aspectRatio) {}
 
+    math::Matrix44f getView() const;
     math::Matrix44f& getProjection() { return mProjection; }
     const math::Matrix44f& getProjection() const { return mProjection; }
 

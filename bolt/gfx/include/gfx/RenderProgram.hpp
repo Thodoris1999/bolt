@@ -20,6 +20,8 @@ public:
      * \name Functions for setting shader uniforms
      * \{
      */
+    virtual void setFloat(const char* name, float value) = 0;
+    virtual void setVec3(const char* name, const math::Vector3f& value) = 0;
     virtual void setVec4(const char* name, const math::Vector4f& value) = 0;
 
     // set matrix row-major (i.e. gets transposed in opengl)

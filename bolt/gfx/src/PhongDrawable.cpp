@@ -4,6 +4,8 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
+using namespace bolt::math;
+
 namespace bolt {
 namespace gfx {
 
@@ -20,6 +22,10 @@ static const ProgramDescriptor PHONG_PROG_DESC = {
     BOLT_GFX_RES("phong.frag")
 };
 
+PhongDrawable::PhongDrawable() : mAmbient(Vector3f::ZERO), mDiffuse(Vector3f::ZERO), mSpecular(Vector3f::ZERO), mShininess(0.0f) {
+
+}
+
 const VertexAttribute* PhongDrawable::attributes() const {
     return PHONG_VTX_ATTR;
 }
@@ -35,8 +41,10 @@ const ProgramDescriptor& PhongDrawable::programDescriptor() const {
 void PhongDrawable::onDraw() {
     this->Drawable3d::onDraw();
 
-    mProgram->setColor("ambientColor", mAmbient);
-    // Future: diffuse, maybe specular
+    mProgram->setVec3("material.ambient", mAmbient);
+    mProgram->setVec3("material.diffuse", mDiffuse);
+    mProgram->setVec3("material.specular", mSpecular);
+    mProgram->setFloat("material.shininess", mShininess);
 }
 
 } // gfx

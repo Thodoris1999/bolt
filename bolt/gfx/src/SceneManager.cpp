@@ -31,6 +31,15 @@ void SceneManager::loadAll() {
     addDrawableRecurse(&mSceneRoot);
 
     mRenderSystem->load();
+
+    // add a sun
+    mDirLightParams = DirLightParams(
+        math::Vector3f(-0.2f, -0.3f, -1.0f),   // direction
+        math::Vector3f(0.05f, 0.05f, 0.05f),   // ambient
+        math::Vector3f(0.4f, 0.4f, 0.4f),      // diffuse
+        math::Vector3f(0.5f, 0.5f, 0.5f)       // specular
+    );
+    mRenderSystem->uniform(2)->writeData(&mDirLightParams, 0, sizeof(mDirLightParams));
 }
 
 void SceneManager::addDrawableRecurse(SceneNode* node) {

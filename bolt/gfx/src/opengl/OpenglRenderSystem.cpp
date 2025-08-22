@@ -36,6 +36,9 @@ OpenglRenderSystem::~OpenglRenderSystem() {
     for (auto& entry : mLoadedTextures) {
         delete entry.second;
     }
+    for (auto* entry : mUniforms) {
+        delete entry;
+    }
 }
 
 void OpenglDrawable::load() {
@@ -119,8 +122,12 @@ struct CameraData {
 
 void OpenglRenderSystem::load() {
     // create uniform blocks
-    // currently only one for camera matrices located at binding point 0
-    mUniforms.emplace_back(sizeof(CameraData), 0);
+    // camera view and projection matrices
+    mUniforms.emplace_back(new OpenglUniformBuffer(sizeof(CameraData), 0));
+    // camera position
+    mUniforms.emplace_back(new OpenglUniformBuffer(sizeof(math::Vector3f), 1));
+    // directional light
+    mUniforms.emplace_back(new OpenglUniformBuffer(sizeof(DirLightParams), 2));
     
     for (auto& d : mDrawables) {
         // load program
@@ -145,12 +152,17 @@ void OpenglRenderSystem::renderFrame(const Camera& camera) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // set uniforms blocks
-    // currently only one for camera matrices located at binding point 0
     // it would be nice to allow flexibility for custom uniform block bindings
+    // camera matrices located at binding point 0
     CameraData cameraData;
     cameraData.projection = camera.getProjection();
-    cameraData.view = camera.worldMtx();
-    mUniforms[0].writeData(&cameraData, 0, sizeof(cameraData));
+    cameraData.view = camera.getView();
+    mUniforms[0]->writeData(&cameraData, 0, sizeof(cameraData));
+    // camera position located at binding point 1
+    math::Vector3f camPos = camera.worldPos();
+    mUniforms[1]->writeData(&camPos, 0, sizeof(math::Vector3f));
+    // directional light located at binding point 2
+    // (set by SceneManager API)
 
     for (const auto& d : mDrawables) {
         // configure program

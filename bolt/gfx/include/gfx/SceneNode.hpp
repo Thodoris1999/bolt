@@ -28,6 +28,7 @@ public:
     /// @beginGetters
     const math::Matrix44f& mtx() const { return mMtx; }
     const math::Matrix44f& worldMtx() const { return mWorldMtx; }
+    math::Vector3f worldPos() const { return mWorldMtx.getTranslation(); }
     SceneNode* child(int i) { return mChildren[i]; }
     int childCount() const { return mChildren.size(); }
     Type type() const { return mType; }

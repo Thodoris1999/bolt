@@ -2,6 +2,8 @@
 
 #include "gfx/Camera.hpp"
 #include "gfx/Drawable.hpp"
+#include "gfx/RenderUniformBuffer.hpp"
+#include "gfx/DirLight.hpp"
 
 namespace bolt {
 namespace gfx {
@@ -12,6 +14,11 @@ public:
     virtual void addDrawable(Drawable* drawable) = 0;
     virtual void load() = 0;
     virtual void renderFrame(const Camera& camera) = 0;
+
+    RenderUniformBuffer* uniform(int i) { return mUniforms[i]; }
+
+protected:
+    std::vector<RenderUniformBuffer*> mUniforms;
 };
 
 } // gfx

@@ -13,7 +13,8 @@ public:
 
     void setColor(const Color& color) {
         mShaft.setColor(color);
-        mTip.setAmbient(color);
+        math::Vector3f colorVec(color.r, color.g, color.b);
+        mTip.setAmbient(colorVec);
     }
 
 private:

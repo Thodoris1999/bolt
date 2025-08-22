@@ -1,5 +1,6 @@
 set(math_SRC 
     src/Matrix.cpp
+    src/Vector.cpp
 )   
 
 add_library(math ${math_SRC})

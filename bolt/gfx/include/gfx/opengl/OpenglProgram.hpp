@@ -24,6 +24,12 @@ public:
      * \name Functions for setting shader uniforms
      * \{
      */
+    virtual void setFloat(const char* name, float value) override {
+        glUniform1f(glGetUniformLocation(mId, name), (const GLfloat)value);
+    }
+    virtual void setVec3(const char* name, const math::Vector3f& value) override {
+        glUniform3fv(glGetUniformLocation(mId, name), 1, (const GLfloat*)&value);
+    }
     virtual void setVec4(const char* name, const math::Vector4f& value) override {
         glUniform4fv(glGetUniformLocation(mId, name), 1, (const GLfloat*)&value);
     }

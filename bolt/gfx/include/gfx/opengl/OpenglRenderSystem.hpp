@@ -29,7 +29,6 @@ public:
     virtual void renderFrame(const Camera& camera) override;
 
 private:
-    std::vector<OpenglUniformBuffer> mUniforms;
     std::vector<OpenglDrawable> mDrawables;
 
     // TODO: combine into a ResourceManager

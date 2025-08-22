@@ -22,6 +22,8 @@ struct Vector3f {
     float y;
     float z;
 
+    static const Vector3f ZERO;
+
     Vector3f() = default;
 
     Vector3f(float x, float y, float z) {

@@ -2,6 +2,8 @@
 
 #include "math/math.h"
 
+#include "util/common.h"
+
 namespace bolt {
 namespace gfx {
 
@@ -14,6 +16,13 @@ Camera::Camera() : SceneNode(SceneNode::NODE_TYPE_CAMERA) {
     mMtx.setTranslation(0, 0, -3);
 
     mProjection.setPerspective(DEG2RAD(45), 1, 0.1, 100);
+}
+
+Matrix44f Camera::getView() const {
+#ifndef NDEBUG
+    RUNTIME_ASSERT(!mWorldDirty, "View matrix is only valid if the world matrix is valid");
+#endif
+    return mWorldMtx.rigidInverse();
 }
 
 OrbitCamera::OrbitCamera() : mFocus(0, 0, 0), mPos(10, 10, 10), mFovy(DEG2RAD(45)), mAspectRatio(1) {
@@ -85,7 +94,7 @@ void OrbitCamera::onDrag(float x, float y) {
     // Update the camera position
     mPos = mFocus + direction;
 
-    // Update the view matrix
+    // Update the transformation matrix
     mMtx.setLookAt(mPos, mFocus, Vector3f(0, 0, 1));
     mWorldDirty = true;
 }
