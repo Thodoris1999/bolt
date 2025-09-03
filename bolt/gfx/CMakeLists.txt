@@ -24,6 +24,7 @@ set(gfx_SRC
     src/SceneManager.cpp
     src/Camera.cpp
     src/Color.cpp
+    src/PhongMaterial.cpp
 
     src/opengl/OpenglRenderSystem.cpp
     src/opengl/OpenglProgram.cpp

@@ -12,7 +12,7 @@ ObjectSphere::ObjectSphere(float radius) : mRadius(radius) {
 void ObjectSphere::createVisuals(gfx::SceneManager& scene) {
     if (mSceneNode == nullptr) {
         auto* sphere = scene.createDrawable<gfx::DrawableSpheroid>(mRadius, mRadius, mRadius);
-        sphere->setAmbient(gfx::randomBrightColor(0.6));
+        sphere->setMaterial(gfx::randomBrightMaterial());
         sphere->setMtx(mMtx);
         mSceneNode = sphere;
     }

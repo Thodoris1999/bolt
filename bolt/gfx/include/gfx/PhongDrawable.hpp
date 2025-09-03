@@ -2,6 +2,7 @@
 
 #include "Drawable.hpp"
 #include "Color.hpp"
+#include "PhongMaterial.hpp"
 #include "math/Vector.hpp"
 
 namespace bolt {
@@ -27,6 +28,7 @@ public:
     void setDiffuse(const math::Vector3f& color) { mDiffuse = color; }
     void setSpecular(const math::Vector3f& color) { mSpecular = color; }
     void setShininess(float shininess) { mShininess = shininess; }
+    void setMaterial(const PhongMaterial& material);
 
 protected:
     math::Vector3f mAmbient;

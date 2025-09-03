@@ -47,5 +47,12 @@ void PhongDrawable::onDraw() {
     mProgram->setFloat("material.shininess", mShininess);
 }
 
+void PhongDrawable::setMaterial(const PhongMaterial& material) {
+    setAmbient(material.ambient);
+    setDiffuse(material.diffuse);
+    setSpecular(material.specular);
+    setShininess(material.shininess);
+}
+
 } // gfx
 } // bolt

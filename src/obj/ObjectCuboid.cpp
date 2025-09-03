@@ -12,7 +12,7 @@ ObjectCuboid::ObjectCuboid(float sizeX, float sizeY, float sizeZ) : mSx(sizeX), 
 void ObjectCuboid::createVisuals(gfx::SceneManager& scene) {
     if (mSceneNode == nullptr) {
         auto* cuboid = scene.createDrawable<gfx::DrawableCuboid>(mSx, mSy, mSz);
-        cuboid->setAmbient(gfx::randomBrightColor(0.6));
+        cuboid->setMaterial(gfx::randomBrightMaterial());
         cuboid->setMtx(mMtx);
         mSceneNode = cuboid;
     }

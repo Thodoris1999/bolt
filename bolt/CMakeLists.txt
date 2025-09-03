@@ -4,6 +4,7 @@ add_subdirectory(gfx EXCLUDE_FROM_ALL)
 
 # ----------- Create package
 include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 # set version
 set(version 1.0.0)

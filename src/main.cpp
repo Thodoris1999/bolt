@@ -46,13 +46,13 @@ int main(int argc, char** argv) {
     zAxis.setColor(COLOR_BLUE);
 
     auto* cube = scene.createDrawable<DrawableCuboid>(1, 1, 1);
-    cube->setAmbient(randomBrightColor(0.6));
+    cube->setMaterial(randomBrightMaterial());
     cube->setTranslation(1, 1, 4);
     cube->setRotation(DEG2RAD(40), DEG2RAD(10), DEG2RAD(50));
 
     auto* sphere = scene.createDrawable<DrawableSpheroid>(1.02, 1.02, 1.02);
     sphere->setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
-    sphere->setAmbient(randomBrightColor(0.6));
+    sphere->setMaterial(randomBrightMaterial());
     ShapeSphere sphereShape(1.02);
 
     RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
