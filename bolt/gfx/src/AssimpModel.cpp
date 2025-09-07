@@ -122,9 +122,12 @@ DrawableMesh AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene) {
     // 3. normal maps
     std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
     textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    // 4. height maps
-    std::vector<TextureDescriptor> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+    // 4. ambient maps
+    std::vector<TextureDescriptor> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
+    textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
+    // 5. Shininess maps
+    std::vector<TextureDescriptor> shininessMaps = loadMaterialTextures(material, aiTextureType_SHININESS, "texture_shininess");
+    textures.insert(textures.end(), shininessMaps.begin(), shininessMaps.end());
     
     // return a mesh object created from the extracted mesh data
     return DrawableMesh(vertices, indices, textures);
