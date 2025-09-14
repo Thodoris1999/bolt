@@ -25,8 +25,9 @@ public:
     virtual ~OpenglRenderSystem();
     virtual void setViewport(int x, int y, int width, int height) override;
     virtual void addDrawable(Drawable* drawable) override;
+    virtual RenderUniformBuffer* addUniform(size_t size, uint32_t bindPoint) override;
     virtual void load() override;
-    virtual void renderFrame(const Camera& camera) override;
+    virtual void renderFrame() override;
 
 private:
     std::vector<OpenglDrawable> mDrawables;

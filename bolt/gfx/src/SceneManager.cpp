@@ -1,5 +1,4 @@
 #include "gfx/SceneManager.hpp"
-
 #include "gfx/opengl/OpenglRenderSystem.hpp"
 
 #include "util/common.h"
@@ -7,7 +6,13 @@
 namespace bolt {
 namespace gfx {
 
+struct CameraData {
+    math::Matrix44f projection;
+    math::Matrix44f view;
+};
+
 SceneManager::SceneManager() : mSceneRoot(math::Matrix44f::IDENTITY) {
+    // more render systems can be supported in the future by extending RenderSystem
     mRenderSystem = new OpenglRenderSystem;
 }
 
@@ -32,6 +37,14 @@ void SceneManager::loadAll() {
 
     mRenderSystem->load();
 
+    // create uniform blocks
+    // binding point 0: camera view and projection matrices
+    mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(CameraData), 0));
+    // binding point 1: camera position
+    mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(math::Vector3f), 1));
+    // binding point 2: directional light
+    mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(DirLightParams), 2));
+
     // add a sun
     mDirLightParams = DirLightParams(
         math::Vector3f(-0.2f, -0.3f, -1.0f),   // direction
@@ -53,8 +66,19 @@ void SceneManager::addDrawableRecurse(SceneNode* node) {
 }
 
 void SceneManager::draw(Camera* camera) {
+    // update transforms
     mSceneRoot.updateWorldTransforms();
-    mRenderSystem->renderFrame(*camera);
+
+    // update uniforms
+    CameraData cameraData;
+    cameraData.projection = camera->getProjection();
+    cameraData.view = camera->getView();
+    mRenderSystem->uniform(0)->writeData(&cameraData, 0, sizeof(cameraData));
+    math::Vector3f camPos = camera->worldPos();
+    mRenderSystem->uniform(1)->writeData(&camPos, 0, sizeof(math::Vector3f));
+
+    // draw frame
+    mRenderSystem->renderFrame();
 }
 
 void SceneManager::draw() {

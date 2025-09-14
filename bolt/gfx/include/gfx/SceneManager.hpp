@@ -43,6 +43,7 @@ private:
     RenderSystem* mRenderSystem;
     std::vector<Drawable3d*> mDrawables;
     std::vector<Camera*> mCameras;
+    std::vector<RenderUniformBuffer*> mUniforms;
     DirLightParams mDirLightParams;
 };
 
