@@ -1,6 +1,3 @@
 [submodule "vendored/SDL"]
 	path = examples/vendored/SDL
 	url = https://github.com/libsdl-org/SDL
-[submodule "vendored/ccd"]
-	path = examples/vendored/ccd
-	url = https://github.com/danfis/libccd
