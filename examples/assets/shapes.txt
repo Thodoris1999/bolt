@@ -1,0 +1,5 @@
+cuboid 1 0 0 0 0 0 0.2 0.2 0.2
+cuboid -1 0 0 0 0 0 0.2 0.2 0.2
+cuboid 1 1 0 0 0 0 0.2 0.2 0.2
+cuboid -1 -1 0 0 0 0 0.2 0.2 0.2
+model -0.5 0.5 2 0 0 0 examples/backpack/backpack.obj

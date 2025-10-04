@@ -77,6 +77,7 @@ int main(int argc, char** argv) {
     TIME(objmanstart);
     ObjectManagerText objManager(&scene);
     objManager.createObjects(argv[1]);
+    objManager.createVisuals(scene);
 
     sceneRoot.addChild(&zAxis);
     sceneRoot.addChild(&yAxis);
