@@ -1,10 +1,11 @@
-add_subdirectory(util EXCLUDE_FROM_ALL)
-add_subdirectory(math EXCLUDE_FROM_ALL)
-add_subdirectory(gfx EXCLUDE_FROM_ALL)
+include(GNUInstallDirs)
+
+add_subdirectory(util)
+add_subdirectory(math)
+add_subdirectory(gfx)
 
 # ----------- Create package
 include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
 
 # set version
 set(version 1.0.0)

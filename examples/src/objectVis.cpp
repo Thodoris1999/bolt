@@ -1,6 +1,6 @@
-#include "SDLApplication3d.hpp"
-
-#include "ObjectManagerText.hpp"
+#include "gui/SDLApplication3d.hpp"
+#include "obj/ObjectManagerText.hpp"
+#include "col/ShapeSphere.hpp"
 
 #include "util/common.h"
 
@@ -9,7 +9,7 @@
 #include "gfx/DrawableCuboid.hpp"
 #include "gfx/DrawableSpheroid.hpp"
 #include "gfx/Color.hpp"
-#include "gfx/opengl/OpenglFramebuffer.hpp"
+#include "gfx/SceneNode.hpp"
 
 #include "math/math.h"
 #include "math/Vector.hpp"
@@ -21,31 +21,9 @@
 #define TIME(X) auto X = std::chrono::steady_clock::now();
 #define P_DUR(X, Y) printf("(" #X " - " #Y ") Elapsed time: %.6f seconds\n", std::chrono::duration<double>(Y - X).count());
 
-void writeToFile(const char* name, const void* buffer, int bufferSize) {
-    // Open the file in binary mode and truncate it if it already exists
-    std::ofstream outFile(name, std::ios::binary | std::ios::trunc);
-
-    if (!outFile) {
-        std::cerr << "Error: Could not open file " << name << " for writing." << std::endl;
-        return;
-    }
-
-    // Write the buffer to the file
-    outFile.write(static_cast<const char*>(buffer), bufferSize);
-
-    if (!outFile) {
-        std::cerr << "Error: Failed to write data to file " << name << "." << std::endl;
-    } else {
-        std::cout << "Successfully wrote " << bufferSize << " bytes to file " << name << "." << std::endl;
-    }
-
-    // Close the file
-    outFile.close();
-}
-
-
 using namespace bolt::math;
 using namespace bolt::gfx;
+using namespace bolt::col;
 
 int main(int argc, char** argv) {
     int initialWidth = 1000;
@@ -73,11 +51,25 @@ int main(int argc, char** argv) {
     auto* sphere = scene.createDrawable<DrawableSpheroid>(1.02, 1.02, 1.02);
     sphere->setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
     sphere->setMaterial(randomBrightMaterial());
+    ShapeSphere sphereShape(1.02);
 
     RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
     TIME(objmanstart);
     ObjectManagerText objManager(&scene);
     objManager.createObjects(argv[1]);
+    objManager.createVisuals(scene);
+
+    ColliderManager colliderManager;
+    objManager.registerColliders(colliderManager);
+    colliderManager.registerCollider(&sphereShape);
+
+    TIME(colstart);
+    bool result = colliderManager.queryCollision(&sphereShape);
+    TIME(end);
+    printf("Collision result: %d\n", result);
+
+    P_DUR(objmanstart, colstart);
+    P_DUR(colstart, end);
 
     sceneRoot.addChild(&zAxis);
     sceneRoot.addChild(&yAxis);
@@ -87,17 +79,7 @@ int main(int argc, char** argv) {
 
     scene.loadAll();
 
-    // This will draw frames on an external frambuffer, and write it to frame.bin once the application is closed
-    OpenglFramebuffer fb(1000, 1000);
-    fb.use();
-
     application.run();
-
-    int fbSize = fb.bufferSize();
-    void* frame = malloc(fbSize);
-    fb.readBuffer(frame);
-    writeToFile("frame.bin", frame, fbSize);
-    free(frame);
 
     return 0;
 }

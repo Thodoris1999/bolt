@@ -1,24 +1,35 @@
-# example executables
-set(dump_frame_SRC
-    ../src/col/ColliderConvex.cpp
-    ../src/col/ColliderConvexHull.cpp
-    ../src/col/ShapeSphere.cpp
-    ../src/col/ShapeCuboid.cpp
-    ../src/col/ColliderManager.cpp
+find_package(assimp)
+if(NOT TARGET assimp::assimp)
+    message(FATAL_ERROR "Assimp not found. Please install assimp to build the examples.")
+endif()
 
-    ../src/obj/Object.cpp
-    ../src/obj/ObjectSphere.cpp
-    ../src/obj/ObjectCuboid.cpp
-    ../src/obj/ObjectModel.cpp
+option(SDL_LIBURING "Enable io_uring (Linux only)" OFF)
+option(SDL_PIPEWIRE "Enable pipewire (Linux only)" OFF)
+add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
+add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
 
-    ../src/ObjectManagerText.cpp
-    ../src/SDLWindow.cpp
-    ../src/SDLApplication.cpp
-    ../src/SDLApplication3d.cpp
+set(vis_common_SRC
+    src/col/ColliderConvex.cpp
+    src/col/ColliderConvexHull.cpp
+    src/col/ShapeSphere.cpp
+    src/col/ShapeCuboid.cpp
+    src/col/ColliderManager.cpp
 
-    src/dump_frame.cpp
+    src/obj/Object.cpp
+    src/obj/ObjectSphere.cpp
+    src/obj/ObjectCuboid.cpp
+    src/obj/ObjectModel.cpp
+    src/obj/ObjectManagerText.cpp
+
+    src/gui/SDLWindow.cpp
+    src/gui/SDLApplication.cpp
+    src/gui/SDLApplication3d.cpp
 )
 
-add_executable(dump_frame ${dump_frame_SRC})
-target_include_directories(dump_frame PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/vendored/stb)
-target_link_libraries(dump_frame PRIVATE SDL3::SDL3 ccd assimp::assimp bolt::math bolt::gfx)
+add_executable(objectVis src/objectVis.cpp ${vis_common_SRC})
+target_include_directories(objectVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src vendored/stb)
+target_link_libraries(objectVis PRIVATE SDL3::SDL3 ccd bolt::math bolt::gfx)
+
+add_executable(dumpFrame src/dumpFrame.cpp ${vis_common_SRC})
+target_include_directories(dumpFrame PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src vendored/stb)
+target_link_libraries(dumpFrame PRIVATE SDL3::SDL3 ccd bolt::math bolt::gfx)

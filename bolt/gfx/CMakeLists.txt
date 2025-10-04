@@ -1,8 +1,7 @@
 project(bolt_gfx)
 
 # Try to find system Assimp
-# TODO: should not be a requirement I think
-find_package(assimp REQUIRED)
+find_package(assimp)
 
 add_subdirectory(vendored/glad)
 
@@ -17,7 +16,6 @@ set(gfx_SRC
     src/DrawableTriangle.cpp
     src/DrawableMesh.cpp
 
-    src/AssimpModel.cpp
     src/Axis.cpp
 
     src/SceneNode.cpp
@@ -35,6 +33,10 @@ set(gfx_SRC
     src/opengl/gl_defines.cpp
 )
 
+if(TARGET assimp::assimp)
+    list(APPEND gfx_SRC src/AssimpModel.cpp)
+endif()
+
 add_library(gfx ${gfx_SRC})
 add_library(bolt::gfx ALIAS gfx)
 target_include_directories(gfx
@@ -44,7 +46,13 @@ target_include_directories(gfx
     PRIVATE
     vendored/stb
 )
-target_link_libraries(gfx PRIVATE assimp::assimp bolt::math PUBLIC bolt::util glad)
+target_link_libraries(gfx PRIVATE bolt::math PUBLIC bolt::util glad)
+
+if(TARGET assimp::assimp)
+    target_compile_definitions(gfx PRIVATE HAVE_ASSIMP)
+    target_link_libraries(gfx PRIVATE assimp::assimp)
+endif()
+
 target_compile_definitions(gfx PRIVATE BOLT_GFX_ROOT="${PROJECT_SOURCE_DIR}")
 
 install(TARGETS gfx glad
