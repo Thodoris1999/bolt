@@ -13,8 +13,6 @@ struct Color {
     Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
 };
 
-
-
 extern const Color COLOR_WHITE;
 extern const Color COLOR_BLACK;
 extern const Color COLOR_RED;
