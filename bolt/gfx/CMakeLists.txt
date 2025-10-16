@@ -46,7 +46,7 @@ target_include_directories(gfx
     PRIVATE
     vendored/stb
 )
-target_link_libraries(gfx PRIVATE bolt::math PUBLIC bolt::util glad)
+target_link_libraries(gfx PRIVATE glad PUBLIC bolt::math bolt::util)
 
 if(TARGET assimp::assimp)
     target_compile_definitions(gfx PRIVATE HAVE_ASSIMP)
