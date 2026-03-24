@@ -35,17 +35,15 @@ struct VulkanPipelineSignatureHash {
  */
 class VulkanProgram : public RenderProgram {
 public:
-    VulkanProgram(VkDevice device, VkRenderPass renderPass, Drawable* d);
+    VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelineLayout pipelineLayout, Drawable* d);
     virtual ~VulkanProgram() {
         vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
     }
 
     VkPipeline pipeline() { return mGraphicsPipeline; }
 
 private:
     VkDevice mDevice;
-    VkPipelineLayout mPipelineLayout;
     VkPipeline mGraphicsPipeline;
 };
 

@@ -1,5 +1,6 @@
 #include "gfx/vulkan/VulkanRenderSystem.hpp"
 #include "gfx/vulkan/VulkanProgram.hpp"
+#include "gfx/vulkan/VulkanUniformBuffer.hpp"
 
 #include <vulkan/vulkan.h>
 
@@ -116,6 +117,9 @@ mDeviceExtensions({VK_KHR_SWAPCHAIN_EXTENSION_NAME}),
 mCurrentFrame(0), mFramebufferResized(false) {
     createInstance(extensions, extensionCount);
     mSurface = VK_NULL_HANDLE;
+    mPipelineLayout = VK_NULL_HANDLE;
+    mDescriptorPool = VK_NULL_HANDLE;
+    mDescriptorSetLayout = VK_NULL_HANDLE;
 }
 
 void VulkanRenderSystem::init() {
@@ -149,6 +153,12 @@ VulkanRenderSystem::~VulkanRenderSystem() {
     }
     vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
     cleanupSwapChain();
+    vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+    for (auto* entry : mUniforms) {
+        delete entry;
+    }
+    vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
     vkDestroyDevice(mDevice, nullptr);
     vkDestroyInstance(mInstance, nullptr);
 }
@@ -367,6 +377,33 @@ void VulkanRenderSystem::createImageViews() {
     }
 }
 
+void VulkanRenderSystem::createDescriptorPool() {
+    VkDescriptorPoolSize poolSize{};
+    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize.descriptorCount = mUniforms.size() * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+        
+    VkResult result = vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool);
+    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create descriptor pool");
+}
+
+void VulkanRenderSystem::createDescriptorSets() {
+    std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, mDescriptorSetLayout);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = mDescriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    VkResult result = vkAllocateDescriptorSets(mDevice, &allocInfo, mSceneDescriptorSets.data());
+    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create scene descriptor sets");
+}
+
 void VulkanRenderSystem::createRenderPass() {
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = mSwapChainImageFormat;
@@ -470,6 +507,35 @@ void VulkanRenderSystem::createCommandBuffer() {
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command buffers");
 }
 
+void VulkanRenderSystem::createSceneDescriptorSetLayout() {
+    std::vector<VkDescriptorSetLayoutBinding> uboLayoutBindings(mUniforms.size());
+    for (int i = 0; i < (int)mUniforms.size(); i++) {
+        const VulkanUniformBuffer* uniform = static_cast<VulkanUniformBuffer*>(mUniforms[i]);
+        uboLayoutBindings[i].binding = uniform->bindPoint();
+        uboLayoutBindings[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        uboLayoutBindings[i].descriptorCount = 1;
+        uboLayoutBindings[i].stageFlags = uniform->stageFlags();
+    }
+
+    // create descriptor set layout
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = uboLayoutBindings.size();
+    layoutInfo.pBindings = uboLayoutBindings.data();
+    VkResult setLayoutCreateResult = vkCreateDescriptorSetLayout(mDevice, &layoutInfo, nullptr, &mDescriptorSetLayout);
+    RUNTIME_ASSERT(setLayoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create scene descriptor set layout");
+
+    // create pipeline layout
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
+    pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
+    pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+    VkResult layoutCreateResult = vkCreatePipelineLayout(mDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout);
+    RUNTIME_ASSERT(layoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline layout");
+}
+
 void VulkanRenderSystem::recreateSwapChain() {
     // on minimization blocks until resurfaced again
     uint32_t width = 0, height = 0;
@@ -497,7 +563,7 @@ void VulkanRenderSystem::cleanupSwapChain() {
     vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
 }
 
-void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneDescriptorSet, uint32_t imageIndex) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0; // Optional
@@ -530,16 +596,19 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, uint
     scissor.extent = mSwapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+    // bind descriptor set
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &sceneDescriptorSet, 0, nullptr);
+
     // draw render list
     mDrawList.recordCommands(commandBuffer);
 
     // end drawing
     vkCmdEndRenderPass(commandBuffer);
     VkResult endCommandRes = vkEndCommandBuffer(commandBuffer);
-    RUNTIME_ASSERT(endCommandRes, "Vulkan: Failed to end command buffer");
+    RUNTIME_ASSERT(endCommandRes == VK_SUCCESS, "Vulkan: Failed to end command buffer");
 }
 
-uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
 
@@ -552,7 +621,7 @@ uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropert
     PANIC("Vulkan: Failed to find suitable memory type");
 }
 
-void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -607,6 +676,10 @@ void VulkanRenderSystem::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDe
     vkFreeCommandBuffers(mDevice, mCommandPool, 1, &commandBuffer);
 }
 
+void VulkanRenderSystem::setClearColor(float r, float g, float b, float a) {
+    mClearColor = {{{r, g, b, a}}};
+}
+
 void VulkanRenderSystem::setViewport(int x, int y, int width, int height) {
     // TODO: non-full screen rendering
     mFramebufferResized = true;
@@ -618,11 +691,22 @@ void VulkanRenderSystem::addDrawable(Drawable* drawable) {
     mDrawList.addDrawable(&mDrawables.back());
 }
 
-void VulkanRenderSystem::setClearColor(float r, float g, float b, float a) {
-    mClearColor = {{{r, g, b, a}}};
+RenderUniformBuffer* VulkanRenderSystem::addUniform(size_t size, uint32_t bindPoint) {
+    RenderUniformBuffer* uni = new VulkanUniformBuffer(this, size, bindPoint);
+    mUniforms.emplace_back(uni);
+    return uni;
 }
 
 void VulkanRenderSystem::load() {
+    // Create pipeline layout and scene descriptor set layout
+    createSceneDescriptorSetLayout();
+    createDescriptorPool();
+    createDescriptorSets();
+    for (int i = 0; i < (int)mUniforms.size(); i++) {
+        VulkanUniformBuffer* uniform = static_cast<VulkanUniformBuffer*>(mUniforms[i]);
+        uniform->createBuffers(MAX_FRAMES_IN_FLIGHT);
+    }
+
     for (auto& d : mDrawables) {
         // load program
         registerProgram(d.drawable);
@@ -648,9 +732,15 @@ void VulkanRenderSystem::renderFrame() {
 
     vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
+    // update current frame's descriptor set
+    for (int i =0; i < (int)mUniforms.size(); i++) {
+        VulkanUniformBuffer* uniform = static_cast<VulkanUniformBuffer*>(mUniforms[i]);
+        uniform->update(mCurrentFrame);
+    }
+
     // record command buffer (it is always necessary? What if the draw calls are not chainging? What if only uniforms are changing?)
     vkResetCommandBuffer(mCommandBuffers[mCurrentFrame], 0);
-    recordCommandBuffer(mCommandBuffers[mCurrentFrame], imageIndex);
+    recordCommandBuffer(mCommandBuffers[mCurrentFrame], mSceneDescriptorSets[mCurrentFrame], imageIndex);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -691,7 +781,7 @@ void VulkanRenderSystem::registerProgram(Drawable* drawable) {
     if (it != mPrograms.end()) {
         drawable->setProgram(it->second);
     } else {
-        RenderProgram* program = new VulkanProgram(mDevice, mRenderPass, drawable);
+        RenderProgram* program = new VulkanProgram(mDevice, mRenderPass, mPipelineLayout, drawable);
         mPrograms[sig] = program;
         drawable->setProgram(program);
     }

@@ -84,7 +84,7 @@ static VkShaderModule createShaderModule(VkDevice device, const std::string& fil
     return shaderModule;
 }
 
-VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, Drawable* drawable) : mDevice(device) {
+VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelineLayout pipelineLayout, Drawable* drawable) : mDevice(device) {
     const ProgramDescriptor& pd = drawable->programDescriptor();
     VkShaderModule vertShaderModule = createShaderModule(device, pd.vertShader);
     VkShaderModule  fragShaderModule = createShaderModule(device, pd.fragShader);
@@ -193,16 +193,6 @@ VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, Drawable*
     colorBlending.blendConstants[2] = 0.0f; // Optional
     colorBlending.blendConstants[3] = 0.0f; // Optional
 
-    // TODO: configure pipeline layout
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0; // Optional
-    pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-    pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-    pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-    VkResult layoutCreateResult = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &mPipelineLayout);
-    RUNTIME_ASSERT(layoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline layout");
-
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -217,7 +207,7 @@ VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, Drawable*
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;
 
-    pipelineInfo.layout = mPipelineLayout;
+    pipelineInfo.layout = pipelineLayout;
 
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
