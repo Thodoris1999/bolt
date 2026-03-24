@@ -4,13 +4,13 @@ in vec3 FragPos;
 
 out vec4 FragColor;
 
-//uniform vec4 ambientColor;
 struct Material {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     float shininess;
 };
+uniform Material material;
 
 struct DirLight {
     vec3 direction;
@@ -20,7 +20,6 @@ struct DirLight {
     vec3 specular;
 };
 
-uniform Material material;
 layout (std140, binding = 1) uniform ViewPos {
     vec3 viewPos;
 };

@@ -47,18 +47,19 @@ public:
     VkSurfaceKHR& surface() { return mSurface; }
     void init();
 
-    virtual void setClearColor(float r, float g, float b, float a);
+    virtual void setClearColor(float r, float g, float b, float a) override;
     virtual void setViewport(int x, int y, int width, int height) override;
     virtual void addDrawable(Drawable* drawable) override;
     virtual RenderUniformBuffer* addUniform(size_t size, uint32_t bindPoint) override;
     virtual void load() override;
     virtual void renderFrame() override;
 
-    VkDevice device() { return mDevice; }
+    VkDevice device() const { return mDevice; }
     VkCommandPool commandPool() { return mCommandPool; }
+    VkDescriptorSet sceneDescriptorSet(int i) const { return mSceneDescriptorSets[i]; }
 
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const;
     /// copy buffer (blocking)
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -73,16 +74,19 @@ private:
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
     void createSwapChain();
     void createImageViews();
+    void createDescriptorPool();
+    void createDescriptorSets();
     void registerProgram(Drawable* d);
     void createRenderPass();
     void createFramebuffers();
     void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
+    void createSceneDescriptorSetLayout();
 
     void recreateSwapChain();
     void cleanupSwapChain();
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneSet, uint32_t imageIndex);
 
     VkInstance mInstance;
     VkSurfaceKHR mSurface;
@@ -100,6 +104,10 @@ private:
     VkClearValue mClearColor;
     std::vector<VkFramebuffer> mSwapChainFramebuffers;
     VkCommandPool mCommandPool;
+    VkDescriptorSetLayout mDescriptorSetLayout;
+    VkPipelineLayout mPipelineLayout;
+    VkDescriptorPool mDescriptorPool;
+    std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mSceneDescriptorSets;
     std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> mCommandBuffers;
     std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mImageAvailableSemaphores;
     std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mRenderFinishedSemaphores;

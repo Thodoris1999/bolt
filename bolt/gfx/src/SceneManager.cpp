@@ -31,8 +31,6 @@ OrbitCamera* SceneManager::createOrbitCamera() {
 void SceneManager::loadAll() {
     addDrawableRecurse(&mSceneRoot);
 
-    mRenderSystem->load();
-
     // create uniform blocks
     // binding point 0: camera view and projection matrices
     mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(CameraData), 0));
@@ -40,6 +38,8 @@ void SceneManager::loadAll() {
     mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(math::Vector3f), 1));
     // binding point 2: directional light
     mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(DirLightParams), 2));
+
+    mRenderSystem->load();
 
     // add a sun
     mDirLightParams = DirLightParams(
