@@ -37,7 +37,7 @@ void AssimpModel::load() {
 
 void AssimpModel::loadModel(const char* path) {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals);
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
     RUNTIME_ASSERT(scene && (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == 0 && scene->mRootNode, importer.GetErrorString());
 
     std::string strPath(path);
@@ -164,19 +164,22 @@ Drawable3d* AssimpModel::processTexturedMesh(aiMesh *mesh, const aiScene *scene)
             vec.x = mesh->mTextureCoords[0][i].x; 
             vec.y = mesh->mTextureCoords[0][i].y;
             vertex.texCoo = vec;
-            // tangent
-            /*vector.x = mesh->mTangents[i].x;
-            vector.y = mesh->mTangents[i].y;
-            vector.z = mesh->mTangents[i].z;
-            vertex.Tangent = vector;
-            // bitangent
-            vector.x = mesh->mBitangents[i].x;
-            vector.y = mesh->mBitangents[i].y;
-            vector.z = mesh->mBitangents[i].z;
-            vertex.Bitangent = vector;*/
         }
         else
             vertex.texCoo = math::Vector2f(0.0f, 0.0f);
+
+        // tangent
+        if (mesh->HasTangentsAndBitangents()) {
+            vector.x = mesh->mTangents[i].x;
+            vector.y = mesh->mTangents[i].y;
+            vector.z = mesh->mTangents[i].z;
+            vertex.tangent = vector;
+
+            vector.x = mesh->mBitangents[i].x;
+            vector.y = mesh->mBitangents[i].y;
+            vector.z = mesh->mBitangents[i].z;
+            vertex.bitangent = vector;
+        }
 
         vertices.push_back(vertex);
     }
@@ -203,8 +206,8 @@ Drawable3d* AssimpModel::processTexturedMesh(aiMesh *mesh, const aiScene *scene)
     std::vector<TextureDescriptor> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, 2);
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     // 3. normal maps
-    //std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, 4);
-    //textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+    std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, 4);
+    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
     // 4. ambient maps
     std::vector<TextureDescriptor> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, 0);
     textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());

@@ -13,6 +13,8 @@ struct TexturedMeshVertex {
     math::Vector3f position;
     math::Vector3f normal;
     math::Vector2f texCoo;
+    math::Vector3f tangent;
+    math::Vector3f bitangent;
 };
 
 class TexturedMesh : public Drawable3d {
