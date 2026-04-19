@@ -19,7 +19,7 @@ public:
 
     virtual const VertexAttribute* attributes() const override;
     virtual int attributeCount() const override;
-    virtual const ProgramDescriptor& programDescriptor() const override;
+    virtual const csp::ProgramDescriptor& programDescriptor() const override;
     virtual void onDraw() override;
 
     math::Vector3f& ambient() { return mAmbient; }

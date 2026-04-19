@@ -9,24 +9,49 @@ namespace bolt {
 namespace gfx {
 
 struct VulkanPipelineSignature {
-    ProgramDescriptor programDescriptor;
+    csp::ProgramDescriptor programDescriptor;
     PrimitiveType primitiveType;
 
     bool operator==(const VulkanPipelineSignature& other) const {
-        return programDescriptor == other.programDescriptor &&
-            primitiveType == other.primitiveType;
+        const auto& lhs = programDescriptor;
+        const auto& rhs = other.programDescriptor;
+
+        // Compare Vk shader source filenames
+        if (lhs.source_count != rhs.source_count) {
+            return false;
+        }
+        for (uint32_t i = 0; i < lhs.source_count; ++i) {
+            const auto& a = lhs.vk_sources[i];
+            const auto& b = rhs.vk_sources[i];
+
+            if (a.filename != b.filename) {
+                return false;
+            }
+        }
+
+        // Compare primitive type
+        return primitiveType == other.primitiveType;
     }
 };
 struct VulkanPipelineSignatureHash {
     size_t operator()(const VulkanPipelineSignature& sig) const {
-        size_t h1 = std::hash<std::string>{}(sig.programDescriptor.vertShader);
-        size_t h2 = std::hash<std::string>{}(sig.programDescriptor.fragShader);
-        size_t h3 = std::hash<int>{}(static_cast<int>(sig.primitiveType));
+        const auto& p = sig.programDescriptor;
 
-        size_t combined = h1;
-        combined ^= h2 + 0x9e3779b9 + (combined << 6) + (combined >> 2);
-        combined ^= h3 + 0x9e3779b9 + (combined << 6) + (combined >> 2);
-        return combined;
+        std::size_t seed = 0;
+        std::hash<std::string_view> str_hash;
+
+        // Hash all shader filenames (order matters)
+        for (uint32_t i = 0; i < p.source_count; ++i) {
+            std::size_t h = str_hash(p.vk_sources[i].filename);
+
+            seed ^= h + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+        }
+
+        // Hash primitive type
+        std::size_t prim_hash = std::hash<int>{}(static_cast<int>(sig.primitiveType));
+        seed ^= prim_hash + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+
+        return seed;
     }
 };
 
@@ -39,6 +64,11 @@ public:
     virtual ~VulkanProgram() {
         vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
     }
+
+    virtual void setFloat(uint32_t id, float value) override;
+    virtual void setVec3(uint32_t id, const math::Vector3f& value) override;
+    virtual void setVec4(uint32_t id, const math::Vector4f& value) override;
+    virtual void setMat4(uint32_t id, const math::Matrix44f& value) override;
 
     VkPipeline pipeline() { return mGraphicsPipeline; }
 

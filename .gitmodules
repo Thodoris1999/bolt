@@ -1,3 +1,6 @@
 [submodule "vendored/SDL"]
 	path = examples/vendored/SDL
 	url = https://github.com/libsdl-org/SDL
+[submodule "bolt/gfx/vendored/csp"]
+	path = bolt/gfx/vendored/csp
+	url = https://github.com/Thodoris1999/csp

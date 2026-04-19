@@ -12,7 +12,7 @@ struct FlatDrawableVertex {
 };
 
 /**
- * Flat shaded drawable
+ * Flat shaded drawable.
  */
 class FlatDrawable : public Drawable3d {
 public:
@@ -20,7 +20,7 @@ public:
 
     virtual const VertexAttribute* attributes() const override;
     virtual int attributeCount() const override;
-    virtual const ProgramDescriptor& programDescriptor() const override;
+    virtual const csp::ProgramDescriptor& programDescriptor() const override;
     virtual void onDraw() override;
 
     Color& color() { return mColor; }

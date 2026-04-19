@@ -9,15 +9,16 @@ namespace gfx {
 
 class OpenglTexture final : public RenderTexture {
 public:
-    OpenglTexture(const char* textureFile, GLint samplerLocation);
+    OpenglTexture(const char* textureFile, uint32_t binding);
 
-    GLint samplerLocation() const { return mSamplerLocation; }
+    GLuint id() const { return mId; }
+    GLuint binding() const { return mBinding; }
 
     virtual void bind() override;
 
 private:
     GLuint mId;
-    GLint mSamplerLocation;
+    GLint mBinding;
 };
 
 } // gfx

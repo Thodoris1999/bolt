@@ -1,10 +1,38 @@
 #include "gfx/opengl/OpenglProgram.hpp"
 #include "gfx/opengl/GlUtils.hpp"
 
+#include <vector>
+
 namespace bolt {
 namespace gfx {
 
-static void loadShader(const char* name, GLuint& shader, GLenum type) {
+static GLenum csp2oglStageFlag(csp::ShaderStage stage) {
+    switch (stage) {
+    case csp::ShaderStage::Vertex:
+        return GL_VERTEX_SHADER;
+    
+    case csp::ShaderStage::TessControl:
+        return GL_TESS_CONTROL_SHADER;
+    
+    case csp::ShaderStage::TessEval:
+        return GL_TESS_EVALUATION_SHADER;
+    
+    case csp::ShaderStage::Geometry:
+        return GL_GEOMETRY_SHADER;
+    
+    case csp::ShaderStage::Fragment:
+        return GL_FRAGMENT_SHADER;
+    
+    case csp::ShaderStage::Compute:
+        return GL_COMPUTE_SHADER;
+    
+    default:
+        PANIC("Unkown shader stage");
+        return GL_COMPUTE_SHADER;
+    }
+}
+
+static void loadShader(std::string_view name, GLuint& shader, GLenum type) {
     unsigned int size;
     void* source = util::Filesystem::loadFile(name, size);
 
@@ -27,22 +55,46 @@ static void loadShader(const char* name, GLuint& shader, GLenum type) {
     free(source);
 }
 
-OpenglProgram::OpenglProgram(const char* vtxShader, const char* fragShader) {
-    GLuint vertexShader, fragmentShader;
-    loadShader(vtxShader, vertexShader, GL_VERTEX_SHADER);
-    loadShader(fragShader, fragmentShader, GL_FRAGMENT_SHADER);
-
-    mId = glCreateProgram();
-    glAttachShader(mId, vertexShader);
-    glAttachShader(mId, fragmentShader);
-    glLinkProgram(mId);
-    assertProgramOk(mId);
-    glCheckError();
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+static void assertProgramOk(unsigned int program, const csp::ProgramDescriptor* pd) {
+#ifndef NDEBUG
+    int  success;
+    char infoLog[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if(!success) {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        printf("Failed to load program with sources:\n");
+        for (uint32_t i = 0; i < pd->source_count; ++i) {
+            printf("%s\n", pd->ogl_sources[i].filename.data());
+        }
+        RUNTIME_ASSERT(success, infoLog);
+    }
+#endif
 }
 
+OpenglProgram::OpenglProgram(const csp::ProgramDescriptor* pd) : RenderProgram(pd) {
+    std::vector<GLuint> shaders;
+    shaders.reserve(pd->source_count);
+
+    mId = glCreateProgram();
+
+    for (uint32_t i = 0; i < pd->source_count; ++i) {
+        const auto& src = pd->ogl_sources[i];
+
+        GLuint shader;
+        loadShader(src.filename, shader, csp2oglStageFlag(src.stage));
+
+        glAttachShader(mId, shader);
+        shaders.push_back(shader);
+    }
+
+    glLinkProgram(mId);
+    assertProgramOk(mId, pd);
+    glCheckError();
+
+    for (GLuint shader : shaders) {
+        glDeleteShader(shader);
+    }
+}
 
 } // gfx
 } // bolt
