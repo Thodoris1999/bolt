@@ -21,7 +21,9 @@ TexturedMesh::TexturedMesh(std::vector<TexturedMeshVertex> vertices,
 static const VertexAttribute MESH_VTX_ATTR[] = {
     {0, offsetof(TexturedMeshVertex, position), 3, BOLT_F32, sizeof(TexturedMeshVertex)}, // position
     {1, offsetof(TexturedMeshVertex, normal), 3, BOLT_F32, sizeof(TexturedMeshVertex)},   // normal
-    {2, offsetof(TexturedMeshVertex, texCoo), 2, BOLT_F32, sizeof(TexturedMeshVertex)}    // texture coordinates
+    {2, offsetof(TexturedMeshVertex, texCoo), 2, BOLT_F32, sizeof(TexturedMeshVertex)},    // texture coordinates
+    {3, offsetof(TexturedMeshVertex, tangent), 3, BOLT_F32, sizeof(TexturedMeshVertex)}, // tangent
+    {4, offsetof(TexturedMeshVertex, bitangent), 3, BOLT_F32, sizeof(TexturedMeshVertex)}, // bitangent
 };
 
 const VertexAttribute* TexturedMesh::attributes() const {

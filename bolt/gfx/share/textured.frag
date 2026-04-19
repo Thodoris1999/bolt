@@ -1,7 +1,7 @@
 #version 450 core
-layout (location = 0) in vec3 Normal;
-layout (location = 1) in vec3 FragPos;
-layout (location = 2) in vec2 TexCoords;
+layout (location = 0) in vec3 FragPos;
+layout (location = 1) in vec2 TexCoords;
+layout (location = 2) in mat3 TBN;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -41,7 +41,6 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 
     // specular (Blinn-Phong)
     vec3 halfwayDir = normalize(lightDir + viewDir);
-
     float shininess = 32.0; // fallback constant
     float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
 
@@ -54,7 +53,9 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 void main()
 {
     // properties
-    vec3 norm = normalize(Normal);
+    vec3 normal = texture(texture_normal, TexCoords).rgb;
+    normal = normal * 2.0 - 1.0; // [0,1] to [-1,1]
+    normal = normalize(TBN * normal);
     vec3 viewDir = normalize(uboView.viewPos - FragPos);
 
     // == =====================================================
@@ -64,10 +65,10 @@ void main()
     // this fragment's final color.
     // == =====================================================
     // phase 1: directional lighting
-    vec3 result = CalcDirLight(uboLight.dirLight, norm, viewDir);
+    vec3 result = CalcDirLight(uboLight.dirLight, normal, viewDir);
     // phase 2: point lights
     //for(int i = 0; i < NR_POINT_LIGHTS; i++)
-    //    result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
+    //    result += CalcPointLight(pointLights[i], normal, FragPos, viewDir);
 
     FragColor = vec4(result, 1.0);
 }
