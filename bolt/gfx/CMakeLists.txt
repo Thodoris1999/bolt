@@ -4,6 +4,7 @@ project(bolt_gfx)
 find_package(assimp)
 
 add_subdirectory(vendored/glad)
+add_subdirectory(vendored/csp)
 
 option(BOLT_GFX_ENABLE_VULKAN "Enable Vulkan backend" OFF)
 if(BOLT_GFX_ENABLE_VULKAN)
@@ -51,6 +52,20 @@ if(TARGET assimp::assimp)
     list(APPEND gfx_SRC src/AssimpModel.cpp)
 endif()
 
+# shader programs that come with GFX
+csp_add_program(flat
+    VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/flat.vert
+    FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/flat.frag
+)
+csp_add_program(phong
+    VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/phong.vert
+    FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/phong.frag
+)
+csp_add_program(textured
+    VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/textured.vert
+    FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/textured.frag
+)
+
 add_library(gfx ${gfx_SRC})
 add_library(bolt::gfx ALIAS gfx)
 target_include_directories(gfx
@@ -60,9 +75,12 @@ target_include_directories(gfx
     PRIVATE
     vendored/stb
 )
-target_link_libraries(gfx PRIVATE glad PUBLIC bolt::math bolt::util)
+target_link_libraries(gfx PRIVATE glad PUBLIC bolt::math bolt::util csp::csp)
 target_compile_definitions(gfx PRIVATE BOLT_GFX_ROOT="${PROJECT_SOURCE_DIR}")
 target_compile_options(gfx PRIVATE -Wall)
+csp_shader_dependency(gfx PRIVATE flat)
+csp_shader_dependency(gfx PRIVATE phong)
+csp_shader_dependency(gfx PRIVATE textured)
 
 if(BOLT_GFX_ENABLE_VULKAN)
     target_link_libraries(gfx PRIVATE Vulkan::Vulkan)

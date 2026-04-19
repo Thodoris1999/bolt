@@ -35,18 +35,38 @@ private:
 
     // TODO: combine into a ResourceManager
     struct ProgramDescriptorHash {
-        std::size_t operator()(const ProgramDescriptor& p) const {
-            return std::hash<std::string>()(p.vertShader) ^ (std::hash<std::string>()(p.fragShader) << 1);
+        std::size_t operator()(const csp::ProgramDescriptor& p) const {
+            std::size_t seed = 0;
+            std::hash<std::string_view> hasher;
+
+            for (uint32_t i = 0; i < p.source_count; ++i) {
+                const auto& src = p.ogl_sources[i].filename;
+                std::size_t h = hasher(src);
+
+                // hash combine (boost-style)
+                seed ^= h + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+            }
+
+            return seed;
         }
     };
     struct ProgramDescriptorEqual {
-        bool operator()(const ProgramDescriptor& lhs, const ProgramDescriptor& rhs) const {
-            return lhs.vertShader == rhs.vertShader &&
-                   lhs.fragShader == rhs.fragShader;
+        bool operator()(const csp::ProgramDescriptor& lhs, const csp::ProgramDescriptor& rhs) const {
+            if (lhs.source_count != rhs.source_count) {
+                return false;
+            }
+            // filenames must match in order
+            for (uint32_t i = 0; i < lhs.source_count; ++i) {
+                if (lhs.ogl_sources[i].filename != rhs.ogl_sources[i].filename) {
+                    return false;
+                }
+            }
+
+            return true;
         }
     };
     void registerProgram(Drawable* d);
-    std::unordered_map<ProgramDescriptor, RenderProgram*, ProgramDescriptorHash, ProgramDescriptorEqual> mLoadedPrograms;
+    std::unordered_map<csp::ProgramDescriptor, RenderProgram*, ProgramDescriptorHash, ProgramDescriptorEqual> mLoadedPrograms;
 
     struct TextureDescriptorHash {
         std::size_t operator()(const TextureDescriptor& t) const {

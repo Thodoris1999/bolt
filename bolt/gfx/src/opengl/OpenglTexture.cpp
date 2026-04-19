@@ -8,7 +8,7 @@
 namespace bolt {
 namespace gfx {
 
-OpenglTexture::OpenglTexture(const char* textureFile, GLint samplerLocation) : mSamplerLocation(samplerLocation) {
+OpenglTexture::OpenglTexture(const char* textureFile, uint32_t binding) : mBinding(binding) {
     glGenTextures(1, &mId);
 
     int width, height, nrComponents;

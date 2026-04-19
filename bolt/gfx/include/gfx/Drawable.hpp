@@ -1,5 +1,7 @@
 #pragma once
 
+#include "csp/csp.hpp"
+
 #include "math/Matrix.hpp"
 #include "gfx/SceneNode.hpp"
 #include "gfx/RenderProgram.hpp"
@@ -35,22 +37,11 @@ struct VertexAttribute {
     int stride;
 };
 
-struct ProgramDescriptor {
-    /// path to vertex shader
-    std::string vertShader;
-    /// path to fragment shader
-    std::string fragShader;
-
-    bool operator==(const ProgramDescriptor& other) const {
-        return vertShader == other.vertShader && fragShader == other.fragShader;
-    }
-};
-
 struct TextureDescriptor {
     /// path to texture image file
     std::string textureFile;
-    /// name of sampler uniform in shader
-    std::string samplerName;
+    /// binding of sampler uniform in shader
+    uint32_t binding;
 };
 
 enum DrawOp {
@@ -68,7 +59,7 @@ class Drawable {
 public:
     virtual const VertexAttribute* attributes() const = 0;
     virtual int attributeCount() const = 0;
-    virtual const ProgramDescriptor& programDescriptor() const = 0;
+    virtual const csp::ProgramDescriptor& programDescriptor() const = 0;
     virtual const void* vertexData() const = 0;
     virtual uint64_t vertexCount() const = 0;
     virtual DrawOp drawOp() const = 0;
@@ -109,7 +100,7 @@ public:
     Drawable3d();
 
     /// set the model matrix. Do not forget to call Drawable3d::onDraw() if you override this otherwise you lose 3D-ness!
-    virtual void onDraw() override { mProgram->setMat4("model", worldMtx()); }
+    virtual void onDraw() override;
 };
 
 } // gfx

@@ -1,9 +1,8 @@
-#version 330 core
-out vec4 FragColor;
-
-uniform vec4 color;
+#version 450 core
+#include "flat_pcs.glsl"
+layout (location = 0) out vec4 FragColor;
 
 void main()
 {
-    FragColor = color;
+    FragColor = pc.color;
 }

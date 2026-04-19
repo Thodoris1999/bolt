@@ -23,7 +23,7 @@ public:
 
     virtual const VertexAttribute* attributes() const override;
     virtual int attributeCount() const override;
-    virtual const ProgramDescriptor& programDescriptor() const override;
+    virtual const csp::ProgramDescriptor& programDescriptor() const override;
     virtual const void* vertexData() const override { return mVertices.data(); }
     virtual uint64_t vertexCount() const override { return mVertices.size(); }
     virtual DrawOp drawOp() const override { return BOLT_GFX_INDEXED; }

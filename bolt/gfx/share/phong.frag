@@ -1,16 +1,9 @@
-#version 420 core
-in vec3 Normal;
-in vec3 FragPos;
+#version 450 core
+#include "phong_pcs.glsl"
+layout (location = 0) in vec3 Normal;
+layout (location = 1) in vec3 FragPos;
 
-out vec4 FragColor;
-
-struct Material {
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-    float shininess;
-};
-uniform Material material;
+layout (location = 0) out vec4 FragColor;
 
 struct DirLight {
     vec3 direction;
@@ -20,12 +13,12 @@ struct DirLight {
     vec3 specular;
 };
 
-layout (std140, binding = 1) uniform ViewPos {
+layout (set = 0, binding = 1, std140) uniform ViewPos {
     vec3 viewPos;
-};
-layout(std140, binding = 2) uniform DirLightBlock {
+} uboView;
+layout(set = 0, binding = 2, std140) uniform DirLightBlock {
     DirLight dirLight;
-};
+} uboLight;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 {
@@ -34,11 +27,11 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), pc.shininess);
     // combine results
-    vec3 ambient  = light.ambient  * material.ambient;
-    vec3 diffuse  = light.diffuse  * diff * material.diffuse;
-    vec3 specular = light.specular * spec * material.specular;
+    vec3 ambient  = light.ambient  * pc.ambient.xyz;
+    vec3 diffuse  = light.diffuse  * diff * pc.diffuse.xyz;
+    vec3 specular = light.specular * spec * pc.specular.xyz;
     return (ambient + diffuse + specular);
 }
 
@@ -46,10 +39,10 @@ void main()
 {
     // properties
     vec3 norm = normalize(Normal);
-    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 viewDir = normalize(uboView.viewPos - FragPos);
 
     // phase 1: Directional lighting
-    vec3 result = CalcDirLight(dirLight, norm, viewDir);
+    vec3 result = CalcDirLight(uboLight.dirLight, norm, viewDir);
     // phase 2: Point lights
     //for(int i = 0; i < NR_POINT_LIGHTS; i++)
     //    result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);

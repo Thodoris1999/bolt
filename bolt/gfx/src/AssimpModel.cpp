@@ -197,34 +197,38 @@ Drawable3d* AssimpModel::processTexturedMesh(aiMesh *mesh, const aiScene *scene)
     // normal: texture_normalN
 
     // 1. diffuse maps
-    std::vector<TextureDescriptor> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+    std::vector<TextureDescriptor> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, 1);
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
     // 2. specular maps
-    std::vector<TextureDescriptor> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+    std::vector<TextureDescriptor> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, 2);
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     // 3. normal maps
-    std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+    //std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, 4);
+    //textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
     // 4. ambient maps
-    std::vector<TextureDescriptor> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
+    std::vector<TextureDescriptor> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, 0);
     textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
     // 5. Shininess maps
-    std::vector<TextureDescriptor> shininessMaps = loadMaterialTextures(material, aiTextureType_SHININESS, "texture_shininess");
+    std::vector<TextureDescriptor> shininessMaps = loadMaterialTextures(material, aiTextureType_SHININESS, 3);
     textures.insert(textures.end(), shininessMaps.begin(), shininessMaps.end());
     
     // return a mesh object created from the extracted mesh data
     return new TexturedMesh(vertices, indices, textures);
 }
 
-std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName) {
+std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat, aiTextureType type, uint32_t binding) {
     std::vector<TextureDescriptor> textures;
     for(unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
+        if (i > 0) {
+            // ignore textures other than the first
+            break;
+        }
         aiString str;
         mat->GetTexture(type, i, &str);
 
         TextureDescriptor texture;
         texture.textureFile = mDirectory + '/' + str.C_Str();
-        texture.samplerName = typeName + std::to_string(i+1);
+        texture.binding = binding;
         textures.push_back(texture);
     }
     return textures;

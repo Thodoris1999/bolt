@@ -4,6 +4,8 @@
 #include "math/Matrix.hpp"
 #include "Color.hpp"
 
+#include <csp/csp.hpp>
+
 namespace bolt {
 namespace gfx {
 
@@ -12,26 +14,28 @@ namespace gfx {
  */
 class RenderProgram {
 public:
+    RenderProgram(const csp::ProgramDescriptor* pd) : mDescriptor(pd) {}
     virtual ~RenderProgram() {}
-    // activate shader
-    virtual void use() = 0;
-
     /**
-     * \name Functions for setting shader uniforms
+     * \name Functions for setting small shader data. They are defined by push constant blocks in the shader.
+     *  The ID is an index into structures mainted by mDescriptor, which the graphics API can use to set the shader data
      * \{
      */
-    virtual void setFloat(const char* name, float value) = 0;
-    virtual void setVec3(const char* name, const math::Vector3f& value) = 0;
-    virtual void setVec4(const char* name, const math::Vector4f& value) = 0;
+    virtual void setFloat(uint32_t id, float value) = 0;
+    virtual void setVec3(uint32_t id, const math::Vector3f& value) = 0;
+    virtual void setVec4(uint32_t id, const math::Vector4f& value) = 0;
 
     // set matrix row-major (i.e. gets transposed in opengl)
-    virtual void setMat4(const char* name, const math::Matrix44f& value) = 0;
+    virtual void setMat4(uint32_t id, const math::Matrix44f& value) = 0;
 
-    void setColor(const char* name, const Color& value) {
+    void setColor(uint32_t id, const Color& value) {
         // color has the same ABI
-        setVec4(name, reinterpret_cast<const math::Vector4f&>(value));
+        setVec4(id, reinterpret_cast<const math::Vector4f&>(value));
     }
     /** \} */
+
+protected:
+    const csp::ProgramDescriptor* mDescriptor;
 };
 
 } // gfx

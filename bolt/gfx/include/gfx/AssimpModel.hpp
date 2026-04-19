@@ -25,7 +25,7 @@ private:
     Drawable3d* processMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processTexturedMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processPhongMesh(aiMesh *mesh, const aiScene *scene);
-    std::vector<TextureDescriptor> loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName);
+    std::vector<TextureDescriptor> loadMaterialTextures(aiMaterial *mat, aiTextureType type, uint32_t binding);
 
     std::vector<Drawable3d*> mMeshes;
     std::string mDirectory;

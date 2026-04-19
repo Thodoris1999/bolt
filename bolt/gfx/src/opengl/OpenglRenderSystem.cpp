@@ -98,13 +98,13 @@ RenderUniformBuffer* OpenglRenderSystem::addUniform(size_t size, uint32_t bindPo
 }
 
 void OpenglRenderSystem::registerProgram(Drawable* d) {
-    const ProgramDescriptor& desc = d->programDescriptor();
+    const csp::ProgramDescriptor& desc = d->programDescriptor();
     auto it = mLoadedPrograms.find(desc);
 
     if (it != mLoadedPrograms.end()) {
         d->setProgram(it->second);
     } else {
-        RenderProgram* program = new OpenglProgram(desc.vertShader.c_str(), desc.fragShader.c_str());
+        RenderProgram* program = new OpenglProgram(&desc);
         mLoadedPrograms[desc] = program;
         d->setProgram(program);
     }
@@ -118,8 +118,7 @@ void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& d
     } else {
         // TODO: current limitation does not allow same texture to be used in different samplers
         // change when ResourceManager is added
-        GLint samplerLoc = glGetUniformLocation(program, desc.samplerName.c_str());
-        OpenglTexture* texture = new OpenglTexture(desc.textureFile.c_str(), samplerLoc);
+        OpenglTexture* texture = new OpenglTexture(desc.textureFile.c_str(), desc.binding);
         mLoadedTextures[desc] = texture;
         d->addTexture(texture);
     }
@@ -150,7 +149,8 @@ void OpenglRenderSystem::renderFrame() {
 
     for (const auto& d : mDrawables) {
         // configure program
-        d.drawable->program()->use();
+        auto openglProgram = static_cast<OpenglProgram*>(d.drawable->program());
+        openglProgram->use();
 
         // perform pre-draw operations
         d.drawable->onDraw();
@@ -162,8 +162,8 @@ void OpenglRenderSystem::renderFrame() {
         auto& textures = d.drawable->textures();
         for (size_t i = 0; i < textures.size(); i++) {
             auto* texture = static_cast<OpenglTexture*>(textures[i]);
-            glActiveTexture(GL_TEXTURE0 + static_cast<int>(i));
-            glUniform1i(texture->samplerLocation(), static_cast<int>(i));
+            glActiveTexture(GL_TEXTURE0 + texture->binding());
+            glBindTexture(GL_TEXTURE_2D, texture->id());
             texture->bind();
         }
 

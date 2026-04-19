@@ -69,7 +69,7 @@ inline VertexInputState createVertexInputState(const Drawable* drawable) {
     return state;
 }
 
-static VkShaderModule createShaderModule(VkDevice device, const std::string& filename) {
+static VkShaderModule createShaderModule(VkDevice device, const std::string_view& filename) {
     unsigned int size;
     void* source = util::Filesystem::loadFile(filename, size);
 
@@ -84,24 +84,55 @@ static VkShaderModule createShaderModule(VkDevice device, const std::string& fil
     return shaderModule;
 }
 
-VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelineLayout pipelineLayout, Drawable* drawable) : mDevice(device) {
-    const ProgramDescriptor& pd = drawable->programDescriptor();
-    VkShaderModule vertShaderModule = createShaderModule(device, pd.vertShader);
-    VkShaderModule  fragShaderModule = createShaderModule(device, pd.fragShader);
+static VkShaderStageFlagBits csp2vkStageFlag(csp::ShaderStage stage) {
+    switch (stage) {
+    case csp::ShaderStage::Vertex:
+        return VK_SHADER_STAGE_VERTEX_BIT;
+    
+    case csp::ShaderStage::TessControl:
+        return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+    
+    case csp::ShaderStage::TessEval:
+        return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+    
+    case csp::ShaderStage::Geometry:
+        return VK_SHADER_STAGE_GEOMETRY_BIT;
+    
+    case csp::ShaderStage::Fragment:
+        return VK_SHADER_STAGE_FRAGMENT_BIT;
+    
+    case csp::ShaderStage::Compute:
+        return VK_SHADER_STAGE_COMPUTE_BIT;
+    
+    default:
+        PANIC("Vulkan: Unkown shader stage");
+        return VK_SHADER_STAGE_COMPUTE_BIT;
+    }
+}
 
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
+VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelineLayout pipelineLayout, Drawable* drawable) : mDevice(device), RenderProgram(&drawable->programDescriptor()) {
+    const csp::ProgramDescriptor& pd = drawable->programDescriptor();
+    std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+    shaderStages.reserve(pd.source_count);
 
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
+    std::vector<VkShaderModule> shaderModules;
+    shaderModules.reserve(pd.source_count);
 
-    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+    for (uint32_t i = 0; i < pd.source_count; ++i) {
+        const auto& src = pd.vk_sources[i];
+
+        // Create shader module from filename
+        VkShaderModule module = createShaderModule(device, src.filename);
+        shaderModules.push_back(module);
+
+        VkPipelineShaderStageCreateInfo stageInfo{};
+        stageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        stageInfo.stage  = csp2vkStageFlag(src.stage);
+        stageInfo.module = module;
+        stageInfo.pName  = "main";
+
+        shaderStages.push_back(stageInfo);
+    }
 
     // vertex input description
     VertexInputState vertexInput = createVertexInputState(drawable);
@@ -195,8 +226,8 @@ VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelin
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.stageCount = shaderStages.size();
+    pipelineInfo.pStages = shaderStages.data();
 
     pipelineInfo.pVertexInputState = &vertexInput.info;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -219,8 +250,9 @@ VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelin
     VkResult result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline);
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline");
 
-    vkDestroyShaderModule(device, vertShaderModule, nullptr);
-    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+    for (auto module : shaderModules) {
+        vkDestroyShaderModule(device, module, nullptr);
+    }
 }
 
 } // gfx
