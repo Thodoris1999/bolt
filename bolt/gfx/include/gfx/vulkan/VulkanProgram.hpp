@@ -65,11 +65,6 @@ public:
         vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
     }
 
-    virtual void setFloat(uint32_t id, float value) override;
-    virtual void setVec3(uint32_t id, const math::Vector3f& value) override;
-    virtual void setVec4(uint32_t id, const math::Vector4f& value) override;
-    virtual void setMat4(uint32_t id, const math::Matrix44f& value) override;
-
     VkPipeline pipeline() { return mGraphicsPipeline; }
 
 private:

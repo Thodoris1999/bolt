@@ -54,6 +54,17 @@ void VulkanDrawable::load() {
         createIndexBuffer();
     }
 
+    // allocate push constant buffer so that it can hold any data in the push constant ranges
+    uint32_t pcSize = 0;
+    const csp::ProgramDescriptor& pd = drawable->programDescriptor();
+    for (uint32_t i = 0; i < pd.push_constant_count; i++) {
+        const csp::PushConstantEntry& pc = pd.push_constants[i];
+        if (pc.offset + pc.size > pcSize) {
+            pcSize = pc.offset + pc.size;
+        }
+    }
+    mPushConstantBuffer = malloc(pcSize);
+
     mLoaded = true;
 }
 
@@ -65,6 +76,8 @@ void VulkanDrawable::unload() {
 
     vkDestroyBuffer(mRenderSystem->device(), mVertexBuffer, nullptr);
     vkFreeMemory(mRenderSystem->device(), mVertexBufferMemory, nullptr);
+
+    free(mPushConstantBuffer);
 
     mLoaded = false;
 }

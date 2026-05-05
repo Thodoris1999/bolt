@@ -120,6 +120,7 @@ mCurrentFrame(0), mFramebufferResized(false) {
     mPipelineLayout = VK_NULL_HANDLE;
     mDescriptorPool = VK_NULL_HANDLE;
     mDescriptorSetLayout = VK_NULL_HANDLE;
+    mPushConstantBuffer = malloc(0); // just so that free works in the constructor even if load was never called
 }
 
 void VulkanRenderSystem::init() {
@@ -153,6 +154,7 @@ VulkanRenderSystem::~VulkanRenderSystem() {
     }
     vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
     cleanupSwapChain();
+    free(mPushConstantBuffer);
     vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
     for (auto* entry : mUniforms) {
         delete entry;
@@ -507,6 +509,42 @@ void VulkanRenderSystem::createCommandBuffer() {
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command buffers");
 }
 
+void VulkanRenderSystem::createPushConstantBuffer() {
+    size_t totalPushConstantSize = 0;
+    size_t pushConstantMaxSize = 0;
+    VkShaderStageFlags pushConstantAllStageFlags = 0;
+    for (auto& d : mDrawables) {
+        // calculate push constant needs
+        int drawablePushConstantSize = 0;
+        const csp::ProgramDescriptor& pd = d.drawable->programDescriptor();
+        for (uint32_t i = 0; i < pd.push_constant_count; i++) {
+            const csp::PushConstantEntry& pc = pd.push_constants[i];
+            if (pc.offset + pc.size > drawablePushConstantSize) {
+              drawablePushConstantSize = pc.offset + pc.size;
+            }
+            pushConstantAllStageFlags |= pc.stage_flags;
+        }
+
+        if (pushConstantMaxSize < drawablePushConstantSize) {
+            pushConstantMaxSize = drawablePushConstantSize;
+        }
+        totalPushConstantSize += drawablePushConstantSize;
+    }
+
+    mPushConstantRange.stageFlags = pushConstantAllStageFlags;
+    mPushConstantRange.offset = 0;
+    mPushConstantRange.size = pushConstantMaxSize;
+    mPushConstantBuffer = realloc(mPushConstantBuffer, totalPushConstantSize);
+
+    size_t drawablePushConstantOffset = 0;
+    for (auto& d : mDrawables) {
+        // set push constant pointer
+        uint32_t drawablePushConstantSize = d.drawable->pushConstantSize();
+        d.drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
+        drawablePushConstantOffset += drawablePushConstantSize;
+    }
+}
+
 void VulkanRenderSystem::createSceneDescriptorSetLayout() {
     std::vector<VkDescriptorSetLayoutBinding> uboLayoutBindings(mUniforms.size());
     for (int i = 0; i < (int)mUniforms.size(); i++) {
@@ -530,8 +568,8 @@ void VulkanRenderSystem::createSceneDescriptorSetLayout() {
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-    pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+    pipelineLayoutInfo.pushConstantRangeCount = 1; // Optional
+    pipelineLayoutInfo.pPushConstantRanges = &mPushConstantRange; // Optional
     VkResult layoutCreateResult = vkCreatePipelineLayout(mDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout);
     RUNTIME_ASSERT(layoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline layout");
 }
@@ -600,7 +638,7 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, cons
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &sceneDescriptorSet, 0, nullptr);
 
     // draw render list
-    mDrawList.recordCommands(commandBuffer);
+    mDrawList.recordCommands(commandBuffer, mPipelineLayout);
 
     // end drawing
     vkCmdEndRenderPass(commandBuffer);
@@ -698,6 +736,7 @@ RenderUniformBuffer* VulkanRenderSystem::addUniform(size_t size, uint32_t bindPo
 }
 
 void VulkanRenderSystem::load() {
+    createPushConstantBuffer();
     // Create pipeline layout and scene descriptor set layout
     createSceneDescriptorSetLayout();
     createDescriptorPool();

@@ -38,10 +38,12 @@ const csp::ProgramDescriptor& PhongDrawable::programDescriptor() const {
 void PhongDrawable::onDraw() {
     this->Drawable3d::onDraw();
 
-    mProgram->setVec3(CSP_UNIFORM_PHONG_PC_AMBIENT, mAmbient);
-    mProgram->setVec3(CSP_UNIFORM_PHONG_PC_DIFFUSE, mDiffuse);
-    mProgram->setVec3(CSP_UNIFORM_PHONG_PC_SPECULAR, mSpecular);
-    mProgram->setFloat(CSP_UNIFORM_PHONG_PC_SHININESS, mShininess);
+    // can probably set all at once after being careful with alignment
+    // also maybe not need mAmbient etc and use push constant storage directly
+    setPushConstant(CSP_UNIFORM_PHONG_PC_AMBIENT, &mAmbient);
+    setPushConstant(CSP_UNIFORM_PHONG_PC_DIFFUSE, &mDiffuse);
+    setPushConstant(CSP_UNIFORM_PHONG_PC_SPECULAR, &mSpecular);
+    setPushConstant(CSP_UNIFORM_PHONG_PC_SHININESS, &mShininess);
 }
 
 void PhongDrawable::setMaterial(const PhongMaterial& material) {

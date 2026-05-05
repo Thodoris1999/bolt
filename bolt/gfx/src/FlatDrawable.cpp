@@ -30,7 +30,7 @@ const csp::ProgramDescriptor& FlatDrawable::programDescriptor() const {
 void FlatDrawable::onDraw() {
     this->Drawable3d::onDraw();
 
-    mProgram->setColor(CSP_UNIFORM_FLAT_PC_COLOR, mColor);
+    setPushConstant(CSP_UNIFORM_FLAT_PC_COLOR, &mColor);
 }
 
 } // gfx

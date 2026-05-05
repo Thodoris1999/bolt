@@ -5,11 +5,24 @@
 namespace bolt {
 namespace gfx {
 
+static void writeMtxTransposed(const math::Matrix44f& m, void* dst) {
+    float* out = static_cast<float*>(dst);
+
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            out[i * 4 + j] = m(j, i);
+        }
+    }
+}
+
 Drawable3d::Drawable3d() : SceneNode(SceneNode::NODE_TYPE_DRAWABLE) {
 }
 
 void Drawable3d::onDraw() {
-    mProgram->setMat4(CSP_UNIFORM_PHONG_PC_MODEL, worldMtx());
+    const csp::ProgramDescriptor& pd = programDescriptor();
+    const csp::PushConstantEntry& pc = pd.push_constants[CSP_UNIFORM_PHONG_PC_MODEL];
+    // glsl matrices are column-order
+    writeMtxTransposed(worldMtx(), (uint8_t*)mPushConstantData + pc.offset);
 }
 
 } // gfx

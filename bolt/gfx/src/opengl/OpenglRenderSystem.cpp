@@ -4,6 +4,8 @@
 
 #include "gfx/opengl/gl_defines.h"
 
+#include <unordered_set>
+
 namespace bolt {
 namespace gfx {
 
@@ -39,6 +41,7 @@ OpenglRenderSystem::~OpenglRenderSystem() {
     for (auto* entry : mUniforms) {
         delete entry;
     }
+    free(mPushConstantBuffer);
 }
 
 void OpenglDrawable::load() {
@@ -75,6 +78,7 @@ void OpenglDrawable::load() {
 OpenglRenderSystem::OpenglRenderSystem() {
     setClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
+    mPushConstantBuffer = malloc(0); // just so that the free in the dtor is valid even if load is not called
 }
 
 void OpenglRenderSystem::setClearColor(float r, float g, float b, float a) {
@@ -125,7 +129,16 @@ void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& d
 }
 
 void OpenglRenderSystem::load() {
+    size_t totalPushConstantSize = 0;
+    size_t pushConstantUniformSize = 0;
     for (auto& d : mDrawables) {
+        // calculate push constant needs
+        uint32_t drawablePushConstantSize = d.drawable->pushConstantSize();
+        if (pushConstantUniformSize < drawablePushConstantSize) {
+            pushConstantUniformSize = drawablePushConstantSize;
+        }
+        totalPushConstantSize += drawablePushConstantSize;
+
         // load program
         registerProgram(d.drawable);
         auto openglProgram = static_cast<OpenglProgram*>(d.drawable->program());
@@ -142,6 +155,39 @@ void OpenglRenderSystem::load() {
         d.load();
     }
     glUseProgram(0);
+
+    // allocate push constant CPU buffer and calculate drawable constants inside it
+    mPushConstantBuffer = realloc(mPushConstantBuffer, totalPushConstantSize);
+    size_t drawablePushConstantOffset = 0;
+    for (auto& d : mDrawables) {
+        // set push constant pointer
+        uint32_t drawablePushConstantSize = d.drawable->pushConstantSize();
+        d.drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
+        drawablePushConstantOffset += drawablePushConstantSize;
+    }
+
+    /// create dummy uniform for push constants
+    // find available binding point
+    std::unordered_set<uint32_t> usedBindingPoints;
+    for (size_t i = 0; i < mUniforms.size(); i++) {
+        usedBindingPoints.insert(static_cast<OpenglUniformBuffer*>(mUniforms[i])->bindPoint());
+    }
+    uint32_t pushConstantBindPoint = 0;
+    while (usedBindingPoints.find(pushConstantBindPoint) != usedBindingPoints.end()) {
+        pushConstantBindPoint++;
+    }
+    mPushConstantUniform = new OpenglUniformBuffer(pushConstantUniformSize, pushConstantBindPoint);
+    mUniforms.emplace_back(mPushConstantUniform);
+    // set binding of push constant in programs
+    for (auto& entry : mLoadedPrograms) {
+        GLuint program = static_cast<OpenglProgram*>(entry.second)->id();
+        GLuint blockIndex = glGetUniformBlockIndex(program, "PushConstants");
+        if (blockIndex != GL_INVALID_INDEX) {
+            glUniformBlockBinding(program, blockIndex, pushConstantBindPoint);
+        } else {
+            PANIC("Opengl: Failed to create auxiliary uniform for push constants");
+        }
+    }
 }
 
 void OpenglRenderSystem::renderFrame() {
@@ -154,6 +200,9 @@ void OpenglRenderSystem::renderFrame() {
 
         // perform pre-draw operations
         d.drawable->onDraw();
+
+        // set push constants
+        mPushConstantUniform->writeData(d.drawable->pushConstantData(), 0, d.drawable->pushConstantSize());
 
         // select vertex array
         glBindVertexArray(d.VAO);

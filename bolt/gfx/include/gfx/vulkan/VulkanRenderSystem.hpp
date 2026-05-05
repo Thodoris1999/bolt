@@ -82,6 +82,7 @@ private:
     void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
+    void createPushConstantBuffer();
     void createSceneDescriptorSetLayout();
 
     void recreateSwapChain();
@@ -105,6 +106,8 @@ private:
     std::vector<VkFramebuffer> mSwapChainFramebuffers;
     VkCommandPool mCommandPool;
     VkDescriptorSetLayout mDescriptorSetLayout;
+    VkPushConstantRange mPushConstantRange;
+    void* mPushConstantBuffer;
     VkPipelineLayout mPipelineLayout;
     VkDescriptorPool mDescriptorPool;
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mSceneDescriptorSets;

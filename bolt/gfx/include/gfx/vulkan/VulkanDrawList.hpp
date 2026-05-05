@@ -20,7 +20,7 @@ namespace gfx {
 class VulkanDrawList {
 public:
     void addDrawable(VulkanDrawable* drawable);
-    void recordCommands(VkCommandBuffer commandBuffer);
+    void recordCommands(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 
 private:
     std::unordered_map<VulkanPipelineSignature, std::vector<VulkanDrawable*>, VulkanPipelineSignatureHash> mDrawables;
