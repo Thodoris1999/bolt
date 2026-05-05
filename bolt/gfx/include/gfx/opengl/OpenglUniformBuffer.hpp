@@ -16,6 +16,8 @@ public:
 
     virtual void writeData(const void* src, size_t offset, size_t size) override;
 
+    GLuint bindPoint() const { return mBindPoint; }
+
 private:
     GLuint mId;
     GLsizeiptr mSize;

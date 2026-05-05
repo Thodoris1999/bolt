@@ -80,6 +80,9 @@ private:
     };
     void registerTexture(Drawable* d, const TextureDescriptor& desc, GLuint program);
     std::unordered_map<TextureDescriptor, RenderTexture*, TextureDescriptorHash, TextureDescriptorEqual> mLoadedTextures;
+
+    OpenglUniformBuffer* mPushConstantUniform;
+    void* mPushConstantBuffer;
 };
 
 } // gfx

@@ -9,6 +9,7 @@
 #include "util/common.h"
 
 #include <string>
+#include <cstring>
 #include <cstdint>
 
 namespace bolt {
@@ -71,6 +72,11 @@ public:
     /// Perform per draw operations before drawing like setting uniforms. For example Drawable3d uses this to set the model matrix
     virtual void onDraw() {}
 
+    // Drawable pushConstantBuffer
+    void setPushConstantData(void* data) { mPushConstantData = data; };
+    void* pushConstantData() { return mPushConstantData; }
+    const void* pushConstantData() const { return mPushConstantData; }
+
     // Drawable program
     void setProgram(RenderProgram* program) { mProgram = program; };
     RenderProgram* program() { return mProgram; }
@@ -90,7 +96,27 @@ public:
         return total;
     }
 
+    // Compute required size of all push constants
+    uint32_t pushConstantSize() const {
+        uint32_t pushConstantSize = 0;
+        const csp::ProgramDescriptor& pd = programDescriptor();
+        for (uint32_t i = 0; i < pd.push_constant_count; i++) {
+            const csp::PushConstantEntry& pc = pd.push_constants[i];
+            if (pc.offset + pc.size > pushConstantSize) {
+                pushConstantSize = pc.offset + pc.size;
+            }
+        }
+        return pushConstantSize;
+    }
+
+    void setPushConstant(uint32_t id, const void* data) {
+        const csp::PushConstantEntry& pc = programDescriptor().push_constants[id];
+        memcpy((uint8_t*)mPushConstantData + pc.offset, data, pc.size);
+    }
+
 protected:
+    // members initialized by the rendering engine, only valid after load has been called on the RenderSystem
+    void* mPushConstantData;
     RenderProgram* mProgram;
     std::vector<RenderTexture*> mTextures;
 };

@@ -36,6 +36,7 @@ private:
     VkDeviceMemory mVertexBufferMemory;
     VkBuffer mIndexBuffer;
     VkDeviceMemory mIndexBufferMemory;
+    void* mPushConstantBuffer;
     bool mLoaded;
 };
 

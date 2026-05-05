@@ -1,4 +1,4 @@
-layout(push_constant) uniform PC {
+layout(push_constant) uniform PushConstants {
     mat4 model;
 
     vec3 ambient;
