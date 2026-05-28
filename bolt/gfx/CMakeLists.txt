@@ -45,6 +45,9 @@ if(BOLT_GFX_ENABLE_VULKAN)
         src/vulkan/VulkanDrawable.cpp
         src/vulkan/VulkanDrawList.cpp
         src/vulkan/VulkanProgram.cpp
+        src/vulkan/VulkanTexture.cpp
+        src/vulkan/VulkanMaterial.cpp
+        src/vulkan/VulkanUniform.cpp
     )
 endif()
 

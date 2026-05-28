@@ -1,7 +1,10 @@
 #include "gfx/vulkan/VulkanProgram.hpp"
+#include "gfx/vulkan/VulkanRenderSystem.hpp"
+#include "csp/csp.hpp"
 #include "util/Filesystem.hpp"
 
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 namespace bolt {
 namespace gfx {
@@ -110,7 +113,90 @@ static VkShaderStageFlagBits csp2vkStageFlag(csp::ShaderStage stage) {
     }
 }
 
-VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelineLayout pipelineLayout, Drawable* drawable) : mDevice(device), RenderProgram(&drawable->programDescriptor()) {
+static VkDescriptorType csp2vkDescriptorType(csp::DescriptorType type) {
+    switch (type) {
+    case csp::DescriptorType::Sampler:
+        return VK_DESCRIPTOR_TYPE_SAMPLER;
+    
+    case csp::DescriptorType::CombinedImageSampler:
+        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    
+    case csp::DescriptorType::SampledImage:
+        return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    
+    case csp::DescriptorType::StorageImage:
+        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    
+    case csp::DescriptorType::UniformTexelBuffer:
+        return VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+    
+    case csp::DescriptorType::StorageTexelBuffer:
+        return VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+    
+    case csp::DescriptorType::UniformBuffer:
+        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    
+    default:
+        PANIC("Vulkan: Unkown descriptor type");
+        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    }
+}
+
+VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* drawable) : RenderProgram(&drawable->programDescriptor()), mRenderSystem(renderSystem) {
+    // create descriptor layout (set=1) and pipeline layout
+    // descriptor bindings
+    mDescriptorSetLayout = VK_NULL_HANDLE;
+    std::vector<VkDescriptorSetLayoutBinding> descriptorBindings;
+    const csp::ProgramDescriptor& pDesc = drawable->programDescriptor();
+    const csp::UniformVar* uniformVars = pDesc.uniform_vars;
+    for (uint32_t i = 0; i < pDesc.uniform_count; i++) {
+        const csp::UniformVar& uniformVar = uniformVars[i];
+        if (uniformVar.set == 1) {
+            VkDescriptorSetLayoutBinding binding{};
+            binding.binding = uniformVar.binding;
+            binding.descriptorType = csp2vkDescriptorType(uniformVar.descriptor_type);
+            binding.descriptorCount = 1;
+            binding.stageFlags = uniformVar.stage_flags;
+            descriptorBindings.push_back(binding);
+        }
+    }
+
+    // descriptor layout
+    if (descriptorBindings.size() > 0) {
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = descriptorBindings.size();
+        layoutInfo.pBindings = descriptorBindings.data();
+        VkResult setLayoutCreateResult = vkCreateDescriptorSetLayout(renderSystem->device(), &layoutInfo, nullptr, &mDescriptorSetLayout);
+        RUNTIME_ASSERT(setLayoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline descriptor set layout");
+    }
+
+    // push constant ranges
+    std::vector<VkPushConstantRange> pcRanges(pDesc.push_constant_count);
+    for (uint32_t i = 0; i < pDesc.push_constant_count; i++) {
+        const csp::PushConstantEntry& pushConstant = pDesc.push_constants[i];
+        pcRanges[i].stageFlags = pushConstant.stage_flags;
+        pcRanges[i].offset = pushConstant.offset;
+        pcRanges[i].size = pushConstant.size;
+    }
+
+    // pipeline layout
+    std::vector<VkDescriptorSetLayout> layouts = {mDescriptorSetLayout};
+    if (descriptorBindings.size() > 0) {
+        layouts = {mRenderSystem->sceneDescriptorSetLayout(), mDescriptorSetLayout};
+    } else {
+        layouts = {mRenderSystem->sceneDescriptorSetLayout()};
+    }
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = layouts.size();
+    pipelineLayoutInfo.pSetLayouts = layouts.data();
+    pipelineLayoutInfo.pushConstantRangeCount = pcRanges.size();
+    pipelineLayoutInfo.pPushConstantRanges = pcRanges.data();
+    VkResult layoutCreateResult = vkCreatePipelineLayout(renderSystem->device(), &pipelineLayoutInfo, nullptr, &mPipelineLayout);
+    RUNTIME_ASSERT(layoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline layout");
+
+    // create pipeline
     const csp::ProgramDescriptor& pd = drawable->programDescriptor();
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
     shaderStages.reserve(pd.source_count);
@@ -122,7 +208,7 @@ VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelin
         const auto& src = pd.vk_sources[i];
 
         // Create shader module from filename
-        VkShaderModule module = createShaderModule(device, src.filename);
+        VkShaderModule module = createShaderModule(renderSystem->device(), src.filename);
         shaderModules.push_back(module);
 
         VkPipelineShaderStageCreateInfo stageInfo{};
@@ -238,21 +324,27 @@ VulkanProgram::VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelin
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;
 
-    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.layout = mPipelineLayout;
 
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.renderPass = mRenderSystem->renderPass();
     pipelineInfo.subpass = 0;
 
     // TODO: consider inheriting (e.g. for much of common fixed pipeline info)
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.basePipelineIndex = -1; // Optional
 
-    VkResult result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline);
+    VkResult result = vkCreateGraphicsPipelines(mRenderSystem->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline);
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline");
 
     for (auto module : shaderModules) {
-        vkDestroyShaderModule(device, module, nullptr);
+        vkDestroyShaderModule(mRenderSystem->device(), module, nullptr);
     }
+}
+
+VulkanProgram::~VulkanProgram() {
+    vkDestroyDescriptorSetLayout(mRenderSystem->device(), mDescriptorSetLayout, nullptr);
+    vkDestroyPipelineLayout(mRenderSystem->device(), mPipelineLayout, nullptr);
+    vkDestroyPipeline(mRenderSystem->device(), mGraphicsPipeline, nullptr);
 }
 
 } // gfx

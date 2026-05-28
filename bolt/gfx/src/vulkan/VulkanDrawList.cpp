@@ -1,4 +1,6 @@
 #include "gfx/vulkan/VulkanDrawList.hpp"
+#include "gfx/vulkan/VulkanProgram.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace bolt {
 namespace gfx {
@@ -11,11 +13,14 @@ void VulkanDrawList::addDrawable(VulkanDrawable* drawable) {
     mDrawables[sig].push_back(drawable);
 }
 
-void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer) {
     for (auto& [signature, drawables] : mDrawables) {
         // bind pipeline (same for all drawables in bucket)
         VulkanDrawable* first = drawables[0];
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, static_cast<VulkanProgram*>(first->drawable->program())->pipeline());
+        VulkanProgram* program = static_cast<VulkanProgram*>(first->drawable->program());
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, program->pipeline());
+
+        // TODO: material pipeline level descriptor set (e.g. textures)
 
         for (VulkanDrawable* drawable : drawables) {
             Drawable* d = drawable->drawable;
@@ -31,7 +36,7 @@ void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkPipelineLay
             const csp::ProgramDescriptor& pd = d->programDescriptor();
             for (uint32_t i = 0; i < pd.push_constant_count; i++) {
                 const csp::PushConstantEntry& pc = pd.push_constants[i];
-                vkCmdPushConstants(commandBuffer, pipelineLayout, pc.stage_flags, pc.offset, pc.size, static_cast<uint8_t*>(d->pushConstantData()) + pc.offset);
+                vkCmdPushConstants(commandBuffer, program->pipelineLayout(), pc.stage_flags, pc.offset, pc.size, static_cast<uint8_t*>(d->pushConstantData()) + pc.offset);
             }
 
             // bind textures if needed
