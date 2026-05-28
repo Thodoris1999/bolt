@@ -4,6 +4,7 @@
 #include "gfx/Drawable.hpp"
 
 #include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 namespace bolt {
 namespace gfx {
@@ -55,21 +56,26 @@ struct VulkanPipelineSignatureHash {
     }
 };
 
+class VulkanRenderSystem;
+
 /**
  * Abstraction over a vulkan pipeline, exposing runtime dependent settings and data transfer
  */
 class VulkanProgram : public RenderProgram {
 public:
-    VulkanProgram(VkDevice device, VkRenderPass renderPass, VkPipelineLayout pipelineLayout, Drawable* d);
-    virtual ~VulkanProgram() {
-        vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-    }
+    VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d);
+    virtual ~VulkanProgram();
 
-    VkPipeline pipeline() { return mGraphicsPipeline; }
+    VkPipeline pipeline() const { return mGraphicsPipeline; }
+    VkPipelineLayout pipelineLayout() const { return mPipelineLayout; }
+    VkDescriptorSetLayout descriptorSetLayout() const { return mDescriptorSetLayout; }
 
 private:
-    VkDevice mDevice;
+    const VulkanRenderSystem* mRenderSystem;
     VkPipeline mGraphicsPipeline;
+    // pipeline-level descriptor set (set=1)
+    VkDescriptorSetLayout mDescriptorSetLayout;
+    VkPipelineLayout mPipelineLayout;
 };
 
 }

@@ -1,14 +1,17 @@
 #pragma once
 
+#include "gfx/Drawable.hpp"
 #include "gfx/RenderSystem.hpp"
 #include "gfx/vulkan/VulkanDrawable.hpp"
 #include "gfx/vulkan/VulkanProgram.hpp"
 #include "gfx/vulkan/VulkanDrawList.hpp"
+#include "gfx/vulkan/VulkanTexture.hpp"
 
 #include <vulkan/vulkan.h>
 
 #include <unordered_map>
 #include <array>
+#include <vulkan/vulkan_core.h>
 
 namespace bolt {
 namespace gfx {
@@ -56,12 +59,24 @@ public:
 
     VkDevice device() const { return mDevice; }
     VkCommandPool commandPool() { return mCommandPool; }
+    VkDescriptorPool descriptorPool() const { return mDescriptorPool; }
     VkDescriptorSet sceneDescriptorSet(int i) const { return mSceneDescriptorSets[i]; }
+    VkDescriptorSetLayout sceneDescriptorSetLayout() const { return mSceneDescriptorSetLayout; }
+    VkRenderPass renderPass() const { return mRenderPass; }
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const;
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) const;
+    VkImageView createImageView(VkImage image, VkFormat format) const;
+    VkCommandBuffer beginSingleTimeCommands() const;
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
     /// copy buffer (blocking)
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    // transition image layout (blocking)
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) const;
+    // copy buffer to image (blocking)
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) const;
 
 private:
     constexpr static int MAX_FRAMES_IN_FLIGHT = 2;
@@ -77,8 +92,10 @@ private:
     void createDescriptorPool();
     void createDescriptorSets();
     void registerProgram(Drawable* d);
+    void registerTexture(Drawable* d, const TextureDescriptor& textureDescriptor);
     void createRenderPass();
     void createFramebuffers();
+    void createTextureSampler();
     void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
@@ -105,10 +122,10 @@ private:
     VkClearValue mClearColor;
     std::vector<VkFramebuffer> mSwapChainFramebuffers;
     VkCommandPool mCommandPool;
-    VkDescriptorSetLayout mDescriptorSetLayout;
+    VkDescriptorSetLayout mSceneDescriptorSetLayout;
+    VkSampler mTextureSampler;
     VkPushConstantRange mPushConstantRange;
     void* mPushConstantBuffer;
-    VkPipelineLayout mPipelineLayout;
     VkDescriptorPool mDescriptorPool;
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mSceneDescriptorSets;
     std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> mCommandBuffers;
@@ -121,6 +138,7 @@ private:
 
     std::vector<VulkanDrawable> mDrawables;
 
+    std::unordered_map<std::string, VulkanTexture*> mTextures;
     std::unordered_map<VulkanPipelineSignature, RenderProgram*, VulkanPipelineSignatureHash> mPrograms;
     VulkanDrawList mDrawList;
 };
