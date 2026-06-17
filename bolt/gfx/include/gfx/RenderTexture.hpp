@@ -9,8 +9,6 @@ namespace gfx {
 class RenderTexture {
 public:
     virtual ~RenderTexture() {}
-    // bind texture
-    virtual void bind() = 0;
 };
 
 } // gfx

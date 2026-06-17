@@ -13,7 +13,7 @@ public:
     VulkanTexture(const char* textureFile, const VulkanRenderSystem* renderSystem);
     virtual ~VulkanTexture();
 
-    virtual void bind() override;
+    VkImageView textureImageView() const { return mTextureImageView; }
 
 private:
     void createTextureImage(const char* textureFile);

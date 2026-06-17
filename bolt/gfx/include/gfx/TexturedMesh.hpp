@@ -32,7 +32,7 @@ public:
     virtual const uint32_t* indexData() const override { return mIndices.data(); }
     virtual uint64_t indexCount() const override { return mIndices.size(); }
     virtual const TextureDescriptor* textureDescriptors() const override { return mTextureDesc.data(); }
-    virtual int textureCount() const override { return mTextureDesc.size(); }
+    virtual uint32_t textureCount() const override { return mTextureDesc.size(); }
 
 private:
     std::vector<TexturedMeshVertex> mVertices;

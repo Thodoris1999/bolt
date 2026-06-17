@@ -14,7 +14,7 @@ public:
     GLuint id() const { return mId; }
     GLuint binding() const { return mBinding; }
 
-    virtual void bind() override;
+    void bind();
 
 private:
     GLuint mId;

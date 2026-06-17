@@ -1,5 +1,7 @@
 #include "gfx/vulkan/VulkanRenderSystem.hpp"
+#include "csp/csp.hpp"
 #include "gfx/Drawable.hpp"
+#include "gfx/vulkan/VulkanMaterial.hpp"
 #include "gfx/vulkan/VulkanProgram.hpp"
 #include "gfx/vulkan/VulkanTexture.hpp"
 #include "gfx/vulkan/VulkanUniformBuffer.hpp"
@@ -8,11 +10,12 @@
 
 #include <vulkan/vulkan.h>
 
+#include <cstdint>
+#include <utility>
+#include <vector>
 #include <cstring>
-#include <optional>
 #include <set>
 #include <algorithm>
-#include <vulkan/vulkan_core.h>
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
@@ -59,17 +62,6 @@ static bool checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vect
 
     return requiredExtensions.empty();
 }
-
-struct QueueFamilyIndices {
-    // GRAPHICS_BIT
-    std::optional<uint32_t> graphicsFamily;
-    // supports KHR surface
-    std::optional<uint32_t> presentFamily;
-
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
-    }
-};
 
 QueueFamilyIndices VulkanRenderSystem::findQueueFamilies(VkPhysicalDevice device) {
     QueueFamilyIndices indices;
@@ -122,7 +114,7 @@ bool VulkanRenderSystem::isDeviceSuitable(VkPhysicalDevice device) {
 VulkanRenderSystem::VulkanRenderSystem(const char* const * extensions, uint32_t extensionCount, const WindowHooks& windowHooks) :
 mDeviceExtensions({VK_KHR_SWAPCHAIN_EXTENSION_NAME}),
 mWindowHooks(windowHooks),
-mCurrentFrame(0), mFramebufferResized(false) {
+mCurrentFrame(0), mFramebufferResized(false), mDrawList(this) {
     createInstance(extensions, extensionCount);
     mSurface = VK_NULL_HANDLE;
     mDescriptorPool = VK_NULL_HANDLE;
@@ -149,7 +141,7 @@ VulkanRenderSystem::~VulkanRenderSystem() {
 
     for (auto& d : mDrawables) {
         //  clear buffers, textures, uniforms etc
-        d.unload();
+        d->unload();
     }
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
@@ -157,9 +149,10 @@ VulkanRenderSystem::~VulkanRenderSystem() {
         vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
     }
     vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
-    for (auto& entry : mPrograms) { // deletes pipelines and pipeline layouts
-        delete entry.second;
-    }
+    mPrograms.clear();
+    mProgramMap.clear();
+    mMaterials.clear();
+    mMaterialMap.clear();
     vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
     cleanupSwapChain();
     vkDestroySampler(mDevice, mTextureSampler, nullptr);
@@ -254,6 +247,7 @@ void VulkanRenderSystem::createLogicalDevice() {
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create logical device");
 
     vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);
+    vkGetDeviceQueue(mDevice, indices.presentFamily.value(), 0, &mPresentQueue);
 }
 
 SwapChainSupportDetails VulkanRenderSystem::querySwapChainSupport(VkPhysicalDevice device) {
@@ -565,10 +559,10 @@ void VulkanRenderSystem::createPushConstantBuffer() {
     VkShaderStageFlags pushConstantAllStageFlags = 0;
     for (auto& d : mDrawables) {
         // calculate push constant needs
-        int drawablePushConstantSize = 0;
-        const csp::ProgramDescriptor& pd = d.drawable->programDescriptor();
-        for (uint32_t i = 0; i < pd.push_constant_count; i++) {
-            const csp::PushConstantEntry& pc = pd.push_constants[i];
+        uint32_t drawablePushConstantSize = 0;
+        const csp::ProgramDescriptor& pd = d->drawable->programDescriptor();
+        for (uint32_t i = 0; i < pd.push_constant_range_count; i++) {
+            const csp::PushConstantRange& pc = pd.push_constant_ranges[i];
             if (pc.offset + pc.size > drawablePushConstantSize) {
               drawablePushConstantSize = pc.offset + pc.size;
             }
@@ -589,8 +583,8 @@ void VulkanRenderSystem::createPushConstantBuffer() {
     size_t drawablePushConstantOffset = 0;
     for (auto& d : mDrawables) {
         // set push constant pointer
-        uint32_t drawablePushConstantSize = d.drawable->pushConstantSize();
-        d.drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
+        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
+        d->drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
         drawablePushConstantOffset += drawablePushConstantSize;
     }
 }
@@ -674,12 +668,8 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, cons
     scissor.extent = mSwapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    // bind scene-level descriptor set (any pipeline layout works)
-    VulkanProgram* program = static_cast<VulkanProgram*>(mPrograms.begin()->second);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, program->pipelineLayout(), 0, 1, &sceneDescriptorSet, 0, nullptr);
-
     // draw render list
-    mDrawList.recordCommands(commandBuffer);
+    mDrawList.recordCommands(commandBuffer, sceneDescriptorSet);
 
     // end drawing
     vkCmdEndRenderPass(commandBuffer);
@@ -889,9 +879,8 @@ void VulkanRenderSystem::setViewport(int x, int y, int width, int height) {
 }
 
 void VulkanRenderSystem::addDrawable(Drawable* drawable) {
-    VulkanDrawable d(this, drawable);
-    mDrawables.push_back(d);
-    mDrawList.addDrawable(&mDrawables.back());
+    mDrawables.push_back(std::make_unique<VulkanDrawable>(this, drawable));
+    mDrawList.addDrawable(mDrawables.back().get());
 }
 
 RenderUniformBuffer* VulkanRenderSystem::addUniform(size_t size, uint32_t bindPoint) {
@@ -913,17 +902,25 @@ void VulkanRenderSystem::load() {
 
     for (auto& d : mDrawables) {
         // load program
-        registerProgram(d.drawable);
+        uint32_t pipelineId = registerProgram(d->drawable);
 
         // load textures
-        auto textureCount = d.drawable->textureCount();
-        const TextureDescriptor* textures = d.drawable->textureDescriptors();
-        for (int i = 0; i < textureCount; i++) {
-            registerTexture(d.drawable, textures[i]);
+        std::vector<std::pair<uint32_t, VulkanTexture*>> textureBindings;
+        auto textureCount = d->drawable->textureCount();
+        const TextureDescriptor* textures = d->drawable->textureDescriptors();
+        for (uint32_t i = 0; i < textureCount; i++) {
+            VulkanTexture* texture = registerTexture(d->drawable, textures[i]);
+            textureBindings.push_back({textures[i].binding, texture});
         }
 
-        // create and load buffers, textures, uniforms etc
-        d.load();
+        // load material
+        const VulkanProgram& program = *mPrograms[pipelineId];
+        uint32_t materialId = registerMaterial(d->drawable, program.descriptorSetLayout(), textureBindings);
+
+        d->setKey(pipelineId, materialId);
+
+        // create and load vertex buffers etc
+        d->load();
     }
 }
 
@@ -933,11 +930,11 @@ void VulkanRenderSystem::renderFrame() {
     // acquire image from swap chain
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChain, UINT64_MAX, mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || mFramebufferResized) {
-        mFramebufferResized = false;
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        // acquire failed without signaling the semaphore, safe to bail out before submitting/presenting
         recreateSwapChain();
         return;
-    } else if (result != VK_SUCCESS) {
+    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         PANIC("Vulkan: Failed to acquire swap chain image");
     }
 
@@ -978,35 +975,53 @@ void VulkanRenderSystem::renderFrame() {
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // Optional
-    vkQueuePresentKHR(mPresentQueue, &presentInfo);
+    VkResult presentResult = vkQueuePresentKHR(mPresentQueue, &presentInfo);
+
+    if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || result == VK_SUBOPTIMAL_KHR || mFramebufferResized) {
+        mFramebufferResized = false;
+        recreateSwapChain();
+    }
 
     mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanRenderSystem::registerProgram(Drawable* drawable) {
+uint32_t VulkanRenderSystem::registerProgram(Drawable* drawable) {
     VulkanPipelineSignature sig;
     sig.programDescriptor = drawable->programDescriptor();
     sig.primitiveType = drawable->primitiveType();
-    auto it = mPrograms.find(sig);
+    auto it = mProgramMap.find(sig);
 
-    if (it != mPrograms.end()) {
-        drawable->setProgram(it->second);
+    if (it != mProgramMap.end()) {
+        return it->second;
     } else {
-        RenderProgram* program = new VulkanProgram(mDevice, mRenderPass, mPipelineLayout, drawable);
-        mPrograms[sig] = program;
-        drawable->setProgram(program);
+        mPrograms.push_back(std::make_unique<VulkanProgram>(this, drawable));
+        mProgramMap[sig] = mPrograms.size() - 1;
+        return mPrograms.size() - 1;
     }
 }
 
-void VulkanRenderSystem::registerTexture(Drawable* drawable, const TextureDescriptor& textureDescriptor) {
+VulkanTexture* VulkanRenderSystem::registerTexture(Drawable* drawable, const TextureDescriptor& textureDescriptor) {
     auto it = mTextures.find(textureDescriptor.textureFile);
 
     if (it != mTextures.end()) {
-        drawable->setTexture(texture);
+        return it->second;
     } else {
         VulkanTexture* texture = new VulkanTexture(textureDescriptor.textureFile.c_str(), this);
         mTextures[textureDescriptor.textureFile] = texture;
-        drawable->setTexture(texture);
+        return texture;
+    }
+}
+
+uint32_t VulkanRenderSystem::registerMaterial(Drawable* drawable, const VkDescriptorSetLayout layout, std::vector<std::pair<uint32_t, VulkanTexture*>> textureBindings) {
+    Material mat(drawable->textureDescriptors(), drawable->textureDescriptors() + drawable->textureCount());
+    auto it = mMaterialMap.find(mat);
+
+    if (it != mMaterialMap.end()) {
+        return it->second;
+    } else {
+        mMaterials.push_back(std::make_unique<VulkanMaterial>(this, layout, textureBindings));
+        mMaterialMap[mat] = mMaterials.size() - 1;
+        return mMaterials.size() - 1;
     }
 }
 

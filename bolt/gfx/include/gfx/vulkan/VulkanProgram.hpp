@@ -66,6 +66,9 @@ public:
     VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d);
     virtual ~VulkanProgram();
 
+    VulkanProgram(const VulkanProgram&) = delete;
+    VulkanProgram& operator=(const VulkanProgram&) = delete;
+
     VkPipeline pipeline() const { return mGraphicsPipeline; }
     VkPipelineLayout pipelineLayout() const { return mPipelineLayout; }
     VkDescriptorSetLayout descriptorSetLayout() const { return mDescriptorSetLayout; }

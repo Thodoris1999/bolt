@@ -3,10 +3,11 @@
 #include "SDLApplication.hpp"
 
 #include "gfx/SceneManager.hpp"
+#include "gui/SDLWindow.hpp"
 
 class SDLApplication3d : public SDLApplication {
 public:
-    SDLApplication3d(int width, int height, RenderBackend renderBackend = BACKEND_OPENGL);
+    SDLApplication3d(int width, int height, RenderBackend renderBackend = BACKEND_VULKAN);
     virtual ~SDLApplication3d();
 
     virtual void run() override;

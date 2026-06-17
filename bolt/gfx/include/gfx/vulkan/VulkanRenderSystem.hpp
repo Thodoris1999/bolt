@@ -3,15 +3,18 @@
 #include "gfx/Drawable.hpp"
 #include "gfx/RenderSystem.hpp"
 #include "gfx/vulkan/VulkanDrawable.hpp"
+#include "gfx/vulkan/VulkanMaterial.hpp"
 #include "gfx/vulkan/VulkanProgram.hpp"
 #include "gfx/vulkan/VulkanDrawList.hpp"
 #include "gfx/vulkan/VulkanTexture.hpp"
 
+#include <vector>
 #include <vulkan/vulkan.h>
 
 #include <unordered_map>
 #include <array>
-#include <vulkan/vulkan_core.h>
+#include <memory>
+#include <optional>
 
 namespace bolt {
 namespace gfx {
@@ -30,6 +33,17 @@ using GetFramebufferSizeFn = void(*)(void* userData, uint32_t& width, uint32_t& 
 struct WindowHooks {
     GetFramebufferSizeFn getFramebufferSize;
     void* userData;
+};
+
+struct QueueFamilyIndices {
+    // GRAPHICS_BIT
+    std::optional<uint32_t> graphicsFamily;
+    // supports KHR surface
+    std::optional<uint32_t> presentFamily;
+
+    bool isComplete() {
+        return graphicsFamily.has_value() && presentFamily.has_value();
+    }
 };
 
 /**
@@ -63,6 +77,9 @@ public:
     VkDescriptorSet sceneDescriptorSet(int i) const { return mSceneDescriptorSets[i]; }
     VkDescriptorSetLayout sceneDescriptorSetLayout() const { return mSceneDescriptorSetLayout; }
     VkRenderPass renderPass() const { return mRenderPass; }
+    VkSampler textureSampler() const { return mTextureSampler; }
+    const VulkanProgram& getProgram(uint32_t id) const { return *mPrograms[id]; }
+    const VulkanMaterial& getMaterial(uint32_t id) const { return *mMaterials[id]; }
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const;
@@ -91,14 +108,17 @@ private:
     void createImageViews();
     void createDescriptorPool();
     void createDescriptorSets();
-    void registerProgram(Drawable* d);
-    void registerTexture(Drawable* d, const TextureDescriptor& textureDescriptor);
+    uint32_t registerProgram(Drawable* d);
+    VulkanTexture* registerTexture(Drawable* d, const TextureDescriptor& textureDescriptor);
+    uint32_t registerMaterial(Drawable* d, const VkDescriptorSetLayout layout, std::vector<std::pair<uint32_t, VulkanTexture*>> textureBindings);
     void createRenderPass();
     void createFramebuffers();
     void createTextureSampler();
     void createCommandPool();
     void createCommandBuffer();
     void createSyncObjects();
+    void createRenderFinishedSemaphores();
+    void destroyRenderFinishedSemaphores();
     void createPushConstantBuffer();
     void createSceneDescriptorSetLayout();
 
@@ -136,10 +156,13 @@ private:
     uint32_t mCurrentFrame;
     bool mFramebufferResized;
 
-    std::vector<VulkanDrawable> mDrawables;
+    std::vector<std::unique_ptr<VulkanDrawable>> mDrawables;
 
     std::unordered_map<std::string, VulkanTexture*> mTextures;
-    std::unordered_map<VulkanPipelineSignature, RenderProgram*, VulkanPipelineSignatureHash> mPrograms;
+    std::vector<std::unique_ptr<VulkanProgram>> mPrograms;
+    std::unordered_map<VulkanPipelineSignature, uint32_t, VulkanPipelineSignatureHash> mProgramMap;
+    std::vector<std::unique_ptr<VulkanMaterial>> mMaterials;
+    std::unordered_map<Material, uint32_t, MaterialHash> mMaterialMap;
     VulkanDrawList mDrawList;
 };
 

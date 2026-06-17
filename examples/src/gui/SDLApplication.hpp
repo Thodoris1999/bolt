@@ -6,7 +6,7 @@
 
 class SDLApplication {
 public:
-    SDLApplication(int width, int height, RenderBackend renderBackend = BACKEND_OPENGL);
+    SDLApplication(int width, int height, RenderBackend renderBackend = BACKEND_VULKAN);
     virtual ~SDLApplication();
     virtual void run();
     void handleEvents();

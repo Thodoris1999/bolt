@@ -16,7 +16,7 @@ VulkanUniformBuffer::VulkanUniformBuffer(const VulkanRenderSystem* renderSystem,
 
 VulkanUniformBuffer::~VulkanUniformBuffer() {
     free(mStagingBuffer);
-    for (size_t i = 0; i < (int)mUniformBuffers.size(); i++) {
+    for (size_t i = 0; i < mUniformBuffers.size(); i++) {
         vkDestroyBuffer(mRenderSystem->device(), mUniformBuffers[i], nullptr);
         vkFreeMemory(mRenderSystem->device(), mUniformBuffersMemory[i], nullptr);
     }
@@ -31,7 +31,7 @@ void VulkanUniformBuffer::createBuffers(int numFrames) {
     mUniformBuffersMemory.resize(numFrames);
     mUniformBuffersMapped.resize(numFrames);
 
-    for (size_t i = 0; i < numFrames; i++) {
+    for (int i = 0; i < numFrames; i++) {
         mRenderSystem->createBuffer(mSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             mUniformBuffers[i], mUniformBuffersMemory[i]);
 

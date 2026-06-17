@@ -4,7 +4,6 @@
 
 #include <cstddef>
 #include <stb_image.h>
-#include <vulkan/vulkan_core.h>
 
 namespace bolt {
 namespace gfx {

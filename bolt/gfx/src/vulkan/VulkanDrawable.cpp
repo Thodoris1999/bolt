@@ -1,4 +1,5 @@
 #include "gfx/vulkan/VulkanDrawable.hpp"
+#include "csp/csp.hpp"
 #include "gfx/vulkan/VulkanRenderSystem.hpp"
 
 #include <vulkan/vulkan.h>
@@ -57,8 +58,8 @@ void VulkanDrawable::load() {
     // allocate push constant buffer so that it can hold any data in the push constant ranges
     uint32_t pcSize = 0;
     const csp::ProgramDescriptor& pd = drawable->programDescriptor();
-    for (uint32_t i = 0; i < pd.push_constant_count; i++) {
-        const csp::PushConstantEntry& pc = pd.push_constants[i];
+    for (uint32_t i = 0; i < pd.push_constant_range_count; i++) {
+        const csp::PushConstantRange& pc = pd.push_constant_ranges[i];
         if (pc.offset + pc.size > pcSize) {
             pcSize = pc.offset + pc.size;
         }
