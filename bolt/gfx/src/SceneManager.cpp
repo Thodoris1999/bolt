@@ -67,7 +67,7 @@ void SceneManager::draw(Camera* camera) {
 
     // update uniforms
     CameraData cameraData;
-    cameraData.projection = camera->getProjection();
+    cameraData.projection = mRenderSystem->clipSpaceCorrection() * camera->getProjection();
     cameraData.view = camera->getView();
     mRenderSystem->uniform(0)->writeData(&cameraData, 0, sizeof(cameraData));
     math::Vector3f camPos = camera->worldPos();

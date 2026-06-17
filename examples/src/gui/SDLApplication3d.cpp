@@ -4,6 +4,7 @@
 #include "util/common.h"
 
 #include <chrono>
+#include <iostream>
 
 #ifdef BOLT_GFX_HAVE_VULKAN
 #include "gfx/vulkan/VulkanRenderSystem.hpp"
@@ -56,19 +57,25 @@ SDLApplication3d::~SDLApplication3d() {
 }
 
 void SDLApplication3d::run() {
+    uint32_t frameCount = 0;
+    auto fpsWindowStart = std::chrono::steady_clock::now();
+
     while (mRunning) {
-        auto start = std::chrono::steady_clock::now();
         handleEvents();
 
         update();
 
         mScene->draw();
         mWindow.swapBuffers();
-        auto end = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-        // Print the elapsed time
-        //std::cout << "Elapsed time: " << duration.count() << " microseconds" << std::endl;
+        frameCount++;
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration<double>(now - fpsWindowStart);
+        if (elapsed.count() >= 1.0) {
+            std::cout << "FPS: " << (frameCount / elapsed.count()) << std::endl;
+            frameCount = 0;
+            fpsWindowStart = now;
+        }
     }
 }
 

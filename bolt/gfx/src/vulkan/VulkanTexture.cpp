@@ -3,6 +3,7 @@
 #include "util/common.h"
 
 #include <cstddef>
+#include <cstring>
 #include <stb_image.h>
 
 namespace bolt {
@@ -31,6 +32,7 @@ void VulkanTexture::createTextureImage(const char* textureFile) {
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
     void* data;
     vkMapMemory(mRenderSystem->device(), stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, static_cast<size_t>(imageSize));
     vkUnmapMemory(mRenderSystem->device(), stagingBufferMemory);
     stbi_image_free(pixels);
 

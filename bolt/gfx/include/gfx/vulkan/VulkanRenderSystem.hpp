@@ -70,6 +70,7 @@ public:
     virtual RenderUniformBuffer* addUniform(size_t size, uint32_t bindPoint) override;
     virtual void load() override;
     virtual void renderFrame() override;
+    virtual math::Matrix44f clipSpaceCorrection() const override;
 
     VkDevice device() const { return mDevice; }
     VkCommandPool commandPool() { return mCommandPool; }
@@ -150,7 +151,7 @@ private:
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mSceneDescriptorSets;
     std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> mCommandBuffers;
     std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mImageAvailableSemaphores;
-    std::array<VkSemaphore, MAX_FRAMES_IN_FLIGHT> mRenderFinishedSemaphores;
+    std::vector<VkSemaphore> mRenderFinishedSemaphores;
     std::array<VkFence, MAX_FRAMES_IN_FLIGHT> mInFlightFences;
     WindowHooks mWindowHooks;
     uint32_t mCurrentFrame;

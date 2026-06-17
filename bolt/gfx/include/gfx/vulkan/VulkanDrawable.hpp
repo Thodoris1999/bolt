@@ -59,7 +59,7 @@ class VulkanRenderSystem;
  */
 class VulkanDrawable {
 public:
-    VulkanDrawable(VulkanRenderSystem* renderSystem, Drawable* drawable) : drawable(drawable), mRenderSystem(renderSystem), mLoaded(false) {};
+    VulkanDrawable(VulkanRenderSystem* renderSystem, Drawable* drawable) : drawable(drawable), mRenderSystem(renderSystem), mHasIndexBuffer(false), mLoaded(false) {};
     ~VulkanDrawable() { if (mLoaded) unload(); }
 
     VulkanDrawable(const VulkanDrawable&) = delete;
@@ -89,6 +89,7 @@ private:
     VkDeviceMemory mVertexBufferMemory;
     VkBuffer mIndexBuffer;
     VkDeviceMemory mIndexBufferMemory;
+    bool mHasIndexBuffer;
     void* mPushConstantBuffer;
     bool mLoaded;
 };

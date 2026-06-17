@@ -62,7 +62,7 @@ void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkDescriptorS
         if (d->drawOp() == BOLT_GFX_ARRAY) {
             vkCmdDraw(commandBuffer, d->vertexCount(), 1, 0, 0);
         } else {
-            vkCmdBindIndexBuffer(commandBuffer, drawable->indexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+            vkCmdBindIndexBuffer(commandBuffer, drawable->indexBuffer(), 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(commandBuffer, d->indexCount(), 1, 0, 0, 0);
         }
     }
