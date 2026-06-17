@@ -1203,10 +1203,8 @@ void VulkanRenderSystem::renderFrameHeadless() {
     mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanRenderSystem::readFramebuffer(void* dst) {
+void VulkanRenderSystem::readFramebuffer() {
     vkWaitForFences(mDevice, 1, &mInFlightFences[mLastRenderedImageIndex], VK_TRUE, UINT64_MAX);
-
-    VkDeviceSize size = static_cast<VkDeviceSize>(mSwapChainExtent.width) * mSwapChainExtent.height * 4;
 
     vkResetCommandBuffer(mReadbackCommandBuffer, 0);
 
@@ -1240,8 +1238,6 @@ void VulkanRenderSystem::readFramebuffer(void* dst) {
     RUNTIME_ASSERT(submitResult == VK_SUCCESS, "Vulkan: Failed to submit readback command buffer to queue");
 
     vkWaitForFences(mDevice, 1, &mReadbackFence, VK_TRUE, UINT64_MAX);
-
-    memcpy(dst, mReadbackBufferMapped, size);
 }
 
 uint32_t VulkanRenderSystem::registerProgram(Drawable* drawable) {

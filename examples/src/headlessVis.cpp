@@ -106,10 +106,8 @@ int main(int argc, char** argv) {
     }
 
     int frameSize = width * height * 4;
-    void* frame = malloc(frameSize);
-    renderSystem.readFramebuffer(frame);
-    writeToFile("frame.bin", frame, frameSize);
-    free(frame);
+    renderSystem.readFramebuffer();
+    writeToFile("frame.bin", renderSystem.getFrameBuffer(), frameSize);
 
     return 0;
 }

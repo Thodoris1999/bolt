@@ -99,8 +99,12 @@ public:
     void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) const;
     // copy buffer to image (blocking)
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) const;
-    /// (headless only) blocking readback of the most recently rendered frame into dst, RGBA8, width*height*4 bytes
-    void readFramebuffer(void* dst);
+    /// (headless only) blocking readback of the most recently rendered frame into the buffer
+    /// returned by getFrameBuffer(), RGBA8, width*height*4 bytes
+    void readFramebuffer();
+    /// (headless only) pointer to the buffer last filled by readFramebuffer(); owned by this
+    /// VulkanRenderSystem and overwritten by the next readFramebuffer() call
+    void* getFrameBuffer() const { return mReadbackBufferMapped; }
 
 private:
     constexpr static int MAX_FRAMES_IN_FLIGHT = 2;
