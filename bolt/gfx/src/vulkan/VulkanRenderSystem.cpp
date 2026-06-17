@@ -145,9 +145,9 @@ VulkanRenderSystem::~VulkanRenderSystem() {
     }
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
-        vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
         vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
     }
+    destroyRenderFinishedSemaphores();
     vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
     mPrograms.clear();
     mProgramMap.clear();
@@ -166,6 +166,7 @@ VulkanRenderSystem::~VulkanRenderSystem() {
     vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(mDevice, mSceneDescriptorSetLayout, nullptr);
     vkDestroyDevice(mDevice, nullptr);
+    vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
     vkDestroyInstance(mInstance, nullptr);
 }
 
@@ -509,11 +510,29 @@ void VulkanRenderSystem::createSyncObjects() {
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         VkResult imRes = vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[i]);
         RUNTIME_ASSERT(imRes == VK_SUCCESS, "Vulkan: Failed to create image wait semaphore");
-        VkResult reRes = vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]);
-        RUNTIME_ASSERT(reRes == VK_SUCCESS, "Vulkan: Failed to create renderFinished semaphore");
         VkResult feRes = vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFences[i]);
         RUNTIME_ASSERT(feRes == VK_SUCCESS, "Vulkan: Failed to create in flight fence");
     }
+
+    createRenderFinishedSemaphores();
+}
+
+void VulkanRenderSystem::createRenderFinishedSemaphores() {
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    mRenderFinishedSemaphores.resize(mSwapChainImages.size());
+    for (size_t i = 0; i < mSwapChainImages.size(); i++) {
+        VkResult reRes = vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]);
+        RUNTIME_ASSERT(reRes == VK_SUCCESS, "Vulkan: Failed to create renderFinished semaphore");
+    }
+}
+
+void VulkanRenderSystem::destroyRenderFinishedSemaphores() {
+    for (VkSemaphore semaphore : mRenderFinishedSemaphores) {
+        vkDestroySemaphore(mDevice, semaphore, nullptr);
+    }
+    mRenderFinishedSemaphores.clear();
 }
 
 void VulkanRenderSystem::createTextureSampler() {
@@ -619,10 +638,12 @@ void VulkanRenderSystem::recreateSwapChain() {
     vkDeviceWaitIdle(mDevice);
 
     cleanupSwapChain();
+    destroyRenderFinishedSemaphores();
 
     createSwapChain();
     createImageViews();
     createFramebuffers();
+    createRenderFinishedSemaphores();
 }
 
 void VulkanRenderSystem::cleanupSwapChain() {
@@ -873,6 +894,17 @@ void VulkanRenderSystem::setClearColor(float r, float g, float b, float a) {
     mClearColor = {{{r, g, b, a}}};
 }
 
+math::Matrix44f VulkanRenderSystem::clipSpaceCorrection() const {
+    // flips NDC Y (Vulkan points down, the rest of the engine assumes OpenGL's up) and remaps
+    // depth from OpenGL's [-1, 1] range to Vulkan's [0, 1] range
+    math::Matrix44f correction;
+    correction.setIdentity();
+    correction(1, 1) = -1.0f;
+    correction(2, 2) = 0.5f;
+    correction(2, 3) = 0.5f;
+    return correction;
+}
+
 void VulkanRenderSystem::setViewport(int x, int y, int width, int height) {
     // TODO: non-full screen rendering
     mFramebufferResized = true;
@@ -959,7 +991,7 @@ void VulkanRenderSystem::renderFrame() {
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &mCommandBuffers[mCurrentFrame];
-    VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[mCurrentFrame]};
+    VkSemaphore signalSemaphores[] = {mRenderFinishedSemaphores[imageIndex]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
     VkResult drawResult = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]);

@@ -51,7 +51,8 @@ void VulkanDrawable::createIndexBuffer() {
 
 void VulkanDrawable::load() {
     createVertexBuffer();
-    if (drawable->indexCount() > 0) {
+    mHasIndexBuffer = drawable->indexCount() > 0;
+    if (mHasIndexBuffer) {
         createIndexBuffer();
     }
 
@@ -70,7 +71,7 @@ void VulkanDrawable::load() {
 }
 
 void VulkanDrawable::unload() {
-    if (drawable->indexCount() > 0) {
+    if (mHasIndexBuffer) {
         vkDestroyBuffer(mRenderSystem->device(), mIndexBuffer, nullptr);
         vkFreeMemory(mRenderSystem->device(), mIndexBufferMemory, nullptr);
     }

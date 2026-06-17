@@ -78,6 +78,9 @@ void OpenglDrawable::load() {
 OpenglRenderSystem::OpenglRenderSystem() {
     setClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
     mPushConstantBuffer = malloc(0); // just so that the free in the dtor is valid even if load is not called
 }
 

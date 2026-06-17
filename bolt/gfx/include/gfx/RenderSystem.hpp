@@ -19,6 +19,10 @@ public:
     virtual void load() = 0;
     virtual void renderFrame() = 0;
 
+    /// Correction matrix applied to the projection matrix to account for backend-specific clip-space
+    /// conventions (NDC Y direction, depth range). Identity by default (OpenGL conventions).
+    virtual math::Matrix44f clipSpaceCorrection() const { return math::Matrix44f::IDENTITY; }
+
     RenderUniformBuffer* uniform(int i) { return mUniforms[i]; }
 
 protected:

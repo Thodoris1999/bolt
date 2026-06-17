@@ -41,12 +41,12 @@ static std::vector<unsigned int> generateSphereIndices(int slices, int stacks) {
             int second = first + slices + 1;
 
             indices.push_back(first);
-            indices.push_back(second);
             indices.push_back(first + 1);
+            indices.push_back(second);
 
             indices.push_back(second);
-            indices.push_back(second + 1);
             indices.push_back(first + 1);
+            indices.push_back(second + 1);
         }
     }
     return indices;
