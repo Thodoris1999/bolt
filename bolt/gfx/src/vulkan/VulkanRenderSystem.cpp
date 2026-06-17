@@ -197,6 +197,9 @@ VulkanRenderSystem::~VulkanRenderSystem() {
         vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
         vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
     }
+    if (mHeadless) {
+        vkDestroyFence(mDevice, mReadbackFence, nullptr);
+    }
     destroyRenderFinishedSemaphores();
     vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
     mPrograms.clear();
@@ -441,6 +444,12 @@ void VulkanRenderSystem::createOffscreenTarget() {
     }
 
     createImageViews();
+
+    VkDeviceSize readbackSize = static_cast<VkDeviceSize>(mSwapChainExtent.width) * mSwapChainExtent.height * 4;
+    createBuffer(readbackSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        mReadbackBuffer, mReadbackBufferMemory);
+    vkMapMemory(mDevice, mReadbackBufferMemory, 0, readbackSize, 0, &mReadbackBufferMapped);
 }
 
 VkImageView VulkanRenderSystem::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) const {
@@ -611,6 +620,13 @@ void VulkanRenderSystem::createSyncObjects() {
         RUNTIME_ASSERT(feRes == VK_SUCCESS, "Vulkan: Failed to create in flight fence");
     }
 
+    if (mHeadless) {
+        VkFenceCreateInfo readbackFenceInfo{};
+        readbackFenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        VkResult readbackFeRes = vkCreateFence(mDevice, &readbackFenceInfo, nullptr, &mReadbackFence);
+        RUNTIME_ASSERT(readbackFeRes == VK_SUCCESS, "Vulkan: Failed to create readback fence");
+    }
+
     createRenderFinishedSemaphores();
 }
 
@@ -667,6 +683,16 @@ void VulkanRenderSystem::createCommandBuffer() {
     allocInfo.commandBufferCount = mCommandBuffers.size();
     VkResult result = vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data());
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command buffers");
+
+    if (mHeadless) {
+        VkCommandBufferAllocateInfo readbackAllocInfo{};
+        readbackAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        readbackAllocInfo.commandPool = mCommandPool;
+        readbackAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        readbackAllocInfo.commandBufferCount = 1;
+        VkResult readbackResult = vkAllocateCommandBuffers(mDevice, &readbackAllocInfo, &mReadbackCommandBuffer);
+        RUNTIME_ASSERT(readbackResult == VK_SUCCESS, "Vulkan: Failed to create readback command buffer");
+    }
 }
 
 void VulkanRenderSystem::createPushConstantBuffer() {
@@ -762,6 +788,9 @@ void VulkanRenderSystem::cleanupSwapChain() {
         }
         mSwapChainImages.clear();
         mOffscreenImageMemories.clear();
+        vkUnmapMemory(mDevice, mReadbackBufferMemory);
+        vkDestroyBuffer(mDevice, mReadbackBuffer, nullptr);
+        vkFreeMemory(mDevice, mReadbackBufferMemory, nullptr);
     } else {
         // VK_KHR_swapchain is never enabled in headless mode, so its functions aren't loaded
         vkDestroySwapchainKHR(mDevice, mSwapChain, nullptr);
@@ -1169,11 +1198,12 @@ void VulkanRenderSystem::readFramebuffer(void* dst) {
 
     VkDeviceSize size = static_cast<VkDeviceSize>(mSwapChainExtent.width) * mSwapChainExtent.height * 4;
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    vkResetCommandBuffer(mReadbackCommandBuffer, 0);
 
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(mReadbackCommandBuffer, &beginInfo);
 
     VkBufferImageCopy region{};
     region.bufferOffset = 0;
@@ -1186,17 +1216,22 @@ void VulkanRenderSystem::readFramebuffer(void* dst) {
     region.imageOffset = {0, 0, 0};
     region.imageExtent = {mSwapChainExtent.width, mSwapChainExtent.height, 1};
 
-    vkCmdCopyImageToBuffer(commandBuffer, mSwapChainImages[mLastRenderedImageIndex], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer, 1, &region);
+    vkCmdCopyImageToBuffer(mReadbackCommandBuffer, mSwapChainImages[mLastRenderedImageIndex], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, mReadbackBuffer, 1, &region);
 
-    endSingleTimeCommands(commandBuffer);
+    vkEndCommandBuffer(mReadbackCommandBuffer);
 
-    void* mapped;
-    vkMapMemory(mDevice, stagingBufferMemory, 0, size, 0, &mapped);
-    memcpy(dst, mapped, size);
-    vkUnmapMemory(mDevice, stagingBufferMemory);
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &mReadbackCommandBuffer;
 
-    vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
-    vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
+    vkResetFences(mDevice, 1, &mReadbackFence);
+    VkResult submitResult = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mReadbackFence);
+    RUNTIME_ASSERT(submitResult == VK_SUCCESS, "Vulkan: Failed to submit readback command buffer to queue");
+
+    vkWaitForFences(mDevice, 1, &mReadbackFence, VK_TRUE, UINT64_MAX);
+
+    memcpy(dst, mReadbackBufferMapped, size);
 }
 
 uint32_t VulkanRenderSystem::registerProgram(Drawable* drawable) {

@@ -145,6 +145,11 @@ private:
     VkSwapchainKHR mSwapChain;
     std::vector<VkImage> mSwapChainImages;
     std::vector<VkDeviceMemory> mOffscreenImageMemories; // headless only: self-allocated mSwapChainImages need explicit memory
+    VkBuffer mReadbackBuffer; // headless only: persistent staging buffer reused by readFramebuffer() every frame
+    VkDeviceMemory mReadbackBufferMemory;
+    void* mReadbackBufferMapped;
+    VkCommandBuffer mReadbackCommandBuffer; // headless only: persistent command buffer reused by readFramebuffer() every frame
+    VkFence mReadbackFence;
     VkFormat mSwapChainImageFormat;
     VkExtent2D mSwapChainExtent;
     std::vector<VkImageView> mSwapChainImageViews;
