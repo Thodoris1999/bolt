@@ -446,9 +446,10 @@ void VulkanRenderSystem::createOffscreenTarget() {
     createImageViews();
 
     VkDeviceSize readbackSize = static_cast<VkDeviceSize>(mSwapChainExtent.width) * mSwapChainExtent.height * 4;
+    // prefer HOST_CACHED for performance
     createBuffer(readbackSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        mReadbackBuffer, mReadbackBufferMemory);
+        mReadbackBuffer, mReadbackBufferMemory, VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
     vkMapMemory(mDevice, mReadbackBufferMemory, 0, readbackSize, 0, &mReadbackBufferMapped);
 }
 
@@ -843,9 +844,18 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, cons
     RUNTIME_ASSERT(endCommandRes == VK_SUCCESS, "Vulkan: Failed to end command buffer");
 }
 
-uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
+uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkMemoryPropertyFlags preferredExtra) const {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+
+    if (preferredExtra != 0) {
+        VkMemoryPropertyFlags preferred = properties | preferredExtra;
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & preferred) == preferred) {
+                return i;
+            }
+        }
+    }
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -856,7 +866,7 @@ uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropert
     PANIC("Vulkan: Failed to find suitable memory type");
 }
 
-void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const {
+void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkMemoryPropertyFlags preferredExtra) const {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -871,7 +881,7 @@ void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, preferredExtra);
     VkResult allocRes = vkAllocateMemory(mDevice, &allocInfo, nullptr, &bufferMemory);
     RUNTIME_ASSERT(allocRes == VK_SUCCESS, "Vulkan: Failed to allocate buffer memory");
 

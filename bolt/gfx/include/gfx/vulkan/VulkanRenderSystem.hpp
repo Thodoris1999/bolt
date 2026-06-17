@@ -84,8 +84,10 @@ public:
     const VulkanProgram& getProgram(uint32_t id) const { return *mPrograms[id]; }
     const VulkanMaterial& getMaterial(uint32_t id) const { return *mMaterials[id]; }
 
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const;
+    /// preferredExtra: additional property flags to try to satisfy on top of properties (e.g. HOST_CACHED
+    /// for a readback buffer); falls back to properties alone if no memory type has them
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkMemoryPropertyFlags preferredExtra = 0) const;
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkMemoryPropertyFlags preferredExtra = 0) const;
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
         VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) const;
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) const;
