@@ -79,6 +79,7 @@ target_include_directories(gfx
     vendored/stb
 )
 target_link_libraries(gfx PRIVATE glad PUBLIC bolt::math bolt::util csp::csp)
+target_compile_features(gfx PUBLIC cxx_std_20)
 target_compile_definitions(gfx PRIVATE BOLT_GFX_ROOT="${PROJECT_SOURCE_DIR}")
 target_compile_options(gfx PRIVATE -Wall)
 csp_shader_dependency(gfx PRIVATE flat)
