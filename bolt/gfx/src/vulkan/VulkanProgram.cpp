@@ -172,12 +172,12 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
     }
 
     // push constant ranges
-    std::vector<VkPushConstantRange> pcRanges(pDesc.push_constant_count);
-    for (uint32_t i = 0; i < pDesc.push_constant_count; i++) {
-        const csp::PushConstantEntry& pushConstant = pDesc.push_constants[i];
-        pcRanges[i].stageFlags = pushConstant.stage_flags;
-        pcRanges[i].offset = pushConstant.offset;
-        pcRanges[i].size = pushConstant.size;
+    std::vector<VkPushConstantRange> pcRanges(pDesc.push_constant_range_count);
+    for (uint32_t i = 0; i < pDesc.push_constant_range_count; i++) {
+        const csp::PushConstantRange& pushConstantRange = pDesc.push_constant_ranges[i];
+        pcRanges[i].stageFlags = pushConstantRange.stage_flags;
+        pcRanges[i].offset = pushConstantRange.offset;
+        pcRanges[i].size = pushConstantRange.size;
     }
 
     // pipeline layout

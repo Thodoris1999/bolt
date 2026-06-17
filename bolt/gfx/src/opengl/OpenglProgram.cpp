@@ -45,7 +45,7 @@ static void loadShader(std::string_view name, GLuint& shader, GLenum type) {
     char infoLog[512];
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if(!success) {
-        printf("Shader Source (%s):\n%s\n", name, static_cast<const char*>(source));
+        printf("Shader Source (%s):\n%s\n", std::string(name).c_str(), static_cast<const char*>(source));
 
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
         RUNTIME_ASSERT(success, infoLog);

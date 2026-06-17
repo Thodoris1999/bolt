@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include <stdint.h>
+#include <vector>
 
 namespace bolt {
 namespace gfx {

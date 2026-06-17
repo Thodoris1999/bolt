@@ -147,7 +147,7 @@ void OpenglRenderSystem::load() {
         // load textures
         auto textureCount = d.drawable->textureCount();
         const TextureDescriptor* textures = d.drawable->textureDescriptors();
-        for (int i = 0; i < textureCount; i++) {
+        for (uint32_t i = 0; i < textureCount; i++) {
             registerTexture(d.drawable, textures[i], openglProgram->id());
         }
 

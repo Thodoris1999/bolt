@@ -10,6 +10,8 @@
 namespace bolt {
 namespace gfx {
 
+class VulkanRenderSystem;
+
 /**
  * Abstraction of a container holding a reference to all drawables. Internally maintains a representation such that 
  * it can register commands in an efficient manner (avoiding state and context switches etc)
@@ -19,11 +21,13 @@ namespace gfx {
  */
 class VulkanDrawList {
 public:
+    VulkanDrawList(const VulkanRenderSystem* renderSystem) : mRenderSystem(renderSystem) { }
     void addDrawable(VulkanDrawable* drawable);
-    void recordCommands(VkCommandBuffer commandBuffer);
+    void recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet);
 
 private:
-    std::unordered_map<VulkanPipelineSignature, std::vector<VulkanDrawable*>, VulkanPipelineSignatureHash> mDrawables;
+    const VulkanRenderSystem* mRenderSystem;
+    std::vector<VulkanDrawable*> mDrawables;
 };
 
 }

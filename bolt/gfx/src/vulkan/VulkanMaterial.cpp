@@ -1,12 +1,17 @@
 #include "gfx/vulkan/VulkanMaterial.hpp"
 #include "gfx/vulkan/VulkanRenderSystem.hpp"
 #include "util/common.h"
-#include <vulkan/vulkan_core.h>
 
 namespace bolt {
 namespace gfx {
 
-VulkanMaterial::VulkanMaterial(const VulkanRenderSystem* renderSystem, const std::vector<VulkanTexture*> textures, VkSampler textureSampler) {
+VulkanMaterial::VulkanMaterial(const VulkanRenderSystem* renderSystem, const VkDescriptorSetLayout& layout,
+        const std::vector<std::pair<uint32_t, VulkanTexture*>>& textures) : mRenderSystem(renderSystem), mDescriptorSet(VK_NULL_HANDLE) {
+    // programs that declare no set=1 bindings (no per-material textures) have no layout to allocate against
+    if (layout == VK_NULL_HANDLE) {
+        return;
+    }
+
     // create descriptor set
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -21,14 +26,14 @@ VulkanMaterial::VulkanMaterial(const VulkanRenderSystem* renderSystem, const std
     std::vector<VkDescriptorImageInfo> materialImageInfo(textures.size());
     std::vector<VkWriteDescriptorSet> materialDescriptorWrites(textures.size());
     for (int i = 0; i < (int)textures.size(); i++) {
-        const VulkanTexture* texture = textures[i];
+        const std::pair<uint32_t, VulkanTexture*> texture = textures[i];
         materialImageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        materialImageInfo[i].imageView = textureImageView;
-        materialImageInfo[i].sampler = textureSampler;
+        materialImageInfo[i].imageView = texture.second->textureImageView();
+        materialImageInfo[i].sampler = renderSystem->textureSampler();
 
         materialDescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         materialDescriptorWrites[i].dstSet = mDescriptorSet;
-        materialDescriptorWrites[i].dstBinding = 1;
+        materialDescriptorWrites[i].dstBinding = texture.first;
         materialDescriptorWrites[i].dstArrayElement = 0;
         materialDescriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         materialDescriptorWrites[i].descriptorCount = 1;
@@ -36,10 +41,6 @@ VulkanMaterial::VulkanMaterial(const VulkanRenderSystem* renderSystem, const std
     }
 
     vkUpdateDescriptorSets(renderSystem->device(), static_cast<uint32_t>(materialDescriptorWrites.size()), materialDescriptorWrites.data(), 0, nullptr);
-}
-
-VulkanMaterial::~VulkanMaterial() {
-    vkDestroyDescriptorSet(mRenderSystem->device(), mLayout, nullptr);
 }
 
 }

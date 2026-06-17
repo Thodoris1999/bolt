@@ -6,7 +6,7 @@ find_package(assimp)
 add_subdirectory(vendored/glad)
 add_subdirectory(vendored/csp)
 
-option(BOLT_GFX_ENABLE_VULKAN "Enable Vulkan backend" OFF)
+option(BOLT_GFX_ENABLE_VULKAN "Enable Vulkan backend" ON)
 if(BOLT_GFX_ENABLE_VULKAN)
     find_package(Vulkan REQUIRED)
 endif()
@@ -47,7 +47,7 @@ if(BOLT_GFX_ENABLE_VULKAN)
         src/vulkan/VulkanProgram.cpp
         src/vulkan/VulkanTexture.cpp
         src/vulkan/VulkanMaterial.cpp
-        src/vulkan/VulkanUniform.cpp
+        src/vulkan/VulkanUniformBuffer.cpp
     )
 endif()
 
@@ -86,8 +86,8 @@ csp_shader_dependency(gfx PRIVATE phong)
 csp_shader_dependency(gfx PRIVATE textured)
 
 if(BOLT_GFX_ENABLE_VULKAN)
-    target_link_libraries(gfx PRIVATE Vulkan::Vulkan)
-    target_compile_definitions(gfx PRIVATE BOLT_GFX_HAVE_VULKAN)
+    target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
+    target_compile_definitions(gfx PUBLIC BOLT_GFX_HAVE_VULKAN)
 endif()
 
 if(TARGET assimp::assimp)

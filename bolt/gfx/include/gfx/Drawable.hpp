@@ -11,6 +11,7 @@
 #include <string>
 #include <cstring>
 #include <cstdint>
+#include <vector>
 
 namespace bolt {
 namespace gfx {
@@ -43,6 +44,39 @@ struct TextureDescriptor {
     std::string textureFile;
     /// binding of sampler uniform in shader
     uint32_t binding;
+
+    bool operator==(const TextureDescriptor& other) const noexcept {
+        return textureFile == other.textureFile &&
+               binding == other.binding;
+    }
+};
+
+/**
+ * Vector of descriptors needs to be ordered based on the binding number
+ */
+using Material = std::vector<TextureDescriptor>;
+
+struct MaterialHash {
+private:
+    template<typename T>
+    static void hashCombine(std::size_t& seed, const T& value) {
+        seed ^= std::hash<T>{}(value)
+              + 0x9e3779b9
+              + (seed << 6)
+              + (seed >> 2);
+    }
+
+public:
+    std::size_t operator()(const Material& material) const noexcept {
+        std::size_t seed = 0;
+
+        for (const auto& tex : material) {
+            hashCombine(seed, tex.textureFile);
+            hashCombine(seed, tex.binding);
+        }
+
+        return seed;
+    }
 };
 
 enum DrawOp {
@@ -68,7 +102,7 @@ public:
     virtual const uint32_t* indexData() const { return nullptr; }
     virtual uint64_t indexCount() const { return 0; }
     virtual const TextureDescriptor* textureDescriptors() const { return nullptr; }
-    virtual int textureCount() const { return 0; }
+    virtual uint32_t textureCount() const { return 0; }
     /// Perform per draw operations before drawing like setting uniforms. For example Drawable3d uses this to set the model matrix
     virtual void onDraw() {}
 
@@ -100,8 +134,8 @@ public:
     uint32_t pushConstantSize() const {
         uint32_t pushConstantSize = 0;
         const csp::ProgramDescriptor& pd = programDescriptor();
-        for (uint32_t i = 0; i < pd.push_constant_count; i++) {
-            const csp::PushConstantEntry& pc = pd.push_constants[i];
+        for (uint32_t i = 0; i < pd.push_constant_range_count; i++) {
+            const csp::PushConstantRange& pc = pd.push_constant_ranges[i];
             if (pc.offset + pc.size > pushConstantSize) {
                 pushConstantSize = pc.offset + pc.size;
             }
