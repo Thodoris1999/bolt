@@ -41,8 +41,8 @@ struct QueueFamilyIndices {
     // supports KHR surface
     std::optional<uint32_t> presentFamily;
 
-    bool isComplete() {
-        return graphicsFamily.has_value() && presentFamily.has_value();
+    bool isComplete(bool headless) {
+        return graphicsFamily.has_value() && (headless || presentFamily.has_value());
     }
 };
 
@@ -58,6 +58,8 @@ struct QueueFamilyIndices {
 class VulkanRenderSystem final : public RenderSystem {
 public:
     VulkanRenderSystem(const char* const * extensions, uint32_t extensionCount, const WindowHooks& windowHooks);
+    /// headless constructor: no window/surface/swapchain, renders into a self-owned offscreen target
+    VulkanRenderSystem(uint32_t offscreenWidth, uint32_t offscreenHeight);
     virtual ~VulkanRenderSystem();
 
     VkInstance& instance() { return mInstance; }
@@ -95,6 +97,8 @@ public:
     void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) const;
     // copy buffer to image (blocking)
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) const;
+    /// (headless only) blocking readback of the most recently rendered frame into dst, RGBA8, width*height*4 bytes
+    void readFramebuffer(void* dst);
 
 private:
     constexpr static int MAX_FRAMES_IN_FLIGHT = 2;
@@ -107,6 +111,7 @@ private:
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
     void createSwapChain();
     void createImageViews();
+    void createOffscreenTarget();
     void createDescriptorPool();
     void createDescriptorSets();
     uint32_t registerProgram(Drawable* d);
@@ -127,16 +132,19 @@ private:
     void recreateSwapChain();
     void cleanupSwapChain();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneSet, uint32_t imageIndex);
+    void renderFrameHeadless();
 
     VkInstance mInstance;
     VkSurfaceKHR mSurface;
     VkPhysicalDevice mPhysicalDevice;
     VkDevice mDevice;
+    const bool mHeadless;
     const std::vector<const char*> mDeviceExtensions;
     VkQueue mGraphicsQueue;
     VkQueue mPresentQueue;
     VkSwapchainKHR mSwapChain;
     std::vector<VkImage> mSwapChainImages;
+    std::vector<VkDeviceMemory> mOffscreenImageMemories; // headless only: self-allocated mSwapChainImages need explicit memory
     VkFormat mSwapChainImageFormat;
     VkExtent2D mSwapChainExtent;
     std::vector<VkImageView> mSwapChainImageViews;
@@ -161,6 +169,7 @@ private:
     WindowHooks mWindowHooks;
     uint32_t mCurrentFrame;
     bool mFramebufferResized;
+    int mLastRenderedImageIndex; // headless only: which mSwapChainImages slot readFramebuffer() should read
 
     std::vector<std::unique_ptr<VulkanDrawable>> mDrawables;
 
