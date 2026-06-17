@@ -86,7 +86,7 @@ public:
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const;
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
         VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) const;
-    VkImageView createImageView(VkImage image, VkFormat format) const;
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) const;
     VkCommandBuffer beginSingleTimeCommands() const;
     void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
     /// copy buffer (blocking)
@@ -113,6 +113,7 @@ private:
     VulkanTexture* registerTexture(Drawable* d, const TextureDescriptor& textureDescriptor);
     uint32_t registerMaterial(Drawable* d, const VkDescriptorSetLayout layout, std::vector<std::pair<uint32_t, VulkanTexture*>> textureBindings);
     void createRenderPass();
+    void createDepthResources();
     void createFramebuffers();
     void createTextureSampler();
     void createCommandPool();
@@ -139,7 +140,11 @@ private:
     VkFormat mSwapChainImageFormat;
     VkExtent2D mSwapChainExtent;
     std::vector<VkImageView> mSwapChainImageViews;
+
     VkRenderPass mRenderPass;
+    VkImage mDepthImage;
+    VkDeviceMemory mDepthImageMemory;
+    VkImageView mDepthImageView;
     VkClearValue mClearColor;
     std::vector<VkFramebuffer> mSwapChainFramebuffers;
     VkCommandPool mCommandPool;

@@ -72,7 +72,7 @@ void SDLApplication3d::run() {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration<double>(now - fpsWindowStart);
         if (elapsed.count() >= 1.0) {
-            std::cout << "FPS: " << (frameCount / elapsed.count()) << std::endl;
+            std::cout << "FPS: " << (frameCount / elapsed.count()) << '\n';
             frameCount = 0;
             fpsWindowStart = now;
         }

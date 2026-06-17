@@ -49,7 +49,7 @@ void VulkanTexture::createTextureImage(const char* textureFile) {
 }
 
 void VulkanTexture::createTextureImageView() {
-    mTextureImageView = mRenderSystem->createImageView(mTextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+    mTextureImageView = mRenderSystem->createImageView(mTextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 } // gfx
