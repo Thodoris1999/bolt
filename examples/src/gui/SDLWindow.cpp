@@ -3,12 +3,8 @@
 #include "util/common.h"
 
 const SDLWindowOptions defaultWindowOptions {
-    BACKEND_OPENGL
+    BACKEND_VULKAN
 };
-
-SDLWindow::SDLWindow() {
-
-}
 
 void SDLWindow::create(int width, int height, const SDLWindowOptions& options) {
     SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE;

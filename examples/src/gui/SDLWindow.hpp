@@ -15,7 +15,6 @@ extern const SDLWindowOptions defaultWindowOptions;
 
 class SDLWindow {
 public:
-    SDLWindow();
     /// Creates the window using the underlying platform's windowing system
     void create(int width, int height, const SDLWindowOptions& options = defaultWindowOptions);
     /// Destroys the window using the underlying platform's windowing system

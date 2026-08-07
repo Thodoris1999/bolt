@@ -4,6 +4,8 @@
 
 #include <functional>
 
+namespace bolt { namespace gfx { class RenderSystem; } }
+
 class SDLApplication {
 public:
     SDLApplication(int width, int height, RenderBackend renderBackend = BACKEND_VULKAN);
@@ -18,8 +20,7 @@ protected:
     bool mRunning;
 
     SDL_GLContext mGlContext;
-    unsigned int mVulkanExtensionCount;
-    const char* const * mVulkanExtensions;
+    bolt::gfx::RenderSystem* mRenderSystem;
 
 private:
     void setupOpengl();

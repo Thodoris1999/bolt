@@ -6,10 +6,7 @@ find_package(assimp)
 add_subdirectory(vendored/glad)
 add_subdirectory(vendored/csp)
 
-option(BOLT_GFX_ENABLE_VULKAN "Enable Vulkan backend" ON)
-if(BOLT_GFX_ENABLE_VULKAN)
-    find_package(Vulkan REQUIRED)
-endif()
+find_package(Vulkan REQUIRED)
 
 set(gfx_SRC
     src/Drawable.cpp
@@ -38,18 +35,15 @@ set(gfx_SRC
     src/opengl/OpenglFramebuffer.cpp
     src/opengl/GlUtils.cpp
     src/opengl/gl_defines.cpp
+
+    src/vulkan/VulkanRenderSystem.cpp
+    src/vulkan/VulkanDrawable.cpp
+    src/vulkan/VulkanDrawList.cpp
+    src/vulkan/VulkanProgram.cpp
+    src/vulkan/VulkanTexture.cpp
+    src/vulkan/VulkanMaterial.cpp
+    src/vulkan/VulkanUniformBuffer.cpp
 )
-if(BOLT_GFX_ENABLE_VULKAN)
-    list(APPEND gfx_SRC
-        src/vulkan/VulkanRenderSystem.cpp
-        src/vulkan/VulkanDrawable.cpp
-        src/vulkan/VulkanDrawList.cpp
-        src/vulkan/VulkanProgram.cpp
-        src/vulkan/VulkanTexture.cpp
-        src/vulkan/VulkanMaterial.cpp
-        src/vulkan/VulkanUniformBuffer.cpp
-    )
-endif()
 
 if(TARGET assimp::assimp)
     list(APPEND gfx_SRC src/AssimpModel.cpp)
@@ -86,10 +80,7 @@ csp_shader_dependency(gfx PRIVATE flat)
 csp_shader_dependency(gfx PRIVATE phong)
 csp_shader_dependency(gfx PRIVATE textured)
 
-if(BOLT_GFX_ENABLE_VULKAN)
-    target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
-    target_compile_definitions(gfx PUBLIC BOLT_GFX_HAVE_VULKAN)
-endif()
+target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
 
 if(TARGET assimp::assimp)
     target_compile_definitions(gfx PRIVATE HAVE_ASSIMP)

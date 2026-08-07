@@ -6,8 +6,18 @@
 
 #include "gfx/opengl/gl_defines.h"
 #include "gfx/opengl/GlUtils.hpp"
+#include "gfx/opengl/OpenglRenderSystem.hpp"
+#include "gfx/vulkan/VulkanRenderSystem.hpp"
 
 #include <chrono>
+
+static void sdlGetFramebufferSize(void* userData, uint32_t& w, uint32_t& h) {
+    SDL_Window* window = static_cast<SDL_Window*>(userData);
+    int iw, ih;
+    SDL_GetWindowSizeInPixels(window, &iw, &ih);
+    w = static_cast<uint32_t>(iw);
+    h = static_cast<uint32_t>(ih);
+}
 
 SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend renderBackend) : mRunning(true), mRenderBackend(renderBackend) {
     // Initialize SDL
@@ -33,11 +43,21 @@ SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend rend
     options.renderBackend = renderBackend;
     mWindow.create(initWidth, initHeight, options);
 
-    if (renderBackend == BACKEND_OPENGL) {
+    switch (renderBackend) {
+    case BACKEND_OPENGL:
         setupOpengl();
-    } else if (renderBackend == BACKEND_VULKAN) {
+        break;
+
+    case BACKEND_VULKAN:
         setupVulkan();
+        break;
+
+    default:
+        PANIC("Unknown render backend %d", renderBackend);
+        break;
     }
+
+    mRenderSystem->setViewport(0, 0, initWidth, initHeight);
 }
 
 void SDLApplication::setupOpengl() {
@@ -64,14 +84,27 @@ void SDLApplication::setupOpengl() {
         std::abort();
     }
 #endif
+
+    mRenderSystem = new bolt::gfx::OpenglRenderSystem;
 }
 
 void SDLApplication::setupVulkan() {
-    mVulkanExtensions = SDL_Vulkan_GetInstanceExtensions(&mVulkanExtensionCount);
-    RUNTIME_ASSERT(mVulkanExtensions, SDL_GetError());
+    unsigned int extensionCount;
+    const char* const * extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
+    RUNTIME_ASSERT(extensions, SDL_GetError());
+
+    bolt::gfx::WindowHooks windowHooks;
+    windowHooks.getFramebufferSize = sdlGetFramebufferSize;
+    windowHooks.userData = mWindow.getSdlWindow();
+    bolt::gfx::VulkanRenderSystem* vlkRenderSystem = new bolt::gfx::VulkanRenderSystem(extensions, extensionCount, windowHooks);
+    bool result = SDL_Vulkan_CreateSurface(mWindow.getSdlWindow(), vlkRenderSystem->instance(), nullptr, &vlkRenderSystem->surface());
+    RUNTIME_ASSERT(result, SDL_GetError());
+    vlkRenderSystem->init();
+    mRenderSystem = vlkRenderSystem;
 }
 
 SDLApplication::~SDLApplication() {
+    delete mRenderSystem;
     SDL_GL_DestroyContext(mGlContext);
     mWindow.destroy();
     SDL_QuitSubSystem(SDL_INIT_VIDEO);

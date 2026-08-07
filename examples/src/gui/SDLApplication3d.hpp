@@ -18,6 +18,5 @@ public:
 
 protected:
     bolt::gfx::SceneManager* mScene;
-    bolt::gfx::RenderSystem* mRenderSystem;
     bolt::gfx::OrbitCamera* mCamera;
 };

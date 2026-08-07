@@ -1,5 +1,6 @@
 #include "ImguiApplication.hpp"
 
+#include "gui/SDLWindow.hpp"
 #include "imgui.h"
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -8,7 +9,7 @@
  * Largely inspired by imgui examples
  */
 
-ImguiApplication::ImguiApplication(int width, int height) : SDLApplication3d(width, height) {
+ImguiApplication::ImguiApplication(int width, int height) : SDLApplication3d(width, height, BACKEND_OPENGL) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
