@@ -25,6 +25,7 @@
 
 using namespace bolt::math;
 using namespace bolt::gfx;
+using namespace bolt::gui;
 using namespace bolt::col;
 
 int main(int argc, char** argv) {

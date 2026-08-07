@@ -45,6 +45,7 @@ void writeToFile(const char* name, const void* buffer, int bufferSize) {
 
 using namespace bolt::math;
 using namespace bolt::gfx;
+using namespace bolt::gui;
 
 int main(int argc, char** argv) {
     int initialWidth = 1000;

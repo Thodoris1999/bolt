@@ -3,6 +3,7 @@ include(GNUInstallDirs)
 add_subdirectory(util)
 add_subdirectory(math)
 add_subdirectory(gfx)
+add_subdirectory(gui)
 
 # ----------- Create package
 include(CMakePackageConfigHelpers)

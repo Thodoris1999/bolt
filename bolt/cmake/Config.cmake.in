@@ -1,6 +1,6 @@
 @PACKAGE_INIT@
 
-set(_bolt_supported_components math gfx)
+set(_bolt_supported_components math gfx gui)
 
 foreach(_comp ${bolt_FIND_COMPONENTS})
   if (NOT _comp IN_LIST _bolt_supported_components)
