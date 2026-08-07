@@ -8,7 +8,7 @@ Graphics APIs require lots of boilerplate code for a typical 3D application, whi
 
 bolt does a few things to address this:
 1) Exposes a cross API interface that is as low level as possible, exposing things like shaders, shader attachments (uniforms, vertex arrays) and vertex attributes.
-2) Offers different graphics API backends selectable at runtime (only OpenGL currently available)
+2) Offers different graphics API backends selectable at runtime
 3) Users are completely in charge of shaders, they can use any shading language or abstraction on top of that, as long as it is compatible with the graphics API backend.
 4) For convenience, offers perhaps the only 3D graphics engine data structure that has survived all these decades, a scene graph. As the name suggests this is just a graph and nothing else, only used to update the 3D object positions in an efficient way.
 
@@ -39,6 +39,3 @@ Renders a collection of objects specified by `assetFile` to an SDL window.
 ./build/examples/dumpFrame <assetFile>
 ```
 Renders a collection of objects specified by `assetFile` to a frame buffer and dumps it to `frame.bin`. You can visualize this image with `examples/disp_frame.py` (requires matplotlib and numpy)
-
-## Project state
-Currently in alpha. The Vulkan backend is coming next, and is expected to introduce things like asynchronousness and triple buffering to the API. Once that is taken care of, I want the project to settle on an API that will never break, at which point it enters beta.
