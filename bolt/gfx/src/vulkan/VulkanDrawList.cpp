@@ -13,7 +13,7 @@ void VulkanDrawList::addDrawable(VulkanDrawable* drawable) {
     mDrawables.push_back(drawable);
 }
 
-void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet) {
+void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet, uint32_t frameIndex) {
     std::sort(mDrawables.begin(), mDrawables.end(), [](const VulkanDrawable* a, const VulkanDrawable* b) {
         return a->drawKey < b->drawKey;
     });
@@ -50,6 +50,14 @@ void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkDescriptorS
 
         // pre-draw operations
         d->onDraw();
+
+        // flush this drawable's set=2 uniform blocks for the current
+        // frame-in-flight, and bind them if present
+        drawable->updateUniformBuffers(frameIndex);
+        VkDescriptorSet uniformSet = drawable->uniformDescriptorSet(frameIndex);
+        if (uniformSet != VK_NULL_HANDLE) {
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, program.pipelineLayout(), 2, 1, &uniformSet, 0, nullptr);
+        }
 
         // push constants
         const csp::ProgramDescriptor& pd = d->programDescriptor();

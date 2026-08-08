@@ -4,6 +4,7 @@
 
 #include "gfx/opengl/gl_defines.h"
 
+#include <memory>
 #include <unordered_set>
 
 namespace bolt {
@@ -40,6 +41,9 @@ OpenglRenderSystem::~OpenglRenderSystem() {
     }
     for (auto* entry : mUniforms) {
         delete entry;
+    }
+    for (auto* d : mDrawables) {
+        delete d;
     }
     free(mPushConstantBuffer);
 }
@@ -93,8 +97,8 @@ void OpenglRenderSystem::setViewport(int x, int y, int width, int height) {
 }
 
 void OpenglRenderSystem::addDrawable(Drawable* drawable) {
-    OpenglDrawable d;
-    d.drawable = drawable;
+    OpenglDrawable* d = new OpenglDrawable();
+    d->drawable = drawable;
     mDrawables.push_back(d);
 }
 
@@ -134,38 +138,38 @@ void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& d
 void OpenglRenderSystem::load() {
     size_t totalPushConstantSize = 0;
     size_t pushConstantUniformSize = 0;
-    for (auto& d : mDrawables) {
+    for (auto* d : mDrawables) {
         // calculate push constant needs
-        uint32_t drawablePushConstantSize = d.drawable->pushConstantSize();
+        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
         if (pushConstantUniformSize < drawablePushConstantSize) {
             pushConstantUniformSize = drawablePushConstantSize;
         }
         totalPushConstantSize += drawablePushConstantSize;
 
         // load program
-        registerProgram(d.drawable);
-        auto openglProgram = static_cast<OpenglProgram*>(d.drawable->program());
+        registerProgram(d->drawable);
+        auto openglProgram = static_cast<OpenglProgram*>(d->drawable->program());
         openglProgram->use();
 
         // load textures
-        auto textureCount = d.drawable->textureCount();
-        const TextureDescriptor* textures = d.drawable->textureDescriptors();
+        auto textureCount = d->drawable->textureCount();
+        const TextureDescriptor* textures = d->drawable->textureDescriptors();
         for (uint32_t i = 0; i < textureCount; i++) {
-            registerTexture(d.drawable, textures[i], openglProgram->id());
+            registerTexture(d->drawable, textures[i], openglProgram->id());
         }
 
         // load drawable buffers (vertices and indices)
-        d.load();
+        d->load();
     }
     glUseProgram(0);
 
     // allocate push constant CPU buffer and calculate drawable constants inside it
     mPushConstantBuffer = realloc(mPushConstantBuffer, totalPushConstantSize);
     size_t drawablePushConstantOffset = 0;
-    for (auto& d : mDrawables) {
+    for (auto* d : mDrawables) {
         // set push constant pointer
-        uint32_t drawablePushConstantSize = d.drawable->pushConstantSize();
-        d.drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
+        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
+        d->drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
         drawablePushConstantOffset += drawablePushConstantSize;
     }
 
@@ -191,27 +195,50 @@ void OpenglRenderSystem::load() {
             PANIC("Opengl: Failed to create auxiliary uniform for push constants");
         }
     }
+
+    // create each drawable's own buffer for its set=2 uniform blocks
+    for (auto* d : mDrawables) {
+        const csp::ProgramDescriptor& pd = d->drawable->programDescriptor();
+        for (uint32_t i = 0; i < pd.uniform_count; i++) {
+            const csp::UniformVar& uv = pd.uniform_vars[i];
+            if (uv.set != 2) {
+                continue;
+            }
+            if (uv.size == 0) {
+                PANIC("Opengl: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
+            }
+
+            auto uniform = std::make_unique<OpenglUniformBuffer>(uv.size, uv.binding);
+            d->drawable->setUniformData(i, uniform.get());
+            d->uniformBuffers.push_back(std::move(uniform));
+        }
+    }
 }
 
 void OpenglRenderSystem::renderFrame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (const auto& d : mDrawables) {
+    for (auto* d : mDrawables) {
         // configure program
-        auto openglProgram = static_cast<OpenglProgram*>(d.drawable->program());
+        auto openglProgram = static_cast<OpenglProgram*>(d->drawable->program());
         openglProgram->use();
 
         // perform pre-draw operations
-        d.drawable->onDraw();
+        d->drawable->onDraw();
+
+        // rebind this drawable's set=2 uniform buffers to their shared bind points
+        for (auto& uniform : d->uniformBuffers) {
+            uniform->bind();
+        }
 
         // set push constants
-        mPushConstantUniform->writeData(d.drawable->pushConstantData(), 0, d.drawable->pushConstantSize());
+        mPushConstantUniform->writeData(d->drawable->pushConstantData(), 0, d->drawable->pushConstantSize());
 
         // select vertex array
-        glBindVertexArray(d.VAO);
+        glBindVertexArray(d->VAO);
 
         // bind textures if they exist
-        auto& textures = d.drawable->textures();
+        auto& textures = d->drawable->textures();
         for (size_t i = 0; i < textures.size(); i++) {
             auto* texture = static_cast<OpenglTexture*>(textures[i]);
             glActiveTexture(GL_TEXTURE0 + texture->binding());
@@ -220,22 +247,22 @@ void OpenglRenderSystem::renderFrame() {
         }
 
         // perform draw call
-        GLenum mode = bolt2openglPrimitive(d.drawable->primitiveType());
-        switch (d.drawable->drawOp()) {
+        GLenum mode = bolt2openglPrimitive(d->drawable->primitiveType());
+        switch (d->drawable->drawOp()) {
         case BOLT_GFX_ARRAY:
-            glDrawArrays(mode, 0, d.drawable->vertexCount());
+            glDrawArrays(mode, 0, d->drawable->vertexCount());
             break;
         case BOLT_GFX_INDEXED:
-            glDrawElements(mode, d.drawable->indexCount(), GL_UNSIGNED_INT, (void*)(0 * sizeof(unsigned int)));
+            glDrawElements(mode, d->drawable->indexCount(), GL_UNSIGNED_INT, (void*)(0 * sizeof(unsigned int)));
             break;
         default:
-            PANIC("Invalid draw command %d", static_cast<int>(d.drawable->drawOp()));
+            PANIC("Invalid draw command %d", static_cast<int>(d->drawable->drawOp()));
         }
 
         // unbind everything
         glBindVertexArray(0);
         glUseProgram(0);
-        if (d.drawable->textureCount() > 0) {
+        if (d->drawable->textureCount() > 0) {
             glActiveTexture(GL_TEXTURE0);
         }
     }

@@ -218,6 +218,7 @@ VulkanRenderSystem::~VulkanRenderSystem() {
     }
     vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(mDevice, mSceneDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(mDevice, mEmptyDescriptorSetLayout, nullptr);
     vkDestroyDevice(mDevice, nullptr);
     if (!mHeadless) {
         // VK_KHR_surface is never enabled in headless mode, so its functions aren't loaded
@@ -751,6 +752,15 @@ void VulkanRenderSystem::createSceneDescriptorSetLayout() {
     RUNTIME_ASSERT(setLayoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create scene descriptor set layout");
 }
 
+void VulkanRenderSystem::createEmptyDescriptorSetLayout() {
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 0;
+    layoutInfo.pBindings = nullptr;
+    VkResult result = vkCreateDescriptorSetLayout(mDevice, &layoutInfo, nullptr, &mEmptyDescriptorSetLayout);
+    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create empty descriptor set layout");
+}
+
 void VulkanRenderSystem::recreateSwapChain() {
     // on minimization blocks until resurfaced again
     uint32_t width = 0, height = 0;
@@ -798,7 +808,7 @@ void VulkanRenderSystem::cleanupSwapChain() {
     }
 }
 
-void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneDescriptorSet, uint32_t imageIndex) {
+void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneDescriptorSet, uint32_t imageIndex, uint32_t frameIndex) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0; // Optional
@@ -836,7 +846,7 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, cons
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     // draw render list
-    mDrawList.recordCommands(commandBuffer, sceneDescriptorSet);
+    mDrawList.recordCommands(commandBuffer, sceneDescriptorSet, frameIndex);
 
     // end drawing
     vkCmdEndRenderPass(commandBuffer);
@@ -1080,11 +1090,15 @@ void VulkanRenderSystem::load() {
     createPushConstantBuffer();
     // Create pipeline layout and scene descriptor set layout
     createSceneDescriptorSetLayout();
+    createEmptyDescriptorSetLayout();
     createDescriptorPool();
     createDescriptorSets();
     for (int i = 0; i < (int)mUniforms.size(); i++) {
         VulkanUniformBuffer* uniform = static_cast<VulkanUniformBuffer*>(mUniforms[i]);
         uniform->createBuffers(MAX_FRAMES_IN_FLIGHT);
+        for (int f = 0; f < MAX_FRAMES_IN_FLIGHT; f++) {
+            uniform->writeDescriptorSet(mSceneDescriptorSets[f], f);
+        }
     }
 
     for (auto& d : mDrawables) {
@@ -1140,7 +1154,9 @@ void VulkanRenderSystem::renderFrame() {
 
     // record command buffer (it is always necessary? What if the draw calls are not changing? What if only uniforms are changing?)
     vkResetCommandBuffer(mCommandBuffers[mCurrentFrame], 0);
-    recordCommandBuffer(mCommandBuffers[mCurrentFrame], mSceneDescriptorSets[mCurrentFrame], imageIndex);
+    // imageIndex (swapchain image, from vkAcquireNextImageKHR) and mCurrentFrame
+    // (frame-in-flight double-buffering index) are distinct and must not be conflated
+    recordCommandBuffer(mCommandBuffers[mCurrentFrame], mSceneDescriptorSets[mCurrentFrame], imageIndex, mCurrentFrame);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1190,7 +1206,9 @@ void VulkanRenderSystem::renderFrameHeadless() {
     }
 
     vkResetCommandBuffer(mCommandBuffers[frameIdx], 0);
-    recordCommandBuffer(mCommandBuffers[frameIdx], mSceneDescriptorSets[frameIdx], frameIdx);
+    // headless has no separate swapchain image index, so frameIdx is passed for both
+    // the (unused-for-framebuffer-selection-here) imageIndex and frameIndex parameters
+    recordCommandBuffer(mCommandBuffers[frameIdx], mSceneDescriptorSets[frameIdx], frameIdx, frameIdx);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

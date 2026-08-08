@@ -10,7 +10,10 @@ OpenglUniformBuffer::OpenglUniformBuffer(size_t size, uint32_t bindPoint) : mSiz
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glCheckError();
 
-    // bind buffer to binding point
+    bind();
+}
+
+void OpenglUniformBuffer::bind() const {
     glBindBufferRange(GL_UNIFORM_BUFFER, mBindPoint, mId, 0, mSize);
 }
 

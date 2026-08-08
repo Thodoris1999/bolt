@@ -20,6 +20,9 @@ public:
     virtual void writeData(const void* src, size_t offset, size_t size) override;
 
     void createBuffers(int numFrames);
+    void writeDescriptorSet(VkDescriptorSet dstSet, int frameIndex) const;
+    /// copies staging data into the given frame's mapped buffer, but only if
+    /// writeData() has been called since that frame was last updated
     void update(int currentImage);
 
     uint32_t bindPoint() const { return mBindPoint; }
@@ -33,6 +36,7 @@ private:
     std::vector<VkBuffer> mUniformBuffers;
     std::vector<VkDeviceMemory> mUniformBuffersMemory;
     std::vector<void*> mUniformBuffersMapped;
+    std::vector<bool> mDirty; // per frame-in-flight; true if staging data hasn't been applied to that frame's buffer yet
     void* mStagingBuffer;
 };
 

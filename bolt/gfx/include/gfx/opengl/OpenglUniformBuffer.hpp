@@ -16,6 +16,10 @@ public:
 
     virtual void writeData(const void* src, size_t offset, size_t size) override;
 
+    /// (re)binds this buffer to its bind point; needed when multiple buffers
+    /// (e.g. one per drawable) share the same bind point and take turns occupying it
+    void bind() const;
+
     GLuint bindPoint() const { return mBindPoint; }
 
 private:

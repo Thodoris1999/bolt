@@ -6,6 +6,7 @@
 #include "gfx/SceneNode.hpp"
 #include "gfx/RenderProgram.hpp"
 #include "gfx/RenderTexture.hpp"
+#include "gfx/RenderUniformBuffer.hpp"
 #include "util/common.h"
 
 #include <string>
@@ -148,11 +149,32 @@ public:
         memcpy((uint8_t*)mPushConstantData + pc.offset, data, pc.size);
     }
 
+    // Drawable set=2 uniform blocks. offset lets a caller update a sub-range of the block without re-uploading the whole thing.
+    void setUniform(uint32_t id, const void* data, size_t size, size_t offset = 0) {
+        const csp::UniformVar& uv = programDescriptor().uniform_vars[id];
+        if (offset + size > uv.size) {
+            PANIC("Drawable::setUniform: offset %zu + size %zu exceeds reflected uniform size %u for id %u (\"%.*s\")",
+                offset, size, uv.size, id, (int)uv.name.size(), uv.name.data());
+        }
+        if (id >= mUniformData.size() || mUniformData[id] == nullptr) {
+            PANIC("Drawable::setUniform: no backing storage for uniform id %u — was load() called, and is set==2?", id);
+        }
+        mUniformData[id]->writeData(data, offset, size);
+    }
+
+    void setUniformData(uint32_t id, RenderUniformBuffer* buffer) {
+        if (id >= mUniformData.size()) {
+            mUniformData.resize(id + 1, nullptr);
+        }
+        mUniformData[id] = buffer;
+    }
+
 protected:
     // members initialized by the rendering engine, only valid after load has been called on the RenderSystem
     void* mPushConstantData;
     RenderProgram* mProgram;
     std::vector<RenderTexture*> mTextures;
+    std::vector<RenderUniformBuffer*> mUniformData;
 };
 
 class Drawable3d : public Drawable, public SceneNode {

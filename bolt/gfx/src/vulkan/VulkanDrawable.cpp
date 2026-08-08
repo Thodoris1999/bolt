@@ -1,6 +1,7 @@
 #include "gfx/vulkan/VulkanDrawable.hpp"
 #include "csp/csp.hpp"
 #include "gfx/vulkan/VulkanRenderSystem.hpp"
+#include "util/common.h"
 
 #include <vulkan/vulkan.h>
 
@@ -49,6 +50,55 @@ void VulkanDrawable::createIndexBuffer() {
     vkFreeMemory(mRenderSystem->device(), stagingBufferMemory, nullptr);
 }
 
+void VulkanDrawable::createUniformBuffers() {
+    const VulkanProgram& program = mRenderSystem->getProgram(DrawKey::getPipeline(drawKey));
+    VkDescriptorSetLayout uniformSetLayout = program.uniformDescriptorSetLayout();
+    int numFramesInFlight = mRenderSystem->maxFramesInFlight();
+
+    const csp::ProgramDescriptor& pd = drawable->programDescriptor();
+    const csp::UniformVar* uniformVars = pd.uniform_vars;
+    for (uint32_t i = 0; i < pd.uniform_count; i++) {
+        const csp::UniformVar& uv = uniformVars[i];
+        if (uv.set != 2) {
+            continue;
+        }
+        if (uv.size == 0) {
+            PANIC("Vulkan: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
+        }
+
+        auto uniform = std::make_unique<VulkanUniformBuffer>(mRenderSystem, uv.size, uv.binding);
+        uniform->createBuffers(numFramesInFlight);
+        drawable->setUniformData(i, uniform.get());
+        mUniformBuffers.push_back(std::move(uniform));
+    }
+
+    if (mUniformBuffers.empty()) {
+        return;
+    }
+
+    std::vector<VkDescriptorSetLayout> setLayouts(numFramesInFlight, uniformSetLayout);
+    mUniformDescriptorSets.resize(numFramesInFlight);
+    VkDescriptorSetAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = mRenderSystem->descriptorPool();
+    allocInfo.descriptorSetCount = numFramesInFlight;
+    allocInfo.pSetLayouts = setLayouts.data();
+    VkResult result = vkAllocateDescriptorSets(mRenderSystem->device(), &allocInfo, mUniformDescriptorSets.data());
+    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to allocate drawable uniform descriptor sets");
+
+    for (int f = 0; f < numFramesInFlight; f++) {
+        for (auto& uniform : mUniformBuffers) {
+            uniform->writeDescriptorSet(mUniformDescriptorSets[f], f);
+        }
+    }
+}
+
+void VulkanDrawable::updateUniformBuffers(uint32_t frameIndex) {
+    for (auto& uniform : mUniformBuffers) {
+        uniform->update(frameIndex);
+    }
+}
+
 void VulkanDrawable::load() {
     createVertexBuffer();
     mHasIndexBuffer = drawable->indexCount() > 0;
@@ -67,6 +117,8 @@ void VulkanDrawable::load() {
     }
     mPushConstantBuffer = malloc(pcSize);
 
+    createUniformBuffers();
+
     mLoaded = true;
 }
 
@@ -80,6 +132,8 @@ void VulkanDrawable::unload() {
     vkFreeMemory(mRenderSystem->device(), mVertexBufferMemory, nullptr);
 
     free(mPushConstantBuffer);
+
+    mUniformBuffers.clear();
 
     mLoaded = false;
 }

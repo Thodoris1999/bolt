@@ -23,7 +23,7 @@ class VulkanDrawList {
 public:
     VulkanDrawList(const VulkanRenderSystem* renderSystem) : mRenderSystem(renderSystem) { }
     void addDrawable(VulkanDrawable* drawable);
-    void recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet);
+    void recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet, uint32_t frameIndex);
 
 private:
     const VulkanRenderSystem* mRenderSystem;

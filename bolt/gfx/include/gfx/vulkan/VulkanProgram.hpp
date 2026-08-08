@@ -72,12 +72,15 @@ public:
     VkPipeline pipeline() const { return mGraphicsPipeline; }
     VkPipelineLayout pipelineLayout() const { return mPipelineLayout; }
     VkDescriptorSetLayout descriptorSetLayout() const { return mDescriptorSetLayout; }
+    VkDescriptorSetLayout uniformDescriptorSetLayout() const { return mUniformDescriptorSetLayout; }
 
 private:
     const VulkanRenderSystem* mRenderSystem;
     VkPipeline mGraphicsPipeline;
     // pipeline-level descriptor set (set=1)
     VkDescriptorSetLayout mDescriptorSetLayout;
+    // per-drawable uniform descriptor set (set=2)
+    VkDescriptorSetLayout mUniformDescriptorSetLayout;
     VkPipelineLayout mPipelineLayout;
 };
 

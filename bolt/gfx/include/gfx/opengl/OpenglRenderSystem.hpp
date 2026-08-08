@@ -5,6 +5,7 @@
 #include "gfx/opengl/gl_defines.h"
 #include "gfx/opengl/OpenglUniformBuffer.hpp"
 
+#include <memory>
 #include <unordered_map>
 
 namespace bolt {
@@ -15,6 +16,8 @@ struct OpenglDrawable {
     GLuint VBO;
     GLuint EBO;
     GLuint VAO;
+    // one per set=2 uniform block declared by this drawable's program
+    std::vector<std::unique_ptr<OpenglUniformBuffer>> uniformBuffers;
 
     void load();
 };
@@ -31,7 +34,7 @@ public:
     virtual void renderFrame() override;
 
 private:
-    std::vector<OpenglDrawable> mDrawables;
+    std::vector<OpenglDrawable*> mDrawables;
 
     // TODO: combine into a ResourceManager
     struct ProgramDescriptorHash {

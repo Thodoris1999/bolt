@@ -24,42 +24,49 @@ VulkanUniformBuffer::~VulkanUniformBuffer() {
 
 void VulkanUniformBuffer::writeData(const void* src, size_t offset, size_t size) {
     memcpy((uint8_t*)mStagingBuffer + offset, src, size);
+    mDirty.assign(mDirty.size(), true);
 }
 
 void VulkanUniformBuffer::createBuffers(int numFrames) {
     mUniformBuffers.resize(numFrames);
     mUniformBuffersMemory.resize(numFrames);
     mUniformBuffersMapped.resize(numFrames);
+    mDirty.assign(numFrames, true);
 
     for (int i = 0; i < numFrames; i++) {
         mRenderSystem->createBuffer(mSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             mUniformBuffers[i], mUniformBuffersMemory[i]);
 
         vkMapMemory(mRenderSystem->device(), mUniformBuffersMemory[i], 0, mSize, 0, &mUniformBuffersMapped[i]);
-
-        // update descriptor set
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = mUniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = mSize;
-
-        VkWriteDescriptorSet descriptorWrite{};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.pNext = nullptr;
-        descriptorWrite.dstSet = mRenderSystem->sceneDescriptorSet(i);
-        descriptorWrite.dstBinding = mBindPoint;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = nullptr;
-        descriptorWrite.pTexelBufferView = nullptr;
-        vkUpdateDescriptorSets(mRenderSystem->device(), 1, &descriptorWrite, 0, nullptr);
     }
 }
 
+void VulkanUniformBuffer::writeDescriptorSet(VkDescriptorSet dstSet, int frameIndex) const {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = mUniformBuffers[frameIndex];
+    bufferInfo.offset = 0;
+    bufferInfo.range = mSize;
+
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.pNext = nullptr;
+    descriptorWrite.dstSet = dstSet;
+    descriptorWrite.dstBinding = mBindPoint;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    descriptorWrite.pImageInfo = nullptr;
+    descriptorWrite.pTexelBufferView = nullptr;
+    vkUpdateDescriptorSets(mRenderSystem->device(), 1, &descriptorWrite, 0, nullptr);
+}
+
 void VulkanUniformBuffer::update(int currentImage) {
+    if (!mDirty[currentImage]) {
+        return;
+    }
     memcpy(mUniformBuffersMapped[currentImage], mStagingBuffer, mSize);
+    mDirty[currentImage] = false;
 }
 
 } // gfx

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "gfx/Drawable.hpp"
+#include "gfx/vulkan/VulkanUniformBuffer.hpp"
 
 #include <vulkan/vulkan.h>
 
 #include <cstdint>
 #include <cassert>
+#include <memory>
+#include <vector>
 
 namespace bolt {
 namespace gfx {
@@ -77,12 +80,19 @@ public:
     VkBuffer vertexBuffer() const { return mVertexBuffer; }
     VkBuffer indexBuffer() const { return mIndexBuffer; }
 
+    /// flush this drawable's set=2 uniform blocks for the given frame-in-flight
+    void updateUniformBuffers(uint32_t frameIndex);
+    VkDescriptorSet uniformDescriptorSet(uint32_t frameIndex) const {
+        return mUniformDescriptorSets.empty() ? VK_NULL_HANDLE : mUniformDescriptorSets[frameIndex];
+    }
+
     Drawable* drawable;
     uint64_t drawKey;
 
 private:
     void createVertexBuffer();
     void createIndexBuffer();
+    void createUniformBuffers();
 
     VulkanRenderSystem* mRenderSystem;
     VkBuffer mVertexBuffer;
@@ -91,6 +101,9 @@ private:
     VkDeviceMemory mIndexBufferMemory;
     bool mHasIndexBuffer;
     void* mPushConstantBuffer;
+    // one per set=2 uniform block declared by this drawable's program
+    std::vector<std::unique_ptr<VulkanUniformBuffer>> mUniformBuffers;
+    std::vector<VkDescriptorSet> mUniformDescriptorSets; // size == numFramesInFlight, or empty if mUniformBuffers is empty
     bool mLoaded;
 };
 

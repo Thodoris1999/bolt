@@ -79,10 +79,14 @@ public:
     VkDescriptorPool descriptorPool() const { return mDescriptorPool; }
     VkDescriptorSet sceneDescriptorSet(int i) const { return mSceneDescriptorSets[i]; }
     VkDescriptorSetLayout sceneDescriptorSetLayout() const { return mSceneDescriptorSetLayout; }
+    /// shared zero-binding layout used to fill positional gaps in a pipeline layout's
+    /// descriptor set array (e.g. set=2 used with no set=1 material bindings)
+    VkDescriptorSetLayout emptyDescriptorSetLayout() const { return mEmptyDescriptorSetLayout; }
     VkRenderPass renderPass() const { return mRenderPass; }
     VkSampler textureSampler() const { return mTextureSampler; }
     const VulkanProgram& getProgram(uint32_t id) const { return *mPrograms[id]; }
     const VulkanMaterial& getMaterial(uint32_t id) const { return *mMaterials[id]; }
+    int maxFramesInFlight() const { return MAX_FRAMES_IN_FLIGHT; }
 
     /// preferredExtra: additional property flags to try to satisfy on top of properties (e.g. HOST_CACHED
     /// for a readback buffer); falls back to properties alone if no memory type has them
@@ -134,10 +138,11 @@ private:
     void destroyRenderFinishedSemaphores();
     void createPushConstantBuffer();
     void createSceneDescriptorSetLayout();
+    void createEmptyDescriptorSetLayout();
 
     void recreateSwapChain();
     void cleanupSwapChain();
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneSet, uint32_t imageIndex);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, const VkDescriptorSet& sceneSet, uint32_t imageIndex, uint32_t frameIndex);
     void renderFrameHeadless();
 
     VkInstance mInstance;
@@ -168,6 +173,7 @@ private:
     std::vector<VkFramebuffer> mSwapChainFramebuffers;
     VkCommandPool mCommandPool;
     VkDescriptorSetLayout mSceneDescriptorSetLayout;
+    VkDescriptorSetLayout mEmptyDescriptorSetLayout;
     VkSampler mTextureSampler;
     VkPushConstantRange mPushConstantRange;
     void* mPushConstantBuffer;

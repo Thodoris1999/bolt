@@ -6,6 +6,8 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_core.h>
 
+#include <algorithm>
+
 namespace bolt {
 namespace gfx {
 
@@ -143,33 +145,40 @@ static VkDescriptorType csp2vkDescriptorType(csp::DescriptorType type) {
 }
 
 VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* drawable) : RenderProgram(&drawable->programDescriptor()), mRenderSystem(renderSystem) {
-    // create descriptor layout (set=1) and pipeline layout
+    // create descriptor layouts (set=1 material, set=2 per-drawable uniforms) and pipeline layout
     // descriptor bindings
     mDescriptorSetLayout = VK_NULL_HANDLE;
+    mUniformDescriptorSetLayout = VK_NULL_HANDLE;
     std::vector<VkDescriptorSetLayoutBinding> descriptorBindings;
+    std::vector<VkDescriptorSetLayoutBinding> uniformDescriptorBindings;
     const csp::ProgramDescriptor& pDesc = drawable->programDescriptor();
     const csp::UniformVar* uniformVars = pDesc.uniform_vars;
     for (uint32_t i = 0; i < pDesc.uniform_count; i++) {
         const csp::UniformVar& uniformVar = uniformVars[i];
-        if (uniformVar.set == 1) {
-            VkDescriptorSetLayoutBinding binding{};
-            binding.binding = uniformVar.binding;
-            binding.descriptorType = csp2vkDescriptorType(uniformVar.descriptor_type);
-            binding.descriptorCount = 1;
-            binding.stageFlags = uniformVar.stage_flags;
-            descriptorBindings.push_back(binding);
+        if (uniformVar.set != 1 && uniformVar.set != 2) {
+            continue;
         }
+        VkDescriptorSetLayoutBinding binding{};
+        binding.binding = uniformVar.binding;
+        binding.descriptorType = csp2vkDescriptorType(uniformVar.descriptor_type);
+        binding.descriptorCount = 1;
+        binding.stageFlags = uniformVar.stage_flags;
+        (uniformVar.set == 1 ? descriptorBindings : uniformDescriptorBindings).push_back(binding);
     }
 
-    // descriptor layout
-    if (descriptorBindings.size() > 0) {
+    auto createDescriptorSetLayout = [renderSystem](const std::vector<VkDescriptorSetLayoutBinding>& bindings, VkDescriptorSetLayout& outLayout) {
+        if (bindings.empty()) {
+            return;
+        }
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layoutInfo.bindingCount = descriptorBindings.size();
-        layoutInfo.pBindings = descriptorBindings.data();
-        VkResult setLayoutCreateResult = vkCreateDescriptorSetLayout(renderSystem->device(), &layoutInfo, nullptr, &mDescriptorSetLayout);
-        RUNTIME_ASSERT(setLayoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline descriptor set layout");
-    }
+        layoutInfo.bindingCount = bindings.size();
+        layoutInfo.pBindings = bindings.data();
+        VkResult result = vkCreateDescriptorSetLayout(renderSystem->device(), &layoutInfo, nullptr, &outLayout);
+        RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline descriptor set layout");
+    };
+    createDescriptorSetLayout(descriptorBindings, mDescriptorSetLayout);
+    createDescriptorSetLayout(uniformDescriptorBindings, mUniformDescriptorSetLayout);
 
     // push constant ranges
     std::vector<VkPushConstantRange> pcRanges(pDesc.push_constant_range_count);
@@ -181,11 +190,23 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
     }
 
     // pipeline layout
-    std::vector<VkDescriptorSetLayout> layouts = {mDescriptorSetLayout};
-    if (descriptorBindings.size() > 0) {
-        layouts = {mRenderSystem->sceneDescriptorSetLayout(), mDescriptorSetLayout};
-    } else {
-        layouts = {mRenderSystem->sceneDescriptorSetLayout()};
+    uint32_t highestSet = 0;
+    for (uint32_t i = 0; i < pDesc.uniform_count; i++) {
+        highestSet = std::max(highestSet, uniformVars[i].set);
+    }
+
+    std::vector<VkDescriptorSetLayout> layouts(highestSet + 1, mRenderSystem->emptyDescriptorSetLayout());
+    layouts[0] = mRenderSystem->sceneDescriptorSetLayout();
+
+    struct PerSetLayout { uint32_t set; bool hasBindings; VkDescriptorSetLayout layout; };
+    const PerSetLayout perSetLayouts[] = {
+        { 1, descriptorBindings.size() > 0, mDescriptorSetLayout },
+        { 2, uniformDescriptorBindings.size() > 0, mUniformDescriptorSetLayout },
+    };
+    for (const PerSetLayout& entry : perSetLayouts) {
+        if (entry.set <= highestSet && entry.hasBindings) {
+            layouts[entry.set] = entry.layout;
+        }
     }
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -355,6 +376,7 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
 
 VulkanProgram::~VulkanProgram() {
     vkDestroyDescriptorSetLayout(mRenderSystem->device(), mDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(mRenderSystem->device(), mUniformDescriptorSetLayout, nullptr);
     vkDestroyPipelineLayout(mRenderSystem->device(), mPipelineLayout, nullptr);
     vkDestroyPipeline(mRenderSystem->device(), mGraphicsPipeline, nullptr);
 }
