@@ -10,6 +10,7 @@ const SDLWindowOptions defaultWindowOptions {
 };
 
 void SDLWindow::create(int width, int height, const SDLWindowOptions& options) {
+    mRenderBackend = options.renderBackend;
     SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE;
     switch (options.renderBackend)
     {
@@ -40,7 +41,9 @@ void SDLWindow::destroy() {
 }
 
 void SDLWindow::swapBuffers() {
-    SDL_GL_SwapWindow(mSdlWindow);
+    if (mRenderBackend == BACKEND_OPENGL) {
+        SDL_GL_SwapWindow(mSdlWindow);
+    }
 }
 
 } // gui

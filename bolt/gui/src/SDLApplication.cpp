@@ -22,7 +22,7 @@ static void sdlGetFramebufferSize(void* userData, uint32_t& w, uint32_t& h) {
     h = static_cast<uint32_t>(ih);
 }
 
-SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend renderBackend) : mRenderBackend(renderBackend), mRunning(true) {
+SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend renderBackend) : BaseApplication(renderBackend) {
     // Initialize SDL
 #ifndef NDEBUG
     // SDL lets DBus leak by default in case other systems use it. Disable this to not confuse ASan

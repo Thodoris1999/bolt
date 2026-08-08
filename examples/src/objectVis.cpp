@@ -1,5 +1,4 @@
-#include "gui/SDLApplication3d.hpp"
-#include "gui/SDLWindow.hpp"
+#include "gui/Application.hpp"
 #include "obj/ObjectManagerText.hpp"
 #include "col/ShapeSphere.hpp"
 
@@ -31,7 +30,7 @@ using namespace bolt::col;
 int main(int argc, char** argv) {
     int initialWidth = 1000;
     int initialHeight = 1000;
-    SDLApplication3d application(initialWidth, initialHeight, BACKEND_VULKAN);
+    Application3d application(initialWidth, initialHeight, BACKEND_VULKAN);
 
     SceneManager* scene = application.scene();
     SceneNode& sceneRoot = scene->root();

@@ -1,4 +1,4 @@
-#include "gui/SDLApplication3d.hpp"
+#include "gui/Application.hpp"
 #include "obj/ObjectManagerText.hpp"
 
 #include "util/common.h"
@@ -50,7 +50,7 @@ using namespace bolt::gui;
 int main(int argc, char** argv) {
     int initialWidth = 1000;
     int initialHeight = 1000;
-    SDLApplication3d application(initialWidth, initialHeight);
+    Application3d application(initialWidth, initialHeight);
 
     SceneManager& scene = *application.scene();
     SceneNode& sceneRoot = scene.root();

@@ -2,30 +2,30 @@
 
 #include "gui/RenderBackend.hpp"
 
-#include <SDL3/SDL.h>
+struct GLFWwindow;
 
 namespace bolt {
 namespace gui {
 
-struct SDLWindowOptions {
+struct GLFWWindowOptions {
     RenderBackend renderBackend;
 };
 
-extern const SDLWindowOptions defaultWindowOptions;
+extern const GLFWWindowOptions defaultGLFWWindowOptions;
 
-class SDLWindow {
+class GLFWWindow {
 public:
     /// Creates the window using the underlying platform's windowing system
-    void create(int width, int height, const SDLWindowOptions& options = defaultWindowOptions);
+    void create(int width, int height, const GLFWWindowOptions& options = defaultGLFWWindowOptions);
     /// Destroys the window using the underlying platform's windowing system
     void destroy();
     /// Switches in rendered frame buffer to be presented
     void swapBuffers();
 
-    SDL_Window* getSdlWindow() const { return mSdlWindow; }
+    GLFWwindow* getGlfwWindow() const { return mGlfwWindow; }
 
 private:
-    SDL_Window* mSdlWindow;
+    GLFWwindow* mGlfwWindow;
     RenderBackend mRenderBackend;
 };
 

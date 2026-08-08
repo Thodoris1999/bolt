@@ -1,8 +1,5 @@
 #include "gui/SDLApplication3d.hpp"
 
-#include <chrono>
-#include <iostream>
-
 namespace bolt {
 namespace gui {
 
@@ -17,9 +14,6 @@ SDLApplication3d::~SDLApplication3d() {
 }
 
 void SDLApplication3d::run() {
-    uint32_t frameCount = 0;
-    auto fpsWindowStart = std::chrono::steady_clock::now();
-
     while (mRunning) {
         handleEvents();
 
@@ -27,15 +21,6 @@ void SDLApplication3d::run() {
 
         mScene->draw();
         mWindow.swapBuffers();
-
-        frameCount++;
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration<double>(now - fpsWindowStart);
-        if (elapsed.count() >= 1.0) {
-            std::cout << "FPS: " << (frameCount / elapsed.count()) << '\n';
-            frameCount = 0;
-            fpsWindowStart = now;
-        }
     }
 }
 
