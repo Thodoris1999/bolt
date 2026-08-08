@@ -14,6 +14,13 @@ bolt does a few things to address this:
 
 As a result, you can see in the objectVis example that the code to get a minimal scene working is simpler than ogre and more lightweight. Once you have a solid collection of low level APIs, it is easy to build performant abstractions on top of it. This approach is very much imgui-like. In fact, with the OpenGL backend, integration with an imgui overlay is as simple as adding imgui calls after the scene `draw` call.
 
+## Dependencies
+**bolt::gfx**
+Vulkan SDK
+
+**bolt::gui**
+glfw or SDL3
+
 ## Building
 Like any cmake project
 ```
