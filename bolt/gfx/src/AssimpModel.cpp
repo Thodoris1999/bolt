@@ -3,6 +3,7 @@
 #include "gfx/TexturedMesh.hpp"
 #include "gfx/PhongMesh.hpp"
 #include "gfx/SkinnedMesh.hpp"
+#include "gfx/SkinnedPhongMesh.hpp"
 
 #include "util/common.h"
 #include "gfx/common.h"
@@ -23,6 +24,126 @@ static math::Matrix44f toMatrix44f(const aiMatrix4x4& m) {
     result(2,0) = m.c1; result(2,1) = m.c2; result(2,2) = m.c3; result(2,3) = m.c4;
     result(3,0) = m.d1; result(3,1) = m.d2; result(3,2) = m.d3; result(3,3) = m.d4;
     return result;
+}
+
+static std::vector<unsigned int> extractIndices(const aiMesh* mesh) {
+    std::vector<unsigned int> indices;
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+        const aiFace& face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++) {
+            indices.push_back(face.mIndices[j]);
+        }
+    }
+    return indices;
+}
+
+// shared by vertex layouts using the (position, normal, texCoo, tangent, bitangent) field names:
+// TexturedMeshVertex and SkinnedMeshVertex
+template <typename VertexT>
+static std::vector<VertexT> extractTexturedVertices(const aiMesh* mesh) {
+    std::vector<VertexT> vertices(mesh->mNumVertices);
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        VertexT& vertex = vertices[i];
+        vertex.position = math::Vector3f(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        if (mesh->HasNormals()) {
+            vertex.normal = math::Vector3f(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        }
+        if (mesh->mTextureCoords[0]) {
+            vertex.texCoo = math::Vector2f(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+        }
+        if (mesh->HasTangentsAndBitangents()) {
+            vertex.tangent = math::Vector3f(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+            vertex.bitangent = math::Vector3f(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+        }
+    }
+    return vertices;
+}
+
+// shared by vertex layouts that only carry (position, normal), under whatever field names they use:
+// PhongDrawableVertex (pos, nrm) and SkinnedPhongMeshVertex (position, normal)
+template <typename VertexT>
+static std::vector<VertexT> extractPositionNormalVertices(const aiMesh* mesh, math::Vector3f VertexT::*posField, math::Vector3f VertexT::*nrmField) {
+    std::vector<VertexT> vertices(mesh->mNumVertices);
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+        vertices[i].*posField = math::Vector3f(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        if (mesh->HasNormals()) {
+            vertices[i].*nrmField = math::Vector3f(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        }
+    }
+    return vertices;
+}
+
+template <typename VertexT>
+static void addVertexBoneData(VertexT& vertex, int32_t boneId, float weight) {
+    for (int i = 0; i < MAX_VTX_WEIGHTS; i++) {
+        if (vertex.weights[i] == 0.0f) {
+            vertex.boneIds[i] = boneId;
+            vertex.weights[i] = weight;
+            return;
+        }
+    }
+}
+
+// assigns each bone a stable index, records which vertices it influences, and writes each
+// bone's bind-pose offset into boneOffsets
+template <typename VertexT>
+static std::unordered_map<std::string, int32_t> buildBoneMapping(const aiMesh* mesh, std::vector<VertexT>& vertices,
+        std::unordered_map<std::string, math::Matrix44f>& boneOffsets) {
+    std::unordered_map<std::string, int32_t> boneMapping;
+    for (unsigned int i = 0; i < mesh->mNumBones; i++) {
+        aiBone* bone = mesh->mBones[i];
+        std::string boneName(bone->mName.C_Str());
+
+        auto it = boneMapping.find(boneName);
+        int32_t boneId;
+        if (it == boneMapping.end()) {
+            boneId = static_cast<int32_t>(boneMapping.size());
+            if (boneId >= MAX_BONES) {
+                PANIC("AssimpModel: mesh has more than MAX_BONES (%d) distinct bones", MAX_BONES);
+            }
+            boneMapping[boneName] = boneId;
+        } else {
+            boneId = it->second;
+        }
+
+        for (unsigned int j = 0; j < bone->mNumWeights; j++) {
+            const aiVertexWeight& vw = bone->mWeights[j];
+            addVertexBoneData(vertices[vw.mVertexId], boneId, vw.mWeight);
+        }
+
+        boneOffsets[boneName] = toMatrix44f(bone->mOffsetMatrix);
+    }
+    return boneMapping;
+}
+
+struct MaterialColors {
+    math::Vector3f ambient = math::Vector3f::ZERO;
+    math::Vector3f diffuse = math::Vector3f::ZERO;
+    math::Vector3f specular = math::Vector3f::ZERO;
+    float shininess = 0.0f;
+};
+
+static MaterialColors extractMaterialColors(aiMaterial* material) {
+    MaterialColors colors;
+    aiColor3D color;
+
+    if (material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
+        colors.diffuse = math::Vector3f(color.r, color.g, color.b);
+    }
+
+    if (material->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS) {
+        colors.ambient = math::Vector3f(color.r, color.g, color.b);
+    } else {
+        colors.ambient = colors.diffuse * 0.5f;
+    }
+
+    if (material->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS) {
+        colors.specular = math::Vector3f(color.r, color.g, color.b);
+    }
+
+    material->Get(AI_MATKEY_SHININESS, colors.shininess);
+
+    return colors;
 }
 
 AssimpModel::AssimpModel(const char* path) {
@@ -63,7 +184,7 @@ void AssimpModel::loadModel(const char* path) {
 
 void AssimpModel::processNode(aiNode *node, const aiScene *scene) {
     for(unsigned int i = 0; i < node->mNumMeshes; i++) {
-        // the node object only contains indices to index the actual objects in the scene. 
+        // the node object only contains indices to index the actual objects in the scene.
         // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         Drawable3d* drawableMesh = processMesh(mesh, scene);
@@ -78,10 +199,11 @@ void AssimpModel::processNode(aiNode *node, const aiScene *scene) {
 Drawable3d* AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene) {
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     // kinda crude way of figuring out how to shade the mesh. Let me know if you know a better way
+    bool hasTexture = material->GetTextureCount(aiTextureType_DIFFUSE) > 0 || material->GetTextureCount(aiTextureType_AMBIENT) > 0;
     if (mesh->HasBones()) {
         // skinned mesh
-        return processSkinnedMesh(mesh, scene);
-    } else if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0 || material->GetTextureCount(aiTextureType_AMBIENT) > 0) {
+        return hasTexture ? processSkinnedMesh(mesh, scene) : processSkinnedPhongMesh(mesh, scene);
+    } else if (hasTexture) {
         // textured mesh
         return processTexturedMesh(mesh, scene);
     } else {
@@ -90,258 +212,68 @@ Drawable3d* AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene) {
     }
 }
 
-static void addVertexBoneData(SkinnedMeshVertex& vertex, int32_t boneId, float weight) {
-    for (int i = 0; i < MAX_VTX_WEIGHTS; i++) {
-        if (vertex.weights[i] == 0.0f) {
-            vertex.boneIds[i] = boneId;
-            vertex.weights[i] = weight;
-            return;
-        }
-    }
-}
-
 Drawable3d* AssimpModel::processSkinnedMesh(aiMesh *mesh, const aiScene *scene) {
-    std::vector<SkinnedMeshVertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<TextureDescriptor> textures;
-
-    for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        SkinnedMeshVertex vertex;
-        math::Vector3f vector;
-        // positions
-        vector.x = mesh->mVertices[i].x;
-        vector.y = mesh->mVertices[i].y;
-        vector.z = mesh->mVertices[i].z;
-        vertex.position = vector;
-        // normals
-        if (mesh->HasNormals())
-        {
-            vector.x = mesh->mNormals[i].x;
-            vector.y = mesh->mNormals[i].y;
-            vector.z = mesh->mNormals[i].z;
-            vertex.normal = vector;
-        }
-        // texture coordinates
-        if(mesh->mTextureCoords[0])
-        {
-            math::Vector2f vec;
-            vec.x = mesh->mTextureCoords[0][i].x;
-            vec.y = mesh->mTextureCoords[0][i].y;
-            vertex.texCoo = vec;
-        }
-        else
-            vertex.texCoo = math::Vector2f(0.0f, 0.0f);
-
-        // tangent
-        if (mesh->HasTangentsAndBitangents()) {
-            vector.x = mesh->mTangents[i].x;
-            vector.y = mesh->mTangents[i].y;
-            vector.z = mesh->mTangents[i].z;
-            vertex.tangent = vector;
-
-            vector.x = mesh->mBitangents[i].x;
-            vector.y = mesh->mBitangents[i].y;
-            vector.z = mesh->mBitangents[i].z;
-            vertex.bitangent = vector;
-        }
-
-        vertices.push_back(vertex);
-    }
-
-    for(unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-        aiFace face = mesh->mFaces[i];
-        for(unsigned int j = 0; j < face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);
-    }
-
-    // bone weights: assign each bone a stable index and record which vertices it influences
-    std::unordered_map<std::string, int32_t> boneMapping;
-    for (unsigned int i = 0; i < mesh->mNumBones; i++) {
-        aiBone* bone = mesh->mBones[i];
-        std::string boneName(bone->mName.C_Str());
-
-        auto it = boneMapping.find(boneName);
-        int32_t boneId;
-        if (it == boneMapping.end()) {
-            boneId = static_cast<int32_t>(boneMapping.size());
-            if (boneId >= MAX_BONES) {
-                PANIC("AssimpModel: mesh has more than MAX_BONES (%d) distinct bones", MAX_BONES);
-            }
-            boneMapping[boneName] = boneId;
-        } else {
-            boneId = it->second;
-        }
-
-        for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-            const aiVertexWeight& vw = bone->mWeights[j];
-            addVertexBoneData(vertices[vw.mVertexId], boneId, vw.mWeight);
-        }
-
-        mBoneOffsets[boneName] = toMatrix44f(bone->mOffsetMatrix);
-    }
+    std::vector<SkinnedMeshVertex> vertices = extractTexturedVertices<SkinnedMeshVertex>(mesh);
+    std::vector<unsigned int> indices = extractIndices(mesh);
+    std::unordered_map<std::string, int32_t> boneMapping = buildBoneMapping(mesh, vertices, mBoneOffsets);
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<TextureDescriptor> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, 1);
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    std::vector<TextureDescriptor> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, 2);
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, 4);
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    std::vector<TextureDescriptor> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, 0);
-    textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
-    std::vector<TextureDescriptor> shininessMaps = loadMaterialTextures(material, aiTextureType_SHININESS, 3);
-    textures.insert(textures.end(), shininessMaps.begin(), shininessMaps.end());
+    std::vector<TextureDescriptor> textures = loadStandardMaterialTextures(material);
 
     SkinnedMesh* skinnedMesh = new SkinnedMesh(vertices, indices, textures, boneMapping);
     mSkinnedMeshes.push_back(skinnedMesh);
     return skinnedMesh;
 }
 
+Drawable3d* AssimpModel::processSkinnedPhongMesh(aiMesh *mesh, const aiScene *scene) {
+    std::vector<SkinnedPhongMeshVertex> vertices = extractPositionNormalVertices<SkinnedPhongMeshVertex>(
+        mesh, &SkinnedPhongMeshVertex::position, &SkinnedPhongMeshVertex::normal);
+    std::vector<unsigned int> indices = extractIndices(mesh);
+    std::unordered_map<std::string, int32_t> boneMapping = buildBoneMapping(mesh, vertices, mBoneOffsets);
+
+    SkinnedPhongMesh* result = new SkinnedPhongMesh(vertices, indices, boneMapping);
+    mSkinnedMeshes.push_back(result);
+
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    MaterialColors colors = extractMaterialColors(material);
+    result->setAmbient(colors.ambient);
+    result->setDiffuse(colors.diffuse);
+    result->setSpecular(colors.specular);
+    result->setShininess(colors.shininess);
+
+    return result;
+}
+
 Drawable3d* AssimpModel::processPhongMesh(aiMesh *mesh, const aiScene *scene) {
-    std::vector<PhongDrawableVertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<TextureDescriptor> textures;
-
-    for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        PhongDrawableVertex vertex;
-        math::Vector3f vector;
-        // positions
-        vector.x = mesh->mVertices[i].x;
-        vector.y = mesh->mVertices[i].y;
-        vector.z = mesh->mVertices[i].z;
-        vertex.pos = vector;
-        // normals
-        if (mesh->HasNormals())
-        {
-            vector.x = mesh->mNormals[i].x;
-            vector.y = mesh->mNormals[i].y;
-            vector.z = mesh->mNormals[i].z;
-            vertex.nrm = vector;
-        }
-
-        vertices.push_back(vertex);
-    }
-
-    for(unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-        aiFace face = mesh->mFaces[i];
-        for(unsigned int j = 0; j < face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);        
-    }
+    std::vector<PhongDrawableVertex> vertices = extractPositionNormalVertices<PhongDrawableVertex>(
+        mesh, &PhongDrawableVertex::pos, &PhongDrawableVertex::nrm);
+    std::vector<unsigned int> indices = extractIndices(mesh);
 
     PhongMesh* res = new PhongMesh(vertices, indices);
 
-    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];    
-    aiColor3D color;
-    float shininess;
-
-    // DIFFUSE COLOR
-    if (material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
-        res->setDiffuse(math::Vector3f(color.r, color.g, color.b));
-    }
-
-    // AMBIENT COLOR
-    if (material->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS) {
-        res->setAmbient(math::Vector3f(color.r, color.g, color.b));
-    } else {
-        res->setAmbient(res->diffuse() * 0.5f);
-    }
-
-    // SPECULAR COLOR
-    if (material->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS) {
-        res->setSpecular(math::Vector3f(color.r, color.g, color.b));
-    }
-
-    // SHININESS
-    if (material->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS) {
-        res->setShininess(shininess);
-    }
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    MaterialColors colors = extractMaterialColors(material);
+    res->setAmbient(colors.ambient);
+    res->setDiffuse(colors.diffuse);
+    res->setSpecular(colors.specular);
+    res->setShininess(colors.shininess);
 
     return res;
 }
 
 Drawable3d* AssimpModel::processTexturedMesh(aiMesh *mesh, const aiScene *scene) {
-    std::vector<TexturedMeshVertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<TextureDescriptor> textures;
+    std::vector<TexturedMeshVertex> vertices = extractTexturedVertices<TexturedMeshVertex>(mesh);
+    std::vector<unsigned int> indices = extractIndices(mesh);
 
-    for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        TexturedMeshVertex vertex;
-        math::Vector3f vector;
-        // positions
-        vector.x = mesh->mVertices[i].x;
-        vector.y = mesh->mVertices[i].y;
-        vector.z = mesh->mVertices[i].z;
-        vertex.position = vector;
-        // normals
-        if (mesh->HasNormals())
-        {
-            vector.x = mesh->mNormals[i].x;
-            vector.y = mesh->mNormals[i].y;
-            vector.z = mesh->mNormals[i].z;
-            vertex.normal = vector;
-        }
-        // texture coordinates
-        if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-        {
-            math::Vector2f vec;
-            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-            vec.x = mesh->mTextureCoords[0][i].x; 
-            vec.y = mesh->mTextureCoords[0][i].y;
-            vertex.texCoo = vec;
-        }
-        else
-            vertex.texCoo = math::Vector2f(0.0f, 0.0f);
-
-        // tangent
-        if (mesh->HasTangentsAndBitangents()) {
-            vector.x = mesh->mTangents[i].x;
-            vector.y = mesh->mTangents[i].y;
-            vector.z = mesh->mTangents[i].z;
-            vertex.tangent = vector;
-
-            vector.x = mesh->mBitangents[i].x;
-            vector.y = mesh->mBitangents[i].y;
-            vector.z = mesh->mBitangents[i].z;
-            vertex.bitangent = vector;
-        }
-
-        vertices.push_back(vertex);
-    }
-
-    for(unsigned int i = 0; i < mesh->mNumFaces; i++)
-    {
-        aiFace face = mesh->mFaces[i];
-        for(unsigned int j = 0; j < face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);        
-    }
-
-    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];    
     // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
+    // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER.
     // Same applies to other texture as the following list summarizes:
     // diffuse: texture_diffuseN
     // specular: texture_specularN
     // normal: texture_normalN
+    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    std::vector<TextureDescriptor> textures = loadStandardMaterialTextures(material);
 
-    // 1. diffuse maps
-    std::vector<TextureDescriptor> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, 1);
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    // 2. specular maps
-    std::vector<TextureDescriptor> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, 2);
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    // 3. normal maps
-    std::vector<TextureDescriptor> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, 4);
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    // 4. ambient maps
-    std::vector<TextureDescriptor> ambientMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, 0);
-    textures.insert(textures.end(), ambientMaps.begin(), ambientMaps.end());
-    // 5. Shininess maps
-    std::vector<TextureDescriptor> shininessMaps = loadMaterialTextures(material, aiTextureType_SHININESS, 3);
-    textures.insert(textures.end(), shininessMaps.begin(), shininessMaps.end());
-    
-    // return a mesh object created from the extracted mesh data
     return new TexturedMesh(vertices, indices, textures);
 }
 
@@ -360,6 +292,22 @@ std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat
         texture.binding = binding;
         textures.push_back(texture);
     }
+    return textures;
+}
+
+std::vector<TextureDescriptor> AssimpModel::loadStandardMaterialTextures(aiMaterial *mat) {
+    std::vector<TextureDescriptor> textures;
+    auto append = [&](aiTextureType type, uint32_t binding) {
+        std::vector<TextureDescriptor> maps = loadMaterialTextures(mat, type, binding);
+        textures.insert(textures.end(), maps.begin(), maps.end());
+    };
+
+    append(aiTextureType_DIFFUSE, 1);
+    append(aiTextureType_SPECULAR, 2);
+    append(aiTextureType_HEIGHT, 4);
+    append(aiTextureType_AMBIENT, 0);
+    append(aiTextureType_SHININESS, 3);
+
     return textures;
 }
 

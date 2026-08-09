@@ -1,6 +1,6 @@
 #include "gfx/AssimpAnimation.hpp"
 #include "gfx/AssimpModel.hpp"
-#include "gfx/SkinnedMesh.hpp"
+#include "gfx/SkinnedDrawable.hpp"
 
 #include <assimp/scene.h>
 
@@ -180,7 +180,7 @@ void AssimpAnimation::applyNode(const aiNode* node, const math::Matrix44f& paren
     const math::Matrix44f* offset = mModel.boneOffset(nodeName);
     if (offset != nullptr) {
         math::Matrix44f finalTransform = mGlobalInverseTransform * globalTransform * (*offset);
-        for (SkinnedMesh* mesh : mModel.skinnedMeshes()) {
+        for (SkinnedDrawable* mesh : mModel.skinnedMeshes()) {
             if (mesh->hasBone(nodeName)) {
                 mesh->setBoneTransform(nodeName, finalTransform);
             }

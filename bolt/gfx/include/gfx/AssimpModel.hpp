@@ -14,7 +14,7 @@
 namespace bolt {
 namespace gfx {
 
-class SkinnedMesh;
+class SkinnedDrawable;
 class AssimpAnimation;
 
 class AssimpModel : public SceneNode {
@@ -25,7 +25,7 @@ public:
     void load();
 
     std::vector<Drawable3d*>& meshes() { return mMeshes; }
-    const std::vector<SkinnedMesh*>& skinnedMeshes() const { return mSkinnedMeshes; }
+    const std::vector<SkinnedDrawable*>& skinnedMeshes() const { return mSkinnedMeshes; }
 
     const aiScene* scene() const { return mScene; }
 
@@ -42,14 +42,16 @@ private:
     void processNode(aiNode *node, const aiScene *scene);
     Drawable3d* processMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processSkinnedMesh(aiMesh *mesh, const aiScene *scene);
+    Drawable3d* processSkinnedPhongMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processTexturedMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processPhongMesh(aiMesh *mesh, const aiScene *scene);
     std::vector<TextureDescriptor> loadMaterialTextures(aiMaterial *mat, aiTextureType type, uint32_t binding);
+    std::vector<TextureDescriptor> loadStandardMaterialTextures(aiMaterial *mat);
 
     Assimp::Importer mImporter;
     const aiScene* mScene = nullptr;
     std::vector<Drawable3d*> mMeshes;
-    std::vector<SkinnedMesh*> mSkinnedMeshes;
+    std::vector<SkinnedDrawable*> mSkinnedMeshes;
     std::unordered_map<std::string, math::Matrix44f> mBoneOffsets;
     std::vector<AssimpAnimation*> mAnimations;
     std::string mDirectory;

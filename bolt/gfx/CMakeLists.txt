@@ -20,6 +20,7 @@ set(gfx_SRC
     src/DrawableTriangle.cpp
     src/TexturedMesh.cpp
     src/SkinnedMesh.cpp
+    src/SkinnedPhongMesh.cpp
 
     src/Axis.cpp
 
@@ -67,6 +68,10 @@ csp_add_program(skinned
     VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/skinned.vert
     FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/textured.frag
 )
+csp_add_program(skinnedphong
+    VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/skinnedphong.vert
+    FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/phong.frag
+)
 
 add_library(gfx ${gfx_SRC})
 add_library(bolt::gfx ALIAS gfx)
@@ -85,6 +90,7 @@ csp_shader_dependency(gfx PRIVATE flat)
 csp_shader_dependency(gfx PRIVATE phong)
 csp_shader_dependency(gfx PRIVATE textured)
 csp_shader_dependency(gfx PRIVATE skinned)
+csp_shader_dependency(gfx PRIVATE skinnedphong)
 
 target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
 
