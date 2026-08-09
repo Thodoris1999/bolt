@@ -23,6 +23,16 @@ inline VkFormat toVkFormat(DataType type, int count) {
             PANIC("Unsupported float count %d", count);
             return VK_FORMAT_UNDEFINED;
         }
+    case BOLT_I32:
+        switch (count) {
+        case 1: return VK_FORMAT_R32_SINT;
+        case 2: return VK_FORMAT_R32G32_SINT;
+        case 3: return VK_FORMAT_R32G32B32_SINT;
+        case 4: return VK_FORMAT_R32G32B32A32_SINT;
+        default:
+            PANIC("Unsupported int count %d", count);
+            return VK_FORMAT_UNDEFINED;
+        }
     default:
         PANIC("Unsupported DataType %d", static_cast<int>(type));
         return VK_FORMAT_UNDEFINED;

@@ -18,13 +18,16 @@ namespace bolt {
 namespace gfx {
 
 enum DataType {
-    BOLT_F32    
+    BOLT_F32,
+    BOLT_I32,
 };
 
 inline int sizeOfType(DataType type) {
     switch (type) {
     case BOLT_F32:
         return sizeof(float);
+    case BOLT_I32:
+        return sizeof(int32_t);
     default: {
         PANIC("Unknkown type %d", static_cast<int>(type));
         return 0; // unknown type
@@ -106,6 +109,10 @@ public:
     virtual uint32_t textureCount() const { return 0; }
     /// Perform per draw operations before drawing like setting uniforms. For example Drawable3d uses this to set the model matrix
     virtual void onDraw() {}
+
+    /// Called once by the RenderSystem right after this drawable has been loaded, i.e. right after
+    /// it becomes safe to access the drawable's uniform or program via setUniform(), program()
+    virtual void onLoaded() {}
 
     // Drawable pushConstantBuffer
     void setPushConstantData(void* data) { mPushConstantData = data; };

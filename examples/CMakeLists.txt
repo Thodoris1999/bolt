@@ -30,3 +30,6 @@ target_link_libraries(dumpFrame PRIVATE ccd bolt::math bolt::gfx bolt::gui)
 add_executable(headlessVis src/headlessVis.cpp ${vis_common_SRC})
 target_include_directories(headlessVis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(headlessVis PRIVATE ccd bolt::math bolt::gfx)
+
+add_executable(skinnedAnimationVis src/skinnedAnimationVis.cpp)
+target_link_libraries(skinnedAnimationVis PRIVATE bolt::math bolt::gfx bolt::gui)

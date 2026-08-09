@@ -120,6 +120,8 @@ void VulkanDrawable::load() {
     createUniformBuffers();
 
     mLoaded = true;
+
+    drawable->onLoaded();
 }
 
 void VulkanDrawable::unload() {

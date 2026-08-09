@@ -13,6 +13,7 @@ namespace gfx {
 static GLenum bolt2openglDtype(DataType type) {
     switch (type) {
         case BOLT_F32: return GL_FLOAT;
+        case BOLT_I32: return GL_INT;
         default: {
             PANIC("Unknkown data type %d", static_cast<int>(type));
             return GL_FLOAT; // unknown type
@@ -197,6 +198,9 @@ void OpenglRenderSystem::load() {
     }
 
     // create each drawable's own buffer for its set=2 uniform blocks
+    // TODO: currently set=2 uniforms with the same bindings can collide with other sets' uniforms of the same binding
+    // TODO: in the shader cross compiler, map these to a different binging. Alternatively remove explicit binding specifier on
+    // TODO: the shader source and instead bind them manually here by name
     for (auto* d : mDrawables) {
         const csp::ProgramDescriptor& pd = d->drawable->programDescriptor();
         for (uint32_t i = 0; i < pd.uniform_count; i++) {
@@ -212,6 +216,8 @@ void OpenglRenderSystem::load() {
             d->drawable->setUniformData(i, uniform.get());
             d->uniformBuffers.push_back(std::move(uniform));
         }
+
+        d->drawable->onLoaded();
     }
 }
 

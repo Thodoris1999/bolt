@@ -19,6 +19,7 @@ set(gfx_SRC
     src/DrawableSpheroid.cpp
     src/DrawableTriangle.cpp
     src/TexturedMesh.cpp
+    src/SkinnedMesh.cpp
 
     src/Axis.cpp
 
@@ -46,7 +47,7 @@ set(gfx_SRC
 )
 
 if(TARGET assimp::assimp)
-    list(APPEND gfx_SRC src/AssimpModel.cpp)
+    list(APPEND gfx_SRC src/AssimpModel.cpp src/AssimpAnimation.cpp)
 endif()
 
 # shader programs that come with GFX
@@ -60,6 +61,10 @@ csp_add_program(phong
 )
 csp_add_program(textured
     VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/textured.vert
+    FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/textured.frag
+)
+csp_add_program(skinned
+    VERT ${CMAKE_CURRENT_SOURCE_DIR}/share/skinned.vert
     FRAG ${CMAKE_CURRENT_SOURCE_DIR}/share/textured.frag
 )
 
@@ -79,6 +84,7 @@ target_compile_options(gfx PRIVATE -Wall)
 csp_shader_dependency(gfx PRIVATE flat)
 csp_shader_dependency(gfx PRIVATE phong)
 csp_shader_dependency(gfx PRIVATE textured)
+csp_shader_dependency(gfx PRIVATE skinned)
 
 target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
 
