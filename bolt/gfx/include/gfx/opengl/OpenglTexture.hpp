@@ -10,6 +10,7 @@ namespace gfx {
 class OpenglTexture final : public RenderTexture {
 public:
     OpenglTexture(const char* textureFile, uint32_t binding);
+    virtual ~OpenglTexture();
 
     GLuint id() const { return mId; }
     GLuint binding() const { return mBinding; }

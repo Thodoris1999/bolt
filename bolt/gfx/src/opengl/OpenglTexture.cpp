@@ -39,6 +39,10 @@ OpenglTexture::OpenglTexture(const char* textureFile, uint32_t binding) : mBindi
     }
 }
 
+OpenglTexture::~OpenglTexture() {
+    glDeleteTextures(1, &mId);
+}
+
 void OpenglTexture::bind() {
     glBindTexture(GL_TEXTURE_2D, mId);
 }

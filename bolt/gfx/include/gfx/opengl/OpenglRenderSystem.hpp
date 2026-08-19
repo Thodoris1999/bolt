@@ -12,12 +12,14 @@ namespace bolt {
 namespace gfx {
 
 struct OpenglDrawable {
-    Drawable* drawable;
-    GLuint VBO;
-    GLuint EBO;
-    GLuint VAO;
+    Drawable* drawable = nullptr;
+    GLuint VBO = 0;
+    GLuint EBO = 0;
+    GLuint VAO = 0;
     // one per set=2 uniform block declared by this drawable's program
     std::vector<std::unique_ptr<OpenglUniformBuffer>> uniformBuffers;
+
+    ~OpenglDrawable();
 
     void load();
 };

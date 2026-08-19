@@ -49,6 +49,12 @@ OpenglRenderSystem::~OpenglRenderSystem() {
     free(mPushConstantBuffer);
 }
 
+OpenglDrawable::~OpenglDrawable() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}
+
 void OpenglDrawable::load() {
     glGenBuffers(1, &VBO);
     if (drawable->indexData() != nullptr) {
