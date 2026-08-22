@@ -43,10 +43,7 @@ OpenglRenderSystem::~OpenglRenderSystem() {
     for (auto* entry : mUniforms) {
         delete entry;
     }
-    for (auto* d : mDrawables) {
-        delete d;
-    }
-    free(mPushConstantBuffer);
+    delete mPushConstantUniform;
 }
 
 OpenglDrawable::~OpenglDrawable() {
@@ -92,7 +89,6 @@ OpenglRenderSystem::OpenglRenderSystem() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-    mPushConstantBuffer = malloc(0); // just so that the free in the dtor is valid even if load is not called
 }
 
 void OpenglRenderSystem::setClearColor(float r, float g, float b, float a) {
@@ -104,9 +100,13 @@ void OpenglRenderSystem::setViewport(int x, int y, int width, int height) {
 }
 
 void OpenglRenderSystem::addDrawable(Drawable* drawable) {
-    OpenglDrawable* d = new OpenglDrawable();
+    auto d = std::make_unique<OpenglDrawable>();
     d->drawable = drawable;
-    mDrawables.push_back(d);
+    mDrawables.emplace(drawable, std::move(d));
+}
+
+void OpenglRenderSystem::removeDrawable(Drawable* drawable) {
+    mDrawables.erase(drawable);
 }
 
 RenderUniformBuffer* OpenglRenderSystem::addUniform(size_t size, uint32_t bindPoint) {
@@ -115,16 +115,25 @@ RenderUniformBuffer* OpenglRenderSystem::addUniform(size_t size, uint32_t bindPo
     return uni;
 }
 
-void OpenglRenderSystem::registerProgram(Drawable* d) {
+void OpenglRenderSystem::registerProgram(Drawable* d, uint32_t pushConstantBindPoint) {
     const csp::ProgramDescriptor& desc = d->programDescriptor();
     auto it = mLoadedPrograms.find(desc);
 
     if (it != mLoadedPrograms.end()) {
         d->setProgram(it->second);
+        return;
+    }
+
+    RenderProgram* program = new OpenglProgram(&desc);
+    mLoadedPrograms[desc] = program;
+    d->setProgram(program);
+
+    GLuint programId  = static_cast<OpenglProgram*>(program)->id();
+    GLuint blockIndex = glGetUniformBlockIndex(programId, "PushConstants");
+    if (blockIndex != GL_INVALID_INDEX) {
+        glUniformBlockBinding(programId, blockIndex, pushConstantBindPoint);
     } else {
-        RenderProgram* program = new OpenglProgram(&desc);
-        mLoadedPrograms[desc] = program;
-        d->setProgram(program);
+        PANIC("Opengl: Failed to create auxiliary uniform for push constants");
     }
 }
 
@@ -143,18 +152,22 @@ void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& d
 }
 
 void OpenglRenderSystem::load() {
-    size_t totalPushConstantSize = 0;
-    size_t pushConstantUniformSize = 0;
-    for (auto* d : mDrawables) {
-        // calculate push constant needs
-        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
-        if (pushConstantUniformSize < drawablePushConstantSize) {
-            pushConstantUniformSize = drawablePushConstantSize;
-        }
-        totalPushConstantSize += drawablePushConstantSize;
+    // find the binding point reserved for the push-constant emulation uniform, avoiding
+    // whatever SceneManager's own uniforms (camera, view pos, light) already occupy
+    std::unordered_set<uint32_t> usedBindingPoints;
+    for (size_t i = 0; i < mUniforms.size(); i++) {
+        usedBindingPoints.insert(static_cast<OpenglUniformBuffer*>(mUniforms[i])->bindPoint());
+    }
+    uint32_t pushConstantBindPoint = 0;
+    while (usedBindingPoints.find(pushConstantBindPoint) != usedBindingPoints.end()) {
+        pushConstantBindPoint++;
+    }
 
-        // load program
-        registerProgram(d->drawable);
+    for (auto& [key, d] : mDrawables) {
+        if (d->VAO != 0) continue; // already loaded by a previous call
+
+        // load program (also binds its "PushConstants" block, the first time this program is seen)
+        registerProgram(d->drawable, pushConstantBindPoint);
         auto openglProgram = static_cast<OpenglProgram*>(d->drawable->program());
         openglProgram->use();
 
@@ -165,49 +178,25 @@ void OpenglRenderSystem::load() {
             registerTexture(d->drawable, textures[i], openglProgram->id());
         }
 
+        // this drawable's own push-constant scratch storage
+        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
+        d->pushConstantData.assign(drawablePushConstantSize, 0);
+        d->drawable->setPushConstantData(d->pushConstantData.data());
+
+        // grow the shared push-constant emulation uniform if this drawable needs more room
+        // than any drawable loaded so far
+        if (mPushConstantUniform == nullptr || drawablePushConstantSize > mPushConstantUniform->size()) {
+            delete mPushConstantUniform;
+            mPushConstantUniform = new OpenglUniformBuffer(drawablePushConstantSize, pushConstantBindPoint);
+        }
+
         // load drawable buffers (vertices and indices)
         d->load();
-    }
-    glUseProgram(0);
 
-    // allocate push constant CPU buffer and calculate drawable constants inside it
-    mPushConstantBuffer = realloc(mPushConstantBuffer, totalPushConstantSize);
-    size_t drawablePushConstantOffset = 0;
-    for (auto* d : mDrawables) {
-        // set push constant pointer
-        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
-        d->drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
-        drawablePushConstantOffset += drawablePushConstantSize;
-    }
-
-    /// create dummy uniform for push constants
-    // find available binding point
-    std::unordered_set<uint32_t> usedBindingPoints;
-    for (size_t i = 0; i < mUniforms.size(); i++) {
-        usedBindingPoints.insert(static_cast<OpenglUniformBuffer*>(mUniforms[i])->bindPoint());
-    }
-    uint32_t pushConstantBindPoint = 0;
-    while (usedBindingPoints.find(pushConstantBindPoint) != usedBindingPoints.end()) {
-        pushConstantBindPoint++;
-    }
-    mPushConstantUniform = new OpenglUniformBuffer(pushConstantUniformSize, pushConstantBindPoint);
-    mUniforms.emplace_back(mPushConstantUniform);
-    // set binding of push constant in programs
-    for (auto& entry : mLoadedPrograms) {
-        GLuint program = static_cast<OpenglProgram*>(entry.second)->id();
-        GLuint blockIndex = glGetUniformBlockIndex(program, "PushConstants");
-        if (blockIndex != GL_INVALID_INDEX) {
-            glUniformBlockBinding(program, blockIndex, pushConstantBindPoint);
-        } else {
-            PANIC("Opengl: Failed to create auxiliary uniform for push constants");
-        }
-    }
-
-    // create each drawable's own buffer for its set=2 uniform blocks
-    // TODO: currently set=2 uniforms with the same bindings can collide with other sets' uniforms of the same binding
-    // TODO: in the shader cross compiler, map these to a different binging. Alternatively remove explicit binding specifier on
-    // TODO: the shader source and instead bind them manually here by name
-    for (auto* d : mDrawables) {
+        // create this drawable's own buffer for its set=2 uniform blocks
+        // TODO: currently set=2 uniforms with the same bindings can collide with other sets' uniforms of the same binding
+        // TODO: in the shader cross compiler, map these to a different binging. Alternatively remove explicit binding specifier on
+        // TODO: the shader source and instead bind them manually here by name
         const csp::ProgramDescriptor& pd = d->drawable->programDescriptor();
         for (uint32_t i = 0; i < pd.uniform_count; i++) {
             const csp::UniformVar& uv = pd.uniform_vars[i];
@@ -225,12 +214,15 @@ void OpenglRenderSystem::load() {
 
         d->drawable->onLoaded();
     }
+    glUseProgram(0);
 }
 
 void OpenglRenderSystem::renderFrame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (auto* d : mDrawables) {
+    for (auto& [key, d] : mDrawables) {
+        if (!d->drawable->visible()) continue;
+
         // configure program
         auto openglProgram = static_cast<OpenglProgram*>(d->drawable->program());
         openglProgram->use();

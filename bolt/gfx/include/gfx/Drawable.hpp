@@ -114,6 +114,11 @@ public:
     /// it becomes safe to access the drawable's uniform or program via setUniform(), program()
     virtual void onLoaded() {}
 
+    // Drawable visibility -- an invisible drawable is skipped entirely by the RenderSystem's
+    // draw loop, without being removed (and re-added later) from the scene
+    void setVisible(bool visible) { mVisible = visible; }
+    bool visible() const { return mVisible; }
+
     // Drawable pushConstantBuffer
     void setPushConstantData(void* data) { mPushConstantData = data; };
     void* pushConstantData() { return mPushConstantData; }
@@ -177,6 +182,8 @@ public:
     }
 
 protected:
+    bool mVisible = true;
+
     // members initialized by the rendering engine, only valid after load has been called on the RenderSystem
     void* mPushConstantData;
     RenderProgram* mProgram;

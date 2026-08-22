@@ -21,6 +21,7 @@ public:
     void bind() const;
 
     GLuint bindPoint() const { return mBindPoint; }
+    GLsizeiptr size() const { return mSize; }
 
 private:
     GLuint mId;

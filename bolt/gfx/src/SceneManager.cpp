@@ -2,6 +2,8 @@
 
 #include "util/common.h"
 
+#include <algorithm>
+
 namespace bolt {
 namespace gfx {
 
@@ -31,24 +33,29 @@ OrbitCamera* SceneManager::createOrbitCamera() {
 void SceneManager::loadAll() {
     addDrawableRecurse(&mSceneRoot);
 
-    // create uniform blocks
-    // binding point 0: camera view and projection matrices
-    mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(CameraData), 0));
-    // binding point 1: camera position
-    mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(math::Vector3f), 1));
-    // binding point 2: directional light
-    mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(DirLightParams), 2));
+    if (!mLoaded) {
+        // create uniform blocks
+        // binding point 0: camera view and projection matrices
+        mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(CameraData), 0));
+        // binding point 1: camera position
+        mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(math::Vector3f), 1));
+        // binding point 2: directional light
+        mUniforms.emplace_back(mRenderSystem->addUniform(sizeof(DirLightParams), 2));
+    }
 
     mRenderSystem->load();
 
-    // add a sun
-    mDirLightParams = DirLightParams(
-        math::Vector3f(-0.2f, -0.3f, -1.0f),   // direction
-        math::Vector3f(0.3f, 0.3f, 0.3f),   // ambient
-        math::Vector3f(0.4f, 0.4f, 0.4f),      // diffuse
-        math::Vector3f(0.5f, 0.5f, 0.5f)       // specular
-    );
-    mRenderSystem->uniform(2)->writeData(&mDirLightParams, 0, sizeof(mDirLightParams));
+    if (!mLoaded) {
+        // add a sun
+        mDirLightParams = DirLightParams(
+            math::Vector3f(-0.2f, -0.3f, -1.0f),   // direction
+            math::Vector3f(0.3f, 0.3f, 0.3f),   // ambient
+            math::Vector3f(0.4f, 0.4f, 0.4f),      // diffuse
+            math::Vector3f(0.5f, 0.5f, 0.5f)       // specular
+        );
+        mRenderSystem->uniform(2)->writeData(&mDirLightParams, 0, sizeof(mDirLightParams));
+        mLoaded = true;
+    }
 }
 
 void SceneManager::addDrawableRecurse(SceneNode* node) {
@@ -59,6 +66,18 @@ void SceneManager::addDrawableRecurse(SceneNode* node) {
     for (int i = 0; i < node->childCount(); i++) {
         addDrawableRecurse(node->child(i));
     }
+}
+
+void SceneManager::removeDrawable(Drawable3d* drawable) {
+    if (SceneNode* parent = drawable->parent())
+        parent->detachChild(drawable);
+    mRenderSystem->removeDrawable(drawable);
+
+    auto it = std::find(mDrawables.begin(), mDrawables.end(), drawable);
+    if (it != mDrawables.end())
+        mDrawables.erase(it);
+
+    delete drawable;
 }
 
 void SceneManager::draw(Camera* camera) {

@@ -18,6 +18,9 @@ struct OpenglDrawable {
     GLuint VAO = 0;
     // one per set=2 uniform block declared by this drawable's program
     std::vector<std::unique_ptr<OpenglUniformBuffer>> uniformBuffers;
+    // this drawable's own push-constant scratch storage, sized to its program's
+    // pushConstantSize() once loaded
+    std::vector<uint8_t> pushConstantData;
 
     ~OpenglDrawable();
 
@@ -31,12 +34,13 @@ public:
     virtual void setClearColor(float r, float b, float g, float a) override;
     virtual void setViewport(int x, int y, int width, int height) override;
     virtual void addDrawable(Drawable* drawable) override;
+    virtual void removeDrawable(Drawable* drawable) override;
     virtual RenderUniformBuffer* addUniform(size_t size, uint32_t bindPoint) override;
     virtual void load() override;
     virtual void renderFrame() override;
 
 private:
-    std::vector<OpenglDrawable*> mDrawables;
+    std::unordered_map<Drawable*, std::unique_ptr<OpenglDrawable>> mDrawables;
 
     // TODO: combine into a ResourceManager
     struct ProgramDescriptorHash {
@@ -70,7 +74,7 @@ private:
             return true;
         }
     };
-    void registerProgram(Drawable* d);
+    void registerProgram(Drawable* d, uint32_t pushConstantBindPoint);
     std::unordered_map<csp::ProgramDescriptor, RenderProgram*, ProgramDescriptorHash, ProgramDescriptorEqual> mLoadedPrograms;
 
     struct TextureDescriptorHash {
@@ -86,8 +90,7 @@ private:
     void registerTexture(Drawable* d, const TextureDescriptor& desc, GLuint program);
     std::unordered_map<TextureDescriptor, RenderTexture*, TextureDescriptorHash, TextureDescriptorEqual> mLoadedTextures;
 
-    OpenglUniformBuffer* mPushConstantUniform;
-    void* mPushConstantBuffer;
+    OpenglUniformBuffer* mPushConstantUniform = nullptr;
 };
 
 } // gfx

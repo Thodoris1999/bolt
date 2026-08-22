@@ -69,6 +69,7 @@ public:
     virtual void setClearColor(float r, float g, float b, float a) override;
     virtual void setViewport(int x, int y, int width, int height) override;
     virtual void addDrawable(Drawable* drawable) override;
+    virtual void removeDrawable(Drawable* drawable) override;
     virtual RenderUniformBuffer* addUniform(size_t size, uint32_t bindPoint) override;
     virtual void load() override;
     virtual void renderFrame() override;
@@ -136,7 +137,6 @@ private:
     void createSyncObjects();
     void createRenderFinishedSemaphores();
     void destroyRenderFinishedSemaphores();
-    void createPushConstantBuffer();
     void createSceneDescriptorSetLayout();
     void createEmptyDescriptorSetLayout();
 
@@ -175,8 +175,6 @@ private:
     VkDescriptorSetLayout mSceneDescriptorSetLayout;
     VkDescriptorSetLayout mEmptyDescriptorSetLayout;
     VkSampler mTextureSampler;
-    VkPushConstantRange mPushConstantRange;
-    void* mPushConstantBuffer;
     VkDescriptorPool mDescriptorPool;
     std::array<VkDescriptorSet, MAX_FRAMES_IN_FLIGHT> mSceneDescriptorSets;
     std::array<VkCommandBuffer, MAX_FRAMES_IN_FLIGHT> mCommandBuffers;
@@ -188,7 +186,10 @@ private:
     bool mFramebufferResized;
     int mLastRenderedImageIndex; // headless only: which mSwapChainImages slot readFramebuffer() should read
 
-    std::vector<std::unique_ptr<VulkanDrawable>> mDrawables;
+    std::unordered_map<Drawable*, std::unique_ptr<VulkanDrawable>> mDrawables;
+    // guards the one-time, scene-wide portion of load() (descriptor pool, scene descriptor
+    // sets, scene uniform buffers) so that load() can be called again for newly added drawables
+    bool mLoaded = false;
 
     std::unordered_map<std::string, VulkanTexture*> mTextures;
     std::vector<std::unique_ptr<VulkanProgram>> mPrograms;

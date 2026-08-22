@@ -72,6 +72,7 @@ public:
     void load();
     /// clear resources created by load
     void unload();
+    bool loaded() const { return mLoaded; }
 
     void setKey(uint32_t pipelineID, uint32_t materialID) {
         drawKey = DrawKey::make(pipelineID, materialID);
@@ -100,7 +101,9 @@ private:
     VkBuffer mIndexBuffer;
     VkDeviceMemory mIndexBufferMemory;
     bool mHasIndexBuffer;
-    void* mPushConstantBuffer;
+    // this drawable's own push-constant scratch storage, sized to its program's
+    // pushConstantSize() once loaded
+    std::vector<uint8_t> mPushConstantData;
     // one per set=2 uniform block declared by this drawable's program
     std::vector<std::unique_ptr<VulkanUniformBuffer>> mUniformBuffers;
     std::vector<VkDescriptorSet> mUniformDescriptorSets; // size == numFramesInFlight, or empty if mUniformBuffers is empty

@@ -23,6 +23,8 @@ class VulkanDrawList {
 public:
     VulkanDrawList(const VulkanRenderSystem* renderSystem) : mRenderSystem(renderSystem) { }
     void addDrawable(VulkanDrawable* drawable);
+    /// Drops the drawable from the list. Does not destroy it
+    void removeDrawable(VulkanDrawable* drawable);
     void recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet, uint32_t frameIndex);
 
 private:

@@ -30,7 +30,13 @@ public:
     }
     OrbitCamera* createOrbitCamera();
 
-    /// Convenience call that calls load for add drawables and cameras
+    /// Detaches drawable from wherever it's parented in the scene graph, frees its backend GPU
+    /// resources, and destroys it. Safe to call at any time, including after loadAll().
+    void removeDrawable(Drawable3d* drawable);
+
+    /// Registers and loads every drawable reachable from root() that isn't loaded yet. Safe to
+    /// call more than once, e.g. after createDrawable() + addChild() add something new to a scene
+    /// that's already rendering.
     void loadAll();
     /// Performs draw calls for all drawables
     void draw(Camera* camera);
@@ -45,6 +51,7 @@ private:
     std::vector<Camera*> mCameras;
     std::vector<RenderUniformBuffer*> mUniforms;
     DirLightParams mDirLightParams;
+    bool mLoaded = false;
 };
 
 } // gfx

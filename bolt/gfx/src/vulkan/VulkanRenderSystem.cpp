@@ -150,7 +150,6 @@ mCurrentFrame(0), mFramebufferResized(false), mDrawList(this) {
     mSurface = VK_NULL_HANDLE;
     mDescriptorPool = VK_NULL_HANDLE;
     mSceneDescriptorSetLayout = VK_NULL_HANDLE;
-    mPushConstantBuffer = malloc(0); // just so that free works in the constructor even if load was never called
 }
 
 VulkanRenderSystem::VulkanRenderSystem(uint32_t offscreenWidth, uint32_t offscreenHeight) :
@@ -164,7 +163,6 @@ mCurrentFrame(0), mFramebufferResized(false), mDrawList(this) {
     mSwapChainExtent = {offscreenWidth, offscreenHeight};
     mDescriptorPool = VK_NULL_HANDLE;
     mSceneDescriptorSetLayout = VK_NULL_HANDLE;
-    mPushConstantBuffer = malloc(0); // just so that free works in the constructor even if load was never called
 }
 
 void VulkanRenderSystem::init() {
@@ -189,10 +187,7 @@ void VulkanRenderSystem::init() {
 VulkanRenderSystem::~VulkanRenderSystem() {
     vkDeviceWaitIdle(mDevice); // flush queued operations (before cleaning up anything else!)
 
-    for (auto& d : mDrawables) {
-        //  clear buffers, textures, uniforms etc
-        d->unload();
-    }
+    mDrawables.clear();
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
         vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
@@ -212,7 +207,6 @@ VulkanRenderSystem::~VulkanRenderSystem() {
     for (auto& entry : mTextures) {
         delete entry.second;
     }
-    free(mPushConstantBuffer);
     for (auto* entry : mUniforms) {
         delete entry;
     }
@@ -490,7 +484,9 @@ void VulkanRenderSystem::createDescriptorPool() {
     poolInfo.poolSizeCount = ARRAY_SIZE(poolSizes);
     poolInfo.pPoolSizes = poolSizes;
     poolInfo.maxSets = MAX_DESCRIPTOR_SETS;
-        
+    // needed so that a removed drawable can return its set=2 descriptor sets to the pool
+    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+
     VkResult result = vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool);
     RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create descriptor pool");
 }
@@ -694,42 +690,6 @@ void VulkanRenderSystem::createCommandBuffer() {
         readbackAllocInfo.commandBufferCount = 1;
         VkResult readbackResult = vkAllocateCommandBuffers(mDevice, &readbackAllocInfo, &mReadbackCommandBuffer);
         RUNTIME_ASSERT(readbackResult == VK_SUCCESS, "Vulkan: Failed to create readback command buffer");
-    }
-}
-
-void VulkanRenderSystem::createPushConstantBuffer() {
-    size_t totalPushConstantSize = 0;
-    size_t pushConstantMaxSize = 0;
-    VkShaderStageFlags pushConstantAllStageFlags = 0;
-    for (auto& d : mDrawables) {
-        // calculate push constant needs
-        uint32_t drawablePushConstantSize = 0;
-        const csp::ProgramDescriptor& pd = d->drawable->programDescriptor();
-        for (uint32_t i = 0; i < pd.push_constant_range_count; i++) {
-            const csp::PushConstantRange& pc = pd.push_constant_ranges[i];
-            if (pc.offset + pc.size > drawablePushConstantSize) {
-              drawablePushConstantSize = pc.offset + pc.size;
-            }
-            pushConstantAllStageFlags |= pc.stage_flags;
-        }
-
-        if (pushConstantMaxSize < drawablePushConstantSize) {
-            pushConstantMaxSize = drawablePushConstantSize;
-        }
-        totalPushConstantSize += drawablePushConstantSize;
-    }
-
-    mPushConstantRange.stageFlags = pushConstantAllStageFlags;
-    mPushConstantRange.offset = 0;
-    mPushConstantRange.size = pushConstantMaxSize;
-    mPushConstantBuffer = realloc(mPushConstantBuffer, totalPushConstantSize);
-
-    size_t drawablePushConstantOffset = 0;
-    for (auto& d : mDrawables) {
-        // set push constant pointer
-        uint32_t drawablePushConstantSize = d->drawable->pushConstantSize();
-        d->drawable->setPushConstantData((uint8_t*)mPushConstantBuffer + drawablePushConstantOffset);
-        drawablePushConstantOffset += drawablePushConstantSize;
     }
 }
 
@@ -1076,8 +1036,20 @@ void VulkanRenderSystem::setViewport(int x, int y, int width, int height) {
 }
 
 void VulkanRenderSystem::addDrawable(Drawable* drawable) {
-    mDrawables.push_back(std::make_unique<VulkanDrawable>(this, drawable));
-    mDrawList.addDrawable(mDrawables.back().get());
+    auto [it, inserted] = mDrawables.emplace(drawable, std::make_unique<VulkanDrawable>(this, drawable));
+    if (!inserted) return;
+    mDrawList.addDrawable(it->second.get());
+}
+
+void VulkanRenderSystem::removeDrawable(Drawable* drawable) {
+    auto it = mDrawables.find(drawable);
+    if (it == mDrawables.end()) return;
+
+    // frames in flight may still be reading this drawable's buffers and descriptor sets
+    vkDeviceWaitIdle(mDevice);
+
+    mDrawList.removeDrawable(it->second.get());
+    mDrawables.erase(it);
 }
 
 RenderUniformBuffer* VulkanRenderSystem::addUniform(size_t size, uint32_t bindPoint) {
@@ -1087,21 +1059,25 @@ RenderUniformBuffer* VulkanRenderSystem::addUniform(size_t size, uint32_t bindPo
 }
 
 void VulkanRenderSystem::load() {
-    createPushConstantBuffer();
-    // Create pipeline layout and scene descriptor set layout
-    createSceneDescriptorSetLayout();
-    createEmptyDescriptorSetLayout();
-    createDescriptorPool();
-    createDescriptorSets();
-    for (int i = 0; i < (int)mUniforms.size(); i++) {
-        VulkanUniformBuffer* uniform = static_cast<VulkanUniformBuffer*>(mUniforms[i]);
-        uniform->createBuffers(MAX_FRAMES_IN_FLIGHT);
-        for (int f = 0; f < MAX_FRAMES_IN_FLIGHT; f++) {
-            uniform->writeDescriptorSet(mSceneDescriptorSets[f], f);
+    if (!mLoaded) {
+        // Create pipeline layout and scene descriptor set layout
+        createSceneDescriptorSetLayout();
+        createEmptyDescriptorSetLayout();
+        createDescriptorPool();
+        createDescriptorSets();
+        for (int i = 0; i < (int)mUniforms.size(); i++) {
+            VulkanUniformBuffer* uniform = static_cast<VulkanUniformBuffer*>(mUniforms[i]);
+            uniform->createBuffers(MAX_FRAMES_IN_FLIGHT);
+            for (int f = 0; f < MAX_FRAMES_IN_FLIGHT; f++) {
+                uniform->writeDescriptorSet(mSceneDescriptorSets[f], f);
+            }
         }
+        mLoaded = true;
     }
 
-    for (auto& d : mDrawables) {
+    for (auto& [key, d] : mDrawables) {
+        if (d->loaded()) continue; // already loaded by a previous call
+
         // load program
         uint32_t pipelineId = registerProgram(d->drawable);
 

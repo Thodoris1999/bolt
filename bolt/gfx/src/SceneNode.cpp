@@ -1,5 +1,7 @@
 #include "gfx/SceneNode.hpp"
 
+#include <algorithm>
+
 namespace bolt {
 namespace gfx {
 
@@ -18,6 +20,13 @@ void SceneNode::addChild(SceneNode* node) {
     node->mParent = this;
     mChildren.push_back(node);
     node->setWorldDirty();
+}
+
+void SceneNode::detachChild(SceneNode* node) {
+    auto it = std::find(mChildren.begin(), mChildren.end(), node);
+    if (it == mChildren.end()) return;
+    mChildren.erase(it);
+    node->mParent = nullptr;
 }
 
 void SceneNode::setPose(const math::Vector3f& pos, const math::Vector3f& rot) {

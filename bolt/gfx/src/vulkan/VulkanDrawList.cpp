@@ -13,6 +13,12 @@ void VulkanDrawList::addDrawable(VulkanDrawable* drawable) {
     mDrawables.push_back(drawable);
 }
 
+void VulkanDrawList::removeDrawable(VulkanDrawable* drawable) {
+    auto it = std::find(mDrawables.begin(), mDrawables.end(), drawable);
+    if (it == mDrawables.end()) return;
+    mDrawables.erase(it);
+}
+
 void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkDescriptorSet sceneDescriptorSet, uint32_t frameIndex) {
     std::sort(mDrawables.begin(), mDrawables.end(), [](const VulkanDrawable* a, const VulkanDrawable* b) {
         return a->drawKey < b->drawKey;
@@ -22,6 +28,8 @@ void VulkanDrawList::recordCommands(VkCommandBuffer commandBuffer, VkDescriptorS
     uint32_t currentMaterialId = -1;
 
     for (const auto& drawable : mDrawables) {
+        if (!drawable->drawable->visible()) continue;
+
         uint32_t pipelineId = DrawKey::getPipeline(drawable->drawKey);
         if (currentPipelineId != pipelineId) {
             const VulkanProgram& program = mRenderSystem->getProgram(pipelineId);

@@ -33,6 +33,8 @@ public:
     SceneNode* child(int i) { return mChildren[i]; }
     const SceneNode* child(int i) const { return mChildren[i]; }
     int childCount() const { return mChildren.size(); }
+    SceneNode* parent() { return mParent; }
+    const SceneNode* parent() const { return mParent; }
     Type type() const { return mType; }
     /// @endGetters
 
@@ -48,6 +50,8 @@ public:
 
     // graph editing
     void addChild(SceneNode* node);
+    /// Detaches node from this node's children. Does not destroy it
+    void detachChild(SceneNode* node);
 
     // graph transactions
     virtual void updateWorldTransforms(bool parentDirty = false);
