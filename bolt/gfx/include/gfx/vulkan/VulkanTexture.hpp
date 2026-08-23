@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gfx/Drawable.hpp"
 #include "gfx/RenderTexture.hpp"
 
 #include <vulkan/vulkan.h>
@@ -10,13 +11,13 @@ namespace gfx {
 class VulkanRenderSystem;
 class VulkanTexture final : public RenderTexture {
 public:
-    VulkanTexture(const char* textureFile, const VulkanRenderSystem* renderSystem);
+    VulkanTexture(const TextureDescriptor& desc, const VulkanRenderSystem* renderSystem);
     virtual ~VulkanTexture();
 
     VkImageView textureImageView() const { return mTextureImageView; }
 
 private:
-    void createTextureImage(const char* textureFile);
+    void createTextureImage(const TextureDescriptor& desc);
     void createTextureImageView();
 
     const VulkanRenderSystem* mRenderSystem;

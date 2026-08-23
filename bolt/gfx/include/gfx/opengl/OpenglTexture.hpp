@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gfx/Drawable.hpp"
 #include "gfx/RenderTexture.hpp"
 
 #include "gfx/opengl/gl_defines.h"
@@ -9,7 +10,7 @@ namespace gfx {
 
 class OpenglTexture final : public RenderTexture {
 public:
-    OpenglTexture(const char* textureFile, uint32_t binding);
+    explicit OpenglTexture(const TextureDescriptor& desc);
     virtual ~OpenglTexture();
 
     GLuint id() const { return mId; }

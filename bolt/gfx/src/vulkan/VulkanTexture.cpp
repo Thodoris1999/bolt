@@ -9,8 +9,8 @@
 namespace bolt {
 namespace gfx {
 
-VulkanTexture::VulkanTexture(const char* textureFile, const VulkanRenderSystem* renderSystem) : mRenderSystem(renderSystem) {
-    createTextureImage(textureFile);
+VulkanTexture::VulkanTexture(const TextureDescriptor& desc, const VulkanRenderSystem* renderSystem) : mRenderSystem(renderSystem) {
+    createTextureImage(desc);
     createTextureImageView();
 }
 
@@ -20,10 +20,15 @@ VulkanTexture::~VulkanTexture() {
     vkFreeMemory(mRenderSystem->device(), mTextureImageMemory, nullptr);
 }
 
-void VulkanTexture::createTextureImage(const char* textureFile) {
+void VulkanTexture::createTextureImage(const TextureDescriptor& desc) {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(textureFile, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    RUNTIME_ASSERT(pixels != nullptr, "stbi: Failed to load texture image file");
+    stbi_uc* pixels =
+        desc.encoded ? stbi_load_from_memory(desc.encoded->data(),
+                                             static_cast<int>(desc.encoded->size()), &texWidth,
+                                             &texHeight, &texChannels, STBI_rgb_alpha)
+                     : stbi_load(desc.textureFile.c_str(), &texWidth, &texHeight, &texChannels,
+                                 STBI_rgb_alpha);
+    RUNTIME_ASSERT(pixels != nullptr, "stbi: Failed to load texture image");
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     VkBuffer stagingBuffer;

@@ -145,7 +145,7 @@ void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& d
     } else {
         // TODO: current limitation does not allow same texture to be used in different samplers
         // change when ResourceManager is added
-        OpenglTexture* texture = new OpenglTexture(desc.textureFile.c_str(), desc.binding);
+        OpenglTexture* texture = new OpenglTexture(desc);
         mLoadedTextures[desc] = texture;
         d->addTexture(texture);
     }

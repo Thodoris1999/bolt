@@ -1255,7 +1255,7 @@ VulkanTexture* VulkanRenderSystem::registerTexture(Drawable* drawable, const Tex
     if (it != mTextures.end()) {
         return it->second;
     } else {
-        VulkanTexture* texture = new VulkanTexture(textureDescriptor.textureFile.c_str(), this);
+        VulkanTexture* texture = new VulkanTexture(textureDescriptor, this);
         mTextures[textureDescriptor.textureFile] = texture;
         return texture;
     }

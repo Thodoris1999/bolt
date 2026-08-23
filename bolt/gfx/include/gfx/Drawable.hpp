@@ -12,6 +12,7 @@
 #include <string>
 #include <cstring>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace bolt {
@@ -44,8 +45,12 @@ struct VertexAttribute {
 };
 
 struct TextureDescriptor {
-    /// path to texture image file
+    /// Identifies the texture, and is the path to its image file unless \p encoded is set, in
+    /// which case it is only a name -- unique per texture, but not something that can be opened.
     std::string textureFile;
+    /// Encoded image bytes (PNG, JPEG, ...) for a texture that lives inside a model file rather
+    /// than in a file of its own. Null for a plain file texture.
+    std::shared_ptr<const std::vector<unsigned char>> encoded;
     /// binding of sampler uniform in shader
     uint32_t binding;
 

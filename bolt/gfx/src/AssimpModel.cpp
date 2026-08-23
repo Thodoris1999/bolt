@@ -288,8 +288,21 @@ std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat
         mat->GetTexture(type, i, &str);
 
         TextureDescriptor texture;
-        texture.textureFile = mDirectory + '/' + str.C_Str();
         texture.binding = binding;
+
+        // A texture packed into the model file itself is named "*<index>" and has no file to
+        // read: its bytes travel with the descriptor instead.
+        const aiTexture* embedded = mScene->GetEmbeddedTexture(str.C_Str());
+        if (embedded == nullptr) {
+            texture.textureFile = mDirectory + '/' + str.C_Str();
+        } else {
+            RUNTIME_ASSERT(embedded->mHeight == 0,
+                "AssimpModel: embedded textures must be in an encoded format, not raw texels");
+            const auto* bytes = reinterpret_cast<const unsigned char*>(embedded->pcData);
+            texture.textureFile = std::string(mPath) + str.C_Str();
+            texture.encoded = std::make_shared<const std::vector<unsigned char>>(
+                bytes, bytes + embedded->mWidth);
+        }
         textures.push_back(texture);
     }
     return textures;

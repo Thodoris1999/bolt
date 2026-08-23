@@ -8,11 +8,15 @@
 namespace bolt {
 namespace gfx {
 
-OpenglTexture::OpenglTexture(const char* textureFile, uint32_t binding) : mBinding(binding) {
+OpenglTexture::OpenglTexture(const TextureDescriptor& desc) : mBinding(desc.binding) {
     glGenTextures(1, &mId);
 
     int width, height, nrComponents;
-    unsigned char *data = stbi_load(textureFile, &width, &height, &nrComponents, 0);
+    unsigned char* data =
+        desc.encoded ? stbi_load_from_memory(desc.encoded->data(),
+                                             static_cast<int>(desc.encoded->size()), &width,
+                                             &height, &nrComponents, 0)
+                     : stbi_load(desc.textureFile.c_str(), &width, &height, &nrComponents, 0);
     if (data) {
         GLenum format;
         if (nrComponents == 1)
@@ -35,7 +39,7 @@ OpenglTexture::OpenglTexture(const char* textureFile, uint32_t binding) : mBindi
 
         stbi_image_free(data);
     } else {
-        PANIC("Failed to load texture from path: %s", textureFile);
+        PANIC("Failed to load texture: %s", desc.textureFile.c_str());
     }
 }
 
