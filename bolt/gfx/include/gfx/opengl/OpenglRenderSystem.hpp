@@ -90,6 +90,14 @@ private:
     void registerTexture(Drawable* d, const TextureDescriptor& desc, GLuint program);
     std::unordered_map<TextureDescriptor, RenderTexture*, TextureDescriptorHash, TextureDescriptorEqual> mLoadedTextures;
 
+    // GL has no descriptor sets, so a set=2 block and a set=0 block can be cross compiled onto
+    // the same declared binding. Each program's set=2 blocks are therefore rebound to bind points
+    // of our own choosing, remembered here (program id -> set=2 binding -> bind point) so that a
+    // drawable loaded by a later load() reuses the point its program was already bound to.
+    std::unordered_map<GLuint, std::unordered_map<uint32_t, uint32_t>> mSet2BindPoints;
+
+    static constexpr uint32_t INVALID_BIND_POINT = ~0u;
+    uint32_t mPushConstantBindPoint = INVALID_BIND_POINT;
     OpenglUniformBuffer* mPushConstantUniform = nullptr;
 };
 

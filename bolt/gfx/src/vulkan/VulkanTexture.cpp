@@ -22,12 +22,22 @@ VulkanTexture::~VulkanTexture() {
 
 void VulkanTexture::createTextureImage(const TextureDescriptor& desc) {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels =
-        desc.encoded ? stbi_load_from_memory(desc.encoded->data(),
-                                             static_cast<int>(desc.encoded->size()), &texWidth,
-                                             &texHeight, &texChannels, STBI_rgb_alpha)
-                     : stbi_load(desc.textureFile.c_str(), &texWidth, &texHeight, &texChannels,
-                                 STBI_rgb_alpha);
+    stbi_uc* decoded = nullptr; // stb allocation, only when stb was the one to produce the texels
+    const stbi_uc* pixels;
+    if (desc.raw) {
+        texWidth = static_cast<int>(desc.rawWidth);
+        texHeight = static_cast<int>(desc.rawHeight);
+        texChannels = 4;
+        pixels = desc.raw->data();
+    } else {
+        decoded = desc.encoded ? stbi_load_from_memory(desc.encoded->data(),
+                                                       static_cast<int>(desc.encoded->size()),
+                                                       &texWidth, &texHeight, &texChannels,
+                                                       STBI_rgb_alpha)
+                               : stbi_load(desc.textureFile.c_str(), &texWidth, &texHeight,
+                                           &texChannels, STBI_rgb_alpha);
+        pixels = decoded;
+    }
     RUNTIME_ASSERT(pixels != nullptr, "stbi: Failed to load texture image");
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
@@ -39,7 +49,9 @@ void VulkanTexture::createTextureImage(const TextureDescriptor& desc) {
     vkMapMemory(mRenderSystem->device(), stagingBufferMemory, 0, imageSize, 0, &data);
     memcpy(data, pixels, static_cast<size_t>(imageSize));
     vkUnmapMemory(mRenderSystem->device(), stagingBufferMemory);
-    stbi_image_free(pixels);
+    if (decoded) {
+        stbi_image_free(decoded);
+    }
 
     mRenderSystem->createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,

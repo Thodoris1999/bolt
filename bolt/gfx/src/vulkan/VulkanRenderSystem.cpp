@@ -471,7 +471,7 @@ void VulkanRenderSystem::createDescriptorPool() {
     // hardcoded pool maxima
     constexpr uint32_t MAX_DESCRIPTOR_SETS = 1024;
     constexpr uint32_t MAX_UNIFORM_DESCRIPTORS = 1 * MAX_DESCRIPTOR_SETS;
-    constexpr uint32_t MAX_SAMPLER_DESCRIPTORS = 4 * MAX_DESCRIPTOR_SETS;
+    constexpr uint32_t MAX_SAMPLER_DESCRIPTORS = 8 * MAX_DESCRIPTOR_SETS;
 
     VkDescriptorPoolSize poolSizes[] =
     {

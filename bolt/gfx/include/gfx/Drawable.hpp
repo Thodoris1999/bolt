@@ -45,12 +45,14 @@ struct VertexAttribute {
 };
 
 struct TextureDescriptor {
-    /// Identifies the texture, and is the path to its image file unless \p encoded is set, in
-    /// which case it is only a name -- unique per texture, but not something that can be opened.
+    /// Texture file name, ignored if encoded or raw is defined
     std::string textureFile;
-    /// Encoded image bytes (PNG, JPEG, ...) for a texture that lives inside a model file rather
-    /// than in a file of its own. Null for a plain file texture.
+    /// Encoded texture bytes embedded in model file, ignored if raw is defined
     std::shared_ptr<const std::vector<unsigned char>> encoded;
+    /// Already-decoded RGBA8 texels, \p rawWidth by \p rawHeight, for an in-memory texture
+    std::shared_ptr<const std::vector<unsigned char>> raw;
+    uint32_t rawWidth = 0;
+    uint32_t rawHeight = 0;
     /// binding of sampler uniform in shader
     uint32_t binding;
 

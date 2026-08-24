@@ -12,11 +12,21 @@ OpenglTexture::OpenglTexture(const TextureDescriptor& desc) : mBinding(desc.bind
     glGenTextures(1, &mId);
 
     int width, height, nrComponents;
-    unsigned char* data =
-        desc.encoded ? stbi_load_from_memory(desc.encoded->data(),
-                                             static_cast<int>(desc.encoded->size()), &width,
-                                             &height, &nrComponents, 0)
-                     : stbi_load(desc.textureFile.c_str(), &width, &height, &nrComponents, 0);
+    stbi_uc* decoded = nullptr; // stb allocation, only when stb was the one to produce the texels
+    const unsigned char* data;
+    if (desc.raw) {
+        width = static_cast<int>(desc.rawWidth);
+        height = static_cast<int>(desc.rawHeight);
+        nrComponents = 4;
+        data = desc.raw->data();
+    } else {
+        decoded = desc.encoded ? stbi_load_from_memory(desc.encoded->data(),
+                                                       static_cast<int>(desc.encoded->size()),
+                                                       &width, &height, &nrComponents, 0)
+                               : stbi_load(desc.textureFile.c_str(), &width, &height,
+                                           &nrComponents, 0);
+        data = decoded;
+    }
     if (data) {
         GLenum format;
         if (nrComponents == 1)
@@ -37,7 +47,9 @@ OpenglTexture::OpenglTexture(const TextureDescriptor& desc) : mBinding(desc.bind
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        stbi_image_free(data);
+        if (decoded) {
+            stbi_image_free(decoded);
+        }
     } else {
         PANIC("Failed to load texture: %s", desc.textureFile.c_str());
     }

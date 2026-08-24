@@ -5,6 +5,7 @@
 #include "gfx/opengl/gl_defines.h"
 
 #include <memory>
+#include <string>
 #include <unordered_set>
 
 namespace bolt {
@@ -76,7 +77,11 @@ void OpenglDrawable::load() {
     for (int i = 0; i < attrCount; i++) {
         const VertexAttribute& attr = attrs[i];
         GLenum attrType = bolt2openglDtype(attr.dtype);
-        glVertexAttribPointer(attr.index, attr.count, attrType, GL_FALSE, attr.stride, reinterpret_cast<const void*>(attr.offset));
+        if (attr.dtype == BOLT_I32) {
+            glVertexAttribIPointer(attr.index, attr.count, attrType, attr.stride, reinterpret_cast<const void*>(attr.offset));
+        } else {
+            glVertexAttribPointer(attr.index, attr.count, attrType, GL_FALSE, attr.stride, reinterpret_cast<const void*>(attr.offset));
+        }
         glEnableVertexAttribArray(attr.index);
     }
 
@@ -137,6 +142,21 @@ void OpenglRenderSystem::registerProgram(Drawable* d, uint32_t pushConstantBindP
     }
 }
 
+static GLuint findUniformBlock(GLuint program, const csp::UniformVar& uv) {
+    if (uv.block_name.empty()) {
+        PANIC("Opengl: uniform \"%.*s\" is not a block and has no name to look up",
+            (int)uv.name.size(), uv.name.data());
+    }
+
+    // std::string_view is not guaranteed null terminated, and glGetUniformBlockIndex takes a C string
+    std::string blockName(uv.block_name);
+    GLuint blockIndex = glGetUniformBlockIndex(program, blockName.c_str());
+    if (blockIndex == GL_INVALID_INDEX) {
+        PANIC("Opengl: program %u has no uniform block named \"%s\"", program, blockName.c_str());
+    }
+    return blockIndex;
+}
+
 void OpenglRenderSystem::registerTexture(Drawable* d, const TextureDescriptor& desc, GLuint program) {
     auto it = mLoadedTextures.find(desc);
 
@@ -158,10 +178,26 @@ void OpenglRenderSystem::load() {
     for (size_t i = 0; i < mUniforms.size(); i++) {
         usedBindingPoints.insert(static_cast<OpenglUniformBuffer*>(mUniforms[i])->bindPoint());
     }
-    uint32_t pushConstantBindPoint = 0;
-    while (usedBindingPoints.find(pushConstantBindPoint) != usedBindingPoints.end()) {
-        pushConstantBindPoint++;
+    for (const auto& [program, bindPoints] : mSet2BindPoints) {
+        for (const auto& [binding, bindPoint] : bindPoints) {
+            usedBindingPoints.insert(bindPoint);
+        }
     }
+    auto claimFreeBindPoint = [&usedBindingPoints]() {
+        uint32_t bindPoint = 0;
+        while (usedBindingPoints.find(bindPoint) != usedBindingPoints.end()) {
+            bindPoint++;
+        }
+        usedBindingPoints.insert(bindPoint);
+        return bindPoint;
+    };
+    // programs bound by an earlier load() still expect the point handed out back then
+    if (mPushConstantBindPoint == INVALID_BIND_POINT) {
+        mPushConstantBindPoint = claimFreeBindPoint();
+    } else {
+        usedBindingPoints.insert(mPushConstantBindPoint);
+    }
+    uint32_t pushConstantBindPoint = mPushConstantBindPoint;
 
     for (auto& [key, d] : mDrawables) {
         if (d->VAO != 0) continue; // already loaded by a previous call
@@ -193,11 +229,12 @@ void OpenglRenderSystem::load() {
         // load drawable buffers (vertices and indices)
         d->load();
 
-        // create this drawable's own buffer for its set=2 uniform blocks
-        // TODO: currently set=2 uniforms with the same bindings can collide with other sets' uniforms of the same binding
-        // TODO: in the shader cross compiler, map these to a different binging. Alternatively remove explicit binding specifier on
-        // TODO: the shader source and instead bind them manually here by name
+        // create this drawable's own buffer for its set=2 uniform blocks. The cross compiler drops
+        // the set qualifier, so a set=2 block keeps its binding and lands on top of the scene's
+        // set=0 block of the same number. Rebind each set=2 block to a point nothing else claims.
         const csp::ProgramDescriptor& pd = d->drawable->programDescriptor();
+        GLuint programId = openglProgram->id();
+        auto& set2BindPoints = mSet2BindPoints[programId];
         for (uint32_t i = 0; i < pd.uniform_count; i++) {
             const csp::UniformVar& uv = pd.uniform_vars[i];
             if (uv.set != 2) {
@@ -207,7 +244,14 @@ void OpenglRenderSystem::load() {
                 PANIC("Opengl: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
             }
 
-            auto uniform = std::make_unique<OpenglUniformBuffer>(uv.size, uv.binding);
+            auto bindPointIt = set2BindPoints.find(uv.binding);
+            if (bindPointIt == set2BindPoints.end()) {
+                uint32_t bindPoint = claimFreeBindPoint();
+                glUniformBlockBinding(programId, findUniformBlock(programId, uv), bindPoint);
+                bindPointIt = set2BindPoints.emplace(uv.binding, bindPoint).first;
+            }
+
+            auto uniform = std::make_unique<OpenglUniformBuffer>(uv.size, bindPointIt->second);
             d->drawable->setUniformData(i, uniform.get());
             d->uniformBuffers.push_back(std::move(uniform));
         }

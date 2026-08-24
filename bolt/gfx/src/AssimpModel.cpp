@@ -173,7 +173,9 @@ void AssimpModel::load() {
 }
 
 void AssimpModel::loadModel(const char* path) {
-    mScene = mImporter.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights);
+    // aiProcess_FlipUVs: assimp hands back UVs with the origin at the lower-left corner, but both
+    // backends upload the decoded image top row first and sample v=0 at that row.
+    mScene = mImporter.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights | aiProcess_FlipUVs);
     RUNTIME_ASSERT(mScene && (mScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == 0 && mScene->mRootNode, mImporter.GetErrorString());
 
     std::string strPath(path);
@@ -308,19 +310,54 @@ std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat
     return textures;
 }
 
+/// One sampler of the standard material shader (textured.frag, shared by TexturedMesh and
+/// SkinnedMesh), and where its map comes from in an assimp material.
+struct StandardSampler {
+    uint32_t binding;
+    /// assimp texture type holding this map
+    aiTextureType type;
+    /// alternate type to try when \p type is absent, or aiTextureType_NONE if there is none
+    aiTextureType altType;
+    /// texel used when the material carries no such map at all
+    unsigned char defaultTexel[4];
+};
+
+// provide a default sampler for all common texxture fields
+static const StandardSampler STANDARD_SAMPLERS[] = {
+    {0, aiTextureType_AMBIENT,   aiTextureType_NONE,   {255, 255, 255, 255}},
+    {1, aiTextureType_DIFFUSE,   aiTextureType_NONE,   {255, 255, 255, 255}},
+    // no specular map means no specular contribution, so the default is black
+    {2, aiTextureType_SPECULAR,  aiTextureType_NONE,   {  0,   0,   0, 255}},
+    {3, aiTextureType_SHININESS, aiTextureType_NONE,   {255, 255, 255, 255}},
+    // glTF/VRM files a tangent-space normal map under NORMALS; OBJ files it under HEIGHT.
+    // The default is the flat tangent-space normal (0, 0, 1) encoded into [0, 1].
+    {4, aiTextureType_NORMALS,   aiTextureType_HEIGHT, {128, 128, 255, 255}},
+};
+
+static TextureDescriptor defaultTexture(const StandardSampler& sampler) {
+    TextureDescriptor texture;
+    texture.binding = sampler.binding;
+    // not a path: only an identifier, so that every material shares one default per binding
+    texture.textureFile = "<default sampler " + std::to_string(sampler.binding) + ">";
+    texture.raw = std::make_shared<const std::vector<unsigned char>>(
+        sampler.defaultTexel, sampler.defaultTexel + 4);
+    texture.rawWidth = 1;
+    texture.rawHeight = 1;
+    return texture;
+}
+
 std::vector<TextureDescriptor> AssimpModel::loadStandardMaterialTextures(aiMaterial *mat) {
     std::vector<TextureDescriptor> textures;
-    auto append = [&](aiTextureType type, uint32_t binding) {
-        std::vector<TextureDescriptor> maps = loadMaterialTextures(mat, type, binding);
+    for (const StandardSampler& sampler : STANDARD_SAMPLERS) {
+        std::vector<TextureDescriptor> maps = loadMaterialTextures(mat, sampler.type, sampler.binding);
+        if (maps.empty() && sampler.altType != aiTextureType_NONE) {
+            maps = loadMaterialTextures(mat, sampler.altType, sampler.binding);
+        }
+        if (maps.empty()) {
+            maps.push_back(defaultTexture(sampler));
+        }
         textures.insert(textures.end(), maps.begin(), maps.end());
-    };
-
-    append(aiTextureType_DIFFUSE, 1);
-    append(aiTextureType_SPECULAR, 2);
-    append(aiTextureType_HEIGHT, 4);
-    append(aiTextureType_AMBIENT, 0);
-    append(aiTextureType_SHININESS, 3);
-
+    }
     return textures;
 }
 
