@@ -20,7 +20,7 @@ VulkanMaterial::VulkanMaterial(const VulkanRenderSystem* renderSystem, const VkD
     allocInfo.pSetLayouts = &layout;
 
     VkResult result = vkAllocateDescriptorSets(renderSystem->device(), &allocInfo, &mDescriptorSet);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create material descriptor set");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create material descriptor set");
 
     //update descriptor set
     std::vector<VkDescriptorImageInfo> materialImageInfo(textures.size());

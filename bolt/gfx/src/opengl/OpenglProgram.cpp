@@ -27,7 +27,7 @@ static GLenum csp2oglStageFlag(csp::ShaderStage stage) {
         return GL_COMPUTE_SHADER;
     
     default:
-        PANIC("Unkown shader stage");
+        BOLT_PANIC("Unkown shader stage");
         return GL_COMPUTE_SHADER;
     }
 }
@@ -48,7 +48,7 @@ static void loadShader(std::string_view name, GLuint& shader, GLenum type) {
         printf("Shader Source (%s):\n%s\n", std::string(name).c_str(), static_cast<const char*>(source));
 
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        RUNTIME_ASSERT(success, infoLog);
+        BOLT_RUNTIME_ASSERT(success, infoLog);
     }
 #endif
 
@@ -66,7 +66,7 @@ static void assertProgramOk(unsigned int program, const csp::ProgramDescriptor* 
         for (uint32_t i = 0; i < pd->source_count; ++i) {
             printf("%s\n", pd->ogl_sources[i].filename.data());
         }
-        RUNTIME_ASSERT(success, infoLog);
+        BOLT_RUNTIME_ASSERT(success, infoLog);
     }
 #endif
 }

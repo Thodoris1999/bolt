@@ -2,6 +2,8 @@
 
 #include "math/math.h"
 
+#include <numbers>
+
 namespace bolt {
 namespace gfx {
 
@@ -9,12 +11,12 @@ static std::vector<PhongDrawableVertex> generateSphereVertices(float radiusX, fl
     std::vector<PhongDrawableVertex> vertices;
 
     for (int i = 0; i <= stacks; ++i) {
-        float phi = M_PI * i / stacks;
+        float phi = std::numbers::pi * i / stacks;
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
 
         for (int j = 0; j <= slices; ++j) {
-            float theta = 2 * M_PI * j / slices;
+            float theta = 2 * std::numbers::pi * j / slices;
             float sinTheta = sin(theta);
             float cosTheta = cos(theta);
 

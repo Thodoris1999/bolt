@@ -20,14 +20,14 @@ static void glfwHookGetFramebufferSize(void* userData, uint32_t& w, uint32_t& h)
 }
 
 static void glfwErrorCallback(int error, const char* description) {
-    ERROR("GLFW error %d: %s", error, description);
+    BOLT_ERROR("GLFW error %d: %s", error, description);
 }
 
 GLFWApplication::GLFWApplication(int initWidth, int initHeight, RenderBackend renderBackend)
     : BaseApplication(renderBackend), mLastCursorX(0), mLastCursorY(0), mHasLastCursor(false) {
     glfwSetErrorCallback(glfwErrorCallback);
     bool initialized = glfwInit();
-    RUNTIME_ASSERT(initialized, "Failed to initialize GLFW");
+    BOLT_RUNTIME_ASSERT(initialized, "Failed to initialize GLFW");
 
     GLFWWindowOptions options;
     options.renderBackend = renderBackend;
@@ -50,7 +50,7 @@ GLFWApplication::GLFWApplication(int initWidth, int initHeight, RenderBackend re
         break;
 
     default:
-        PANIC("Unknown render backend %d", renderBackend);
+        BOLT_PANIC("Unknown render backend %d", renderBackend);
         break;
     }
 
@@ -62,9 +62,9 @@ void GLFWApplication::setupOpengl() {
 
     // Initialize GLAD
     auto gladLoader = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    RUNTIME_ASSERT(gladLoader != 0, "Failed to initialize GLAD");
+    BOLT_RUNTIME_ASSERT(gladLoader != 0, "Failed to initialize GLAD");
 
-    DEBUG("OpenGL Version: %s", glGetString(GL_VERSION));
+    BOLT_DEBUG("OpenGL Version: %s", glGetString(GL_VERSION));
 #ifndef NDEBUG
     int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
     if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
@@ -86,14 +86,14 @@ void GLFWApplication::setupOpengl() {
 void GLFWApplication::setupVulkan() {
     uint32_t extensionCount;
     const char** extensions = glfwGetRequiredInstanceExtensions(&extensionCount);
-    RUNTIME_ASSERT(extensions, "Failed to query required Vulkan instance extensions");
+    BOLT_RUNTIME_ASSERT(extensions, "Failed to query required Vulkan instance extensions");
 
     bolt::gfx::WindowHooks windowHooks;
     windowHooks.getFramebufferSize = glfwHookGetFramebufferSize;
     windowHooks.userData = mWindow.getGlfwWindow();
     bolt::gfx::VulkanRenderSystem* vlkRenderSystem = new bolt::gfx::VulkanRenderSystem(extensions, extensionCount, windowHooks);
     VkResult result = glfwCreateWindowSurface(vlkRenderSystem->instance(), mWindow.getGlfwWindow(), nullptr, &vlkRenderSystem->surface());
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Failed to create Vulkan surface");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Failed to create Vulkan surface");
     vlkRenderSystem->init();
     mRenderSystem = vlkRenderSystem;
 }

@@ -4,6 +4,8 @@
 
 #include "util/common.h"
 
+#include <numbers>
+
 namespace bolt {
 namespace gfx {
 
@@ -20,7 +22,7 @@ Camera::Camera() : SceneNode(SceneNode::NODE_TYPE_CAMERA) {
 
 Matrix44f Camera::getView() const {
 #ifndef NDEBUG
-    RUNTIME_ASSERT(!mWorldDirty, "View matrix is only valid if the world matrix is valid");
+    BOLT_RUNTIME_ASSERT(!mWorldDirty, "View matrix is only valid if the world matrix is valid");
 #endif
     return mWorldMtx.rigidInverse();
 }
@@ -65,7 +67,7 @@ void OrbitCamera::setFocus(const math::Vector3f& focus) {
 void OrbitCamera::onScroll(float amount) {
     mFovy += -amount;
     mFovy = mFovy < 0 ? 0 : mFovy;
-    float maxFov = 4 * M_PI / 5;
+    float maxFov = 4 * std::numbers::pi / 5;
     mFovy = mFovy > maxFov ? maxFov : mFovy;
 
     updatePerspectiveMat();
@@ -84,7 +86,7 @@ void OrbitCamera::onDrag(float x, float y) {
 
     // Clamp phi to avoid flipping (polar angle within (0, PI))
     const float epsilon = 0.01f; // Small offset to prevent singularity at poles
-    phi = std::max(epsilon, std::min(static_cast<float>(M_PI) - epsilon, phi));
+    phi = std::max(epsilon, std::min(std::numbers::pi_v<float> - epsilon, phi));
 
     // Convert spherical coordinates back to Cartesian coordinates
     direction.x = radius * sin(phi) * cos(theta);

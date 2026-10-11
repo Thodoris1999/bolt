@@ -59,7 +59,7 @@ void SceneManager::loadAll() {
 }
 
 void SceneManager::addDrawableRecurse(SceneNode* node) {
-    RUNTIME_ASSERT(node != nullptr, "null node");
+    BOLT_RUNTIME_ASSERT(node != nullptr, "null node");
     if (node->type() == SceneNode::NODE_TYPE_DRAWABLE) {
         mRenderSystem->addDrawable(static_cast<Drawable3d*>(node));
     }

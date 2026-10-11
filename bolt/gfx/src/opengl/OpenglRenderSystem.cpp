@@ -16,7 +16,7 @@ static GLenum bolt2openglDtype(DataType type) {
         case BOLT_F32: return GL_FLOAT;
         case BOLT_I32: return GL_INT;
         default: {
-            PANIC("Unknkown data type %d", static_cast<int>(type));
+            BOLT_PANIC("Unknkown data type %d", static_cast<int>(type));
             return GL_FLOAT; // unknown type
         }
     }
@@ -28,7 +28,7 @@ static GLenum bolt2openglPrimitive(PrimitiveType type) {
         case BOLT_GFX_TRIANGLE_FAN: return GL_TRIANGLE_FAN;
         case BOLT_GFX_LINE: return GL_LINES;
         default: {
-            PANIC("Unknkown primitive type %d", static_cast<int>(type));
+            BOLT_PANIC("Unknkown primitive type %d", static_cast<int>(type));
             return GL_TRIANGLES; // unknown type
         }
     }
@@ -138,13 +138,13 @@ void OpenglRenderSystem::registerProgram(Drawable* d, uint32_t pushConstantBindP
     if (blockIndex != GL_INVALID_INDEX) {
         glUniformBlockBinding(programId, blockIndex, pushConstantBindPoint);
     } else {
-        PANIC("Opengl: Failed to create auxiliary uniform for push constants");
+        BOLT_PANIC("Opengl: Failed to create auxiliary uniform for push constants");
     }
 }
 
 static GLuint findUniformBlock(GLuint program, const csp::UniformVar& uv) {
     if (uv.block_name.empty()) {
-        PANIC("Opengl: uniform \"%.*s\" is not a block and has no name to look up",
+        BOLT_PANIC("Opengl: uniform \"%.*s\" is not a block and has no name to look up",
             (int)uv.name.size(), uv.name.data());
     }
 
@@ -152,7 +152,7 @@ static GLuint findUniformBlock(GLuint program, const csp::UniformVar& uv) {
     std::string blockName(uv.block_name);
     GLuint blockIndex = glGetUniformBlockIndex(program, blockName.c_str());
     if (blockIndex == GL_INVALID_INDEX) {
-        PANIC("Opengl: program %u has no uniform block named \"%s\"", program, blockName.c_str());
+        BOLT_PANIC("Opengl: program %u has no uniform block named \"%s\"", program, blockName.c_str());
     }
     return blockIndex;
 }
@@ -241,7 +241,7 @@ void OpenglRenderSystem::load() {
                 continue;
             }
             if (uv.size == 0) {
-                PANIC("Opengl: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
+                BOLT_PANIC("Opengl: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
             }
 
             auto bindPointIt = set2BindPoints.find(uv.binding);
@@ -304,7 +304,7 @@ void OpenglRenderSystem::renderFrame() {
             glDrawElements(mode, d->drawable->indexCount(), GL_UNSIGNED_INT, (void*)(0 * sizeof(unsigned int)));
             break;
         default:
-            PANIC("Invalid draw command %d", static_cast<int>(d->drawable->drawOp()));
+            BOLT_PANIC("Invalid draw command %d", static_cast<int>(d->drawable->drawOp()));
         }
 
         // unbind everything

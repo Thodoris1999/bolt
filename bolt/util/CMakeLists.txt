@@ -9,7 +9,10 @@ target_include_directories(util
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_compile_options(util PRIVATE -Wall)
+target_compile_features(util PUBLIC cxx_std_17)
+if(NOT WIN32)
+    target_compile_options(util PRIVATE -Wall)
+endif()
 
 install(TARGETS util
         EXPORT utilTargets

@@ -38,7 +38,7 @@ void VulkanTexture::createTextureImage(const TextureDescriptor& desc) {
                                            &texChannels, STBI_rgb_alpha);
         pixels = decoded;
     }
-    RUNTIME_ASSERT(pixels != nullptr, "stbi: Failed to load texture image");
+    BOLT_RUNTIME_ASSERT(pixels != nullptr, "stbi: Failed to load texture image");
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     VkBuffer stagingBuffer;

@@ -4,6 +4,9 @@ if(NOT TARGET assimp::assimp)
 endif()
 
 add_subdirectory(vendored/ccd EXCLUDE_FROM_ALL)
+if(NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(ccd PUBLIC CCD_STATIC_DEFINE)
+endif()
 
 set(vis_common_SRC
     src/col/ColliderConvex.cpp

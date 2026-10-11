@@ -10,14 +10,14 @@ namespace col {
 using namespace math;
 
 inline const Vector3f* ccd2vec(const ccd_vec3_t *ccd) {
-    STATIC_ASSERT(sizeof(ccd_real_t) == sizeof(float));
-    STATIC_ASSERT(sizeof(ccd_vec3_t) == 3 * sizeof(float));
+    BOLT_STATIC_ASSERT(sizeof(ccd_real_t) == sizeof(float));
+    BOLT_STATIC_ASSERT(sizeof(ccd_vec3_t) == 3 * sizeof(float));
     return reinterpret_cast<const Vector3f*>(ccd);
 }
 
 inline Vector3f* ccd2vec(ccd_vec3_t *ccd) {
-    STATIC_ASSERT(sizeof(ccd_real_t) == sizeof(float));
-    STATIC_ASSERT(sizeof(ccd_vec3_t) == 3 * sizeof(float));
+    BOLT_STATIC_ASSERT(sizeof(ccd_real_t) == sizeof(float));
+    BOLT_STATIC_ASSERT(sizeof(ccd_vec3_t) == 3 * sizeof(float));
     return reinterpret_cast<Vector3f*>(ccd);
 }
 

@@ -27,10 +27,10 @@ SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend rend
 #ifndef NDEBUG
     // SDL lets DBus leak by default in case other systems use it. Disable this to not confuse ASan
     bool hintSet = SDL_SetHint(SDL_HINT_SHUTDOWN_DBUS_ON_QUIT, "1");
-    RUNTIME_ASSERT(hintSet, SDL_GetError());
+    BOLT_RUNTIME_ASSERT(hintSet, SDL_GetError());
 #endif
     bool videoInit = SDL_InitSubSystem(SDL_INIT_VIDEO);
-    RUNTIME_ASSERT(videoInit, SDL_GetError());
+    BOLT_RUNTIME_ASSERT(videoInit, SDL_GetError());
 
     if (renderBackend == BACKEND_OPENGL) {
         // Set OpenGL context attributes
@@ -56,7 +56,7 @@ SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend rend
         break;
 
     default:
-        PANIC("Unknown render backend %d", renderBackend);
+        BOLT_PANIC("Unknown render backend %d", renderBackend);
         break;
     }
 
@@ -66,13 +66,13 @@ SDLApplication::SDLApplication(int initWidth, int initHeight, RenderBackend rend
 void SDLApplication::setupOpengl() {
     // Create OpenGL context
     mGlContext = SDL_GL_CreateContext(mWindow.getSdlWindow());
-    RUNTIME_ASSERT(mGlContext, SDL_GetError());
+    BOLT_RUNTIME_ASSERT(mGlContext, SDL_GetError());
 
     // Initialize GLAD
     auto gladLoader = gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
-    RUNTIME_ASSERT(gladLoader != 0, "Failed to initialize GLAD");
+    BOLT_RUNTIME_ASSERT(gladLoader != 0, "Failed to initialize GLAD");
 
-    DEBUG("OpenGL Version: %s", glGetString(GL_VERSION));
+    BOLT_DEBUG("OpenGL Version: %s", glGetString(GL_VERSION));
 #ifndef NDEBUG
     int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
     if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
@@ -94,14 +94,14 @@ void SDLApplication::setupOpengl() {
 void SDLApplication::setupVulkan() {
     unsigned int extensionCount;
     const char* const * extensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
-    RUNTIME_ASSERT(extensions, SDL_GetError());
+    BOLT_RUNTIME_ASSERT(extensions, SDL_GetError());
 
     bolt::gfx::WindowHooks windowHooks;
     windowHooks.getFramebufferSize = sdlGetFramebufferSize;
     windowHooks.userData = mWindow.getSdlWindow();
     bolt::gfx::VulkanRenderSystem* vlkRenderSystem = new bolt::gfx::VulkanRenderSystem(extensions, extensionCount, windowHooks);
     bool result = SDL_Vulkan_CreateSurface(mWindow.getSdlWindow(), vlkRenderSystem->instance(), nullptr, &vlkRenderSystem->surface());
-    RUNTIME_ASSERT(result, SDL_GetError());
+    BOLT_RUNTIME_ASSERT(result, SDL_GetError());
     vlkRenderSystem->init();
     mRenderSystem = vlkRenderSystem;
 }

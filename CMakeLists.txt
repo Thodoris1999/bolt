@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(objectVis)
 
 option(BOLT_BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    add_compile_options (-fdiagnostics-color=always)

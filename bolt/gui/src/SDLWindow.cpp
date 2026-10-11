@@ -23,7 +23,7 @@ void SDLWindow::create(int width, int height, const SDLWindowOptions& options) {
         break;
 
     default:
-        PANIC("Unknown render backend %d", options.renderBackend);
+        BOLT_PANIC("Unknown render backend %d", options.renderBackend);
         break;
     }
     mSdlWindow = SDL_CreateWindow(
@@ -33,7 +33,7 @@ void SDLWindow::create(int width, int height, const SDLWindowOptions& options) {
         windowFlags
     );
 
-    RUNTIME_ASSERT(mSdlWindow != nullptr, SDL_GetError());
+    BOLT_RUNTIME_ASSERT(mSdlWindow != nullptr, SDL_GetError());
 }
 
 void SDLWindow::destroy() {

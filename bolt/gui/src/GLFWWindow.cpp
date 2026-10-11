@@ -30,13 +30,13 @@ void GLFWWindow::create(int width, int height, const GLFWWindowOptions& options)
         break;
 
     default:
-        PANIC("Unknown render backend %d", options.renderBackend);
+        BOLT_PANIC("Unknown render backend %d", options.renderBackend);
         break;
     }
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     mGlfwWindow = glfwCreateWindow(width, height, "Object Visualizer", nullptr, nullptr);
-    RUNTIME_ASSERT(mGlfwWindow != nullptr, "Failed to create GLFW window");
+    BOLT_RUNTIME_ASSERT(mGlfwWindow != nullptr, "Failed to create GLFW window");
 }
 
 void GLFWWindow::destroy() {

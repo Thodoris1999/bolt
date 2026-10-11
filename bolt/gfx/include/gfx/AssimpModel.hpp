@@ -4,12 +4,18 @@
 
 #include "math/Matrix.hpp"
 
-#include <assimp/scene.h>
-#include <assimp/Importer.hpp>
-
+#include <memory>
 #include <vector>
 #include <string>
 #include <unordered_map>
+
+struct aiScene;
+struct aiNode;
+struct aiMesh;
+
+namespace Assimp {
+class Importer;
+}
 
 namespace bolt {
 namespace gfx {
@@ -45,10 +51,8 @@ private:
     Drawable3d* processSkinnedPhongMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processTexturedMesh(aiMesh *mesh, const aiScene *scene);
     Drawable3d* processPhongMesh(aiMesh *mesh, const aiScene *scene);
-    std::vector<TextureDescriptor> loadMaterialTextures(aiMaterial *mat, aiTextureType type, uint32_t binding);
-    std::vector<TextureDescriptor> loadStandardMaterialTextures(aiMaterial *mat);
 
-    Assimp::Importer mImporter;
+    std::unique_ptr<Assimp::Importer> mImporter;
     const aiScene* mScene = nullptr;
     std::vector<Drawable3d*> mMeshes;
     std::vector<SkinnedDrawable*> mSkinnedMeshes;

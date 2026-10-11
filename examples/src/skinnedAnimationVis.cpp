@@ -99,7 +99,7 @@ private:
 };
 
 int main(int argc, char** argv) {
-    RUNTIME_ASSERT(argc == 2, "Gimme a model file as argument");
+    BOLT_RUNTIME_ASSERT(argc == 2, "Gimme a model file as argument");
 
     SkinnedAnimationViewer viewer(1000, 1000, argv[1]);
 

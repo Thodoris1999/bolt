@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
     sphere->setPose(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
     sphere->setMaterial(randomBrightMaterial());
 
-    RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
+    BOLT_RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
     ObjectManagerText objManager(&scene);
     objManager.createObjects(argv[1]);
     objManager.createVisuals(scene);

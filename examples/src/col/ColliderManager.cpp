@@ -10,7 +10,7 @@ static bool dispatchCollision(const Collider* a, const Collider* b) {
     if (a->isConvex() && b->isConvex()) {
         return checkConvexCollision(*static_cast<const ColliderConvex*>(a), *static_cast<const ColliderConvex*>(b));
     } else {
-        RUNTIME_ASSERT(false, "dispatcher not supporting given colliders");
+        BOLT_RUNTIME_ASSERT(false, "dispatcher not supporting given colliders");
         return false;
     }
 }

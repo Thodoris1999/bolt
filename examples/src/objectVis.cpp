@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     sphere->setMaterial(randomBrightMaterial());
     ShapeSphere sphereShape(1.02);
 
-    RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
+    BOLT_RUNTIME_ASSERT(argc == 2, "Gimme text file as argument");
     TIME(objmanstart);
     ObjectManagerText objManager(scene);
     objManager.createObjects(argv[1]);

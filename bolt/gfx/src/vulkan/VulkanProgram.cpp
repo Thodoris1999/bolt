@@ -20,7 +20,7 @@ inline VkFormat toVkFormat(DataType type, int count) {
         case 3: return VK_FORMAT_R32G32B32_SFLOAT;
         case 4: return VK_FORMAT_R32G32B32A32_SFLOAT;
         default:
-            PANIC("Unsupported float count %d", count);
+            BOLT_PANIC("Unsupported float count %d", count);
             return VK_FORMAT_UNDEFINED;
         }
     case BOLT_I32:
@@ -30,11 +30,11 @@ inline VkFormat toVkFormat(DataType type, int count) {
         case 3: return VK_FORMAT_R32G32B32_SINT;
         case 4: return VK_FORMAT_R32G32B32A32_SINT;
         default:
-            PANIC("Unsupported int count %d", count);
+            BOLT_PANIC("Unsupported int count %d", count);
             return VK_FORMAT_UNDEFINED;
         }
     default:
-        PANIC("Unsupported DataType %d", static_cast<int>(type));
+        BOLT_PANIC("Unsupported DataType %d", static_cast<int>(type));
         return VK_FORMAT_UNDEFINED;
     }
 }
@@ -95,7 +95,7 @@ static VkShaderModule createShaderModule(VkDevice device, const std::string_view
 
     VkShaderModule shaderModule;
     VkResult result = vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to load module");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to load module");
     return shaderModule;
 }
 
@@ -120,7 +120,7 @@ static VkShaderStageFlagBits csp2vkStageFlag(csp::ShaderStage stage) {
         return VK_SHADER_STAGE_COMPUTE_BIT;
     
     default:
-        PANIC("Vulkan: Unkown shader stage");
+        BOLT_PANIC("Vulkan: Unkown shader stage");
         return VK_SHADER_STAGE_COMPUTE_BIT;
     }
 }
@@ -149,7 +149,7 @@ static VkDescriptorType csp2vkDescriptorType(csp::DescriptorType type) {
         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     
     default:
-        PANIC("Vulkan: Unkown descriptor type");
+        BOLT_PANIC("Vulkan: Unkown descriptor type");
         return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     }
 }
@@ -185,7 +185,7 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
         layoutInfo.bindingCount = bindings.size();
         layoutInfo.pBindings = bindings.data();
         VkResult result = vkCreateDescriptorSetLayout(renderSystem->device(), &layoutInfo, nullptr, &outLayout);
-        RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline descriptor set layout");
+        BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline descriptor set layout");
     };
     createDescriptorSetLayout(descriptorBindings, mDescriptorSetLayout);
     createDescriptorSetLayout(uniformDescriptorBindings, mUniformDescriptorSetLayout);
@@ -225,7 +225,7 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
     pipelineLayoutInfo.pushConstantRangeCount = pcRanges.size();
     pipelineLayoutInfo.pPushConstantRanges = pcRanges.data();
     VkResult layoutCreateResult = vkCreatePipelineLayout(renderSystem->device(), &pipelineLayoutInfo, nullptr, &mPipelineLayout);
-    RUNTIME_ASSERT(layoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline layout");
+    BOLT_RUNTIME_ASSERT(layoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create pipeline layout");
 
     // create pipeline
     const csp::ProgramDescriptor& pd = drawable->programDescriptor();
@@ -265,7 +265,7 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
     
     // TODO: Remove triangle fan support for portability reasons
     case BOLT_GFX_TRIANGLE_FAN:
-        PANIC("Vulkan: BOLT_GFX_TRIANGLE_FAN topology not supported by vulkan backend");
+        BOLT_PANIC("Vulkan: BOLT_GFX_TRIANGLE_FAN topology not supported by vulkan backend");
         inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
         break;
     
@@ -274,7 +274,7 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
         break;
     
     default:
-        PANIC("Vulkan: Unknown primitive type %d", drawable->primitiveType());
+        BOLT_PANIC("Vulkan: Unknown primitive type %d", drawable->primitiveType());
         break;
     }
     inputAssembly.primitiveRestartEnable = VK_FALSE;
@@ -377,7 +377,7 @@ VulkanProgram::VulkanProgram(const VulkanRenderSystem* renderSystem, Drawable* d
     pipelineInfo.basePipelineIndex = -1; // Optional
 
     VkResult result = vkCreateGraphicsPipelines(mRenderSystem->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &mGraphicsPipeline);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create pipeline");
 
     for (auto module : shaderModules) {
         vkDestroyShaderModule(mRenderSystem->device(), module, nullptr);

@@ -14,7 +14,7 @@ public:
     virtual void setViewport(int x, int y, int width, int height) = 0;
     virtual void addDrawable(Drawable* drawable) = 0;
     /// Frees a drawable previously passed to addDrawable(), including its backend GPU resources.
-    virtual void removeDrawable(Drawable* drawable) { PANIC("removeDrawable not implemented for this backend"); }
+    virtual void removeDrawable(Drawable* drawable) { BOLT_PANIC("removeDrawable not implemented for this backend"); }
     virtual RenderUniformBuffer* addUniform(size_t size, uint32_t bindPoint) = 0;
     /**
      * Loads all necessary things for RenderSystem to be able to render frames. Safe to call more

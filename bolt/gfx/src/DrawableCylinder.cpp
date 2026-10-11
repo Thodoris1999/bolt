@@ -1,6 +1,7 @@
 #include "gfx/DrawableCylinder.hpp"
 
 #include <math.h>
+#include <numbers>
 
 namespace bolt {
 namespace gfx {
@@ -26,7 +27,7 @@ DrawableCylinder::DrawableCylinder(float height, float radius, int segments) {
     int topRingStart = 2;
 
     for (int i = 0; i < segments; ++i) {
-        float angle = (2.0f * M_PI * i) / segments;
+        float angle = (2.0f * std::numbers::pi * i) / segments;
         float x = radius * std::cos(angle);
         float y = radius * std::sin(angle);
 
@@ -37,7 +38,7 @@ DrawableCylinder::DrawableCylinder(float height, float radius, int segments) {
     int bottomRingStart = topRingStart + segments;
 
     for (int i = 0; i < segments; ++i) {
-        float angle = (2.0f * M_PI * i) / segments;
+        float angle = (2.0f * std::numbers::pi * i) / segments;
         float x = radius * std::cos(angle);
         float y = radius * std::sin(angle);
 
@@ -49,7 +50,7 @@ DrawableCylinder::DrawableCylinder(float height, float radius, int segments) {
     int sideBottomStart = sideTopStart + segments;
 
     for (int i = 0; i < segments; ++i) {
-        float angle = (2.0f * M_PI * i) / segments;
+        float angle = (2.0f * std::numbers::pi * i) / segments;
         float x = radius * std::cos(angle);
         float y = radius * std::sin(angle);
 
@@ -60,7 +61,7 @@ DrawableCylinder::DrawableCylinder(float height, float radius, int segments) {
     }
 
     for (int i = 0; i < segments; ++i) {
-        float angle = (2.0f * M_PI * i) / segments;
+        float angle = (2.0f * std::numbers::pi * i) / segments;
         float x = radius * std::cos(angle);
         float y = radius * std::sin(angle);
 

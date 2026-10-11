@@ -33,7 +33,9 @@ target_include_directories(gui
     $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(gui PRIVATE glad bolt::util PUBLIC bolt::gfx)
-target_compile_options(gui PRIVATE -Wall)
+if(NOT WIN32)
+    target_compile_options(gui PRIVATE -Wall)
+endif()
 
 if(TARGET SDL3::SDL3)
     target_compile_definitions(gui PUBLIC BOLT_GUI_HAVE_SDL3)

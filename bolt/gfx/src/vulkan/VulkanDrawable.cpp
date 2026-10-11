@@ -63,7 +63,7 @@ void VulkanDrawable::createUniformBuffers() {
             continue;
         }
         if (uv.size == 0) {
-            PANIC("Vulkan: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
+            BOLT_PANIC("Vulkan: set=2 uniform block has zero size for \"%.*s\" — was csp regenerated with UniformVar.size support?", (int)uv.name.size(), uv.name.data());
         }
 
         auto uniform = std::make_unique<VulkanUniformBuffer>(mRenderSystem, uv.size, uv.binding);
@@ -84,7 +84,7 @@ void VulkanDrawable::createUniformBuffers() {
     allocInfo.descriptorSetCount = numFramesInFlight;
     allocInfo.pSetLayouts = setLayouts.data();
     VkResult result = vkAllocateDescriptorSets(mRenderSystem->device(), &allocInfo, mUniformDescriptorSets.data());
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to allocate drawable uniform descriptor sets");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to allocate drawable uniform descriptor sets");
 
     for (int f = 0; f < numFramesInFlight; f++) {
         for (auto& uniform : mUniformBuffers) {

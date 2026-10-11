@@ -49,7 +49,7 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
     float x, y, z, rx, ry, rz;
 
     if (!(iss >> type >> x >> y >> z >> rx >> ry >> rz)) {
-        PANIC("Invalid object format: %s", text.c_str());
+        BOLT_PANIC("Invalid object format: %s", text.c_str());
     }
 
     Vector3f pos(x, y, z);
@@ -68,7 +68,7 @@ Object3d* ObjectManagerText::createObject(const std::string& text) {
         if (!(iss >> filename)) return nullptr;
         object = new ObjectModel(filename.c_str());
     } else {
-        DEBUG("Unknown object %s", type.c_str());
+        BOLT_DEBUG("Unknown object %s", type.c_str());
         object = nullptr;
     }
 

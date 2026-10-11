@@ -1,6 +1,7 @@
 #include "gfx/DrawableCone.hpp"
 
 #include <math.h>
+#include <numbers>
 
 namespace bolt {
 namespace gfx {
@@ -20,7 +21,7 @@ DrawableCone::DrawableCone(float height, float radius, int segments) {
 
     // Base ring vertices start from index 2
     for (int i = 0; i < segments; ++i) {
-        float angle = (2.0f * M_PI * i) / segments;
+        float angle = (2.0f * std::numbers::pi * i) / segments;
         float x = radius * std::cos(angle);
         float y = radius * std::sin(angle);
         math::Vector3f pos = {x, y, 0.0f};

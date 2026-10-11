@@ -125,7 +125,7 @@ static VkFormat findSupportedFormat(VkPhysicalDevice physicalDevice, const std::
         }
     }
 
-    PANIC("failed to find supported format!");
+    BOLT_PANIC("failed to find supported format!");
 }
 
 static VkFormat findDepthFormat(VkPhysicalDevice physicalDevice) {
@@ -239,7 +239,7 @@ void VulkanRenderSystem::createInstance(const char* const * extensions, uint32_t
     const std::vector<const char*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
     };
-    RUNTIME_ASSERT(checkValidationLayerSupport(validationLayers), "Failed to load requested vulkan validation layers");
+    BOLT_RUNTIME_ASSERT(checkValidationLayerSupport(validationLayers), "Failed to load requested vulkan validation layers");
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = validationLayers.data();
 #else
@@ -247,13 +247,13 @@ void VulkanRenderSystem::createInstance(const char* const * extensions, uint32_t
 #endif
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &mInstance);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Failed to create vulkan instance");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Failed to create vulkan instance");
 }
 
 void VulkanRenderSystem::setupPhysicalDevice() {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
-    RUNTIME_ASSERT(deviceCount > 0, "Could not find any devices with Vulkan support");
+    BOLT_RUNTIME_ASSERT(deviceCount > 0, "Could not find any devices with Vulkan support");
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
 
@@ -264,7 +264,7 @@ void VulkanRenderSystem::setupPhysicalDevice() {
         }
     }
 
-    RUNTIME_ASSERT(mPhysicalDevice != VK_NULL_HANDLE, "Failed to find a suitable Vulkan GPU");
+    BOLT_RUNTIME_ASSERT(mPhysicalDevice != VK_NULL_HANDLE, "Failed to find a suitable Vulkan GPU");
 }
 
 void VulkanRenderSystem::createLogicalDevice() {
@@ -299,7 +299,7 @@ void VulkanRenderSystem::createLogicalDevice() {
 
 
     VkResult result = vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mDevice);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create logical device");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create logical device");
 
     vkGetDeviceQueue(mDevice, indices.graphicsFamily.value(), 0, &mGraphicsQueue);
     if (!mHeadless) {
@@ -409,7 +409,7 @@ void VulkanRenderSystem::createSwapChain() {
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
     VkResult result = vkCreateSwapchainKHR(mDevice, &createInfo, nullptr, &mSwapChain);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create swap chain");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create swap chain");
 
     vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, nullptr);
     mSwapChainImages.resize(imageCount);
@@ -462,7 +462,7 @@ VkImageView VulkanRenderSystem::createImageView(VkImage image, VkFormat format, 
 
     VkImageView imageView;
     VkResult result = vkCreateImageView(mDevice, &viewInfo, nullptr, &imageView);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create image view");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create image view");
 
     return imageView;
 }
@@ -488,7 +488,7 @@ void VulkanRenderSystem::createDescriptorPool() {
     poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
     VkResult result = vkCreateDescriptorPool(mDevice, &poolInfo, nullptr, &mDescriptorPool);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create descriptor pool");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create descriptor pool");
 }
 
 void VulkanRenderSystem::createDescriptorSets() {
@@ -500,7 +500,7 @@ void VulkanRenderSystem::createDescriptorSets() {
     allocInfo.pSetLayouts = layouts.data();
 
     VkResult result = vkAllocateDescriptorSets(mDevice, &allocInfo, mSceneDescriptorSets.data());
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create scene descriptor sets");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create scene descriptor sets");
 }
 
 void VulkanRenderSystem::createRenderPass() {
@@ -558,7 +558,7 @@ void VulkanRenderSystem::createRenderPass() {
     renderPassInfo.pDependencies = &dependency;
 
     VkResult result = vkCreateRenderPass(mDevice, &renderPassInfo, nullptr, &mRenderPass);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create render pass");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create render pass");
 }
 
 void VulkanRenderSystem::createDepthResources() {
@@ -588,7 +588,7 @@ void VulkanRenderSystem::createFramebuffers() {
         framebufferInfo.layers = 1;
 
         VkResult result = vkCreateFramebuffer(mDevice, &framebufferInfo, nullptr, &mSwapChainFramebuffers[i]);
-        RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create framebuffer");
+        BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create framebuffer");
     }
 }
 
@@ -601,7 +601,7 @@ void VulkanRenderSystem::createCommandPool() {
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
     VkResult result = vkCreateCommandPool(mDevice, &poolInfo, nullptr, &mCommandPool);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command pool");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command pool");
 }
 
 void VulkanRenderSystem::createSyncObjects() {
@@ -613,16 +613,16 @@ void VulkanRenderSystem::createSyncObjects() {
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         VkResult imRes = vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[i]);
-        RUNTIME_ASSERT(imRes == VK_SUCCESS, "Vulkan: Failed to create image wait semaphore");
+        BOLT_RUNTIME_ASSERT(imRes == VK_SUCCESS, "Vulkan: Failed to create image wait semaphore");
         VkResult feRes = vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFences[i]);
-        RUNTIME_ASSERT(feRes == VK_SUCCESS, "Vulkan: Failed to create in flight fence");
+        BOLT_RUNTIME_ASSERT(feRes == VK_SUCCESS, "Vulkan: Failed to create in flight fence");
     }
 
     if (mHeadless) {
         VkFenceCreateInfo readbackFenceInfo{};
         readbackFenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         VkResult readbackFeRes = vkCreateFence(mDevice, &readbackFenceInfo, nullptr, &mReadbackFence);
-        RUNTIME_ASSERT(readbackFeRes == VK_SUCCESS, "Vulkan: Failed to create readback fence");
+        BOLT_RUNTIME_ASSERT(readbackFeRes == VK_SUCCESS, "Vulkan: Failed to create readback fence");
     }
 
     createRenderFinishedSemaphores();
@@ -635,7 +635,7 @@ void VulkanRenderSystem::createRenderFinishedSemaphores() {
     mRenderFinishedSemaphores.resize(mSwapChainImages.size());
     for (size_t i = 0; i < mSwapChainImages.size(); i++) {
         VkResult reRes = vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]);
-        RUNTIME_ASSERT(reRes == VK_SUCCESS, "Vulkan: Failed to create renderFinished semaphore");
+        BOLT_RUNTIME_ASSERT(reRes == VK_SUCCESS, "Vulkan: Failed to create renderFinished semaphore");
     }
 }
 
@@ -670,7 +670,7 @@ void VulkanRenderSystem::createTextureSampler() {
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = 0.0f;
     VkResult result = vkCreateSampler(mDevice, &samplerInfo, nullptr, &mTextureSampler);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create sampler");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create sampler");
 }
 
 void VulkanRenderSystem::createCommandBuffer() {
@@ -680,7 +680,7 @@ void VulkanRenderSystem::createCommandBuffer() {
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = mCommandBuffers.size();
     VkResult result = vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data());
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command buffers");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create command buffers");
 
     if (mHeadless) {
         VkCommandBufferAllocateInfo readbackAllocInfo{};
@@ -689,7 +689,7 @@ void VulkanRenderSystem::createCommandBuffer() {
         readbackAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         readbackAllocInfo.commandBufferCount = 1;
         VkResult readbackResult = vkAllocateCommandBuffers(mDevice, &readbackAllocInfo, &mReadbackCommandBuffer);
-        RUNTIME_ASSERT(readbackResult == VK_SUCCESS, "Vulkan: Failed to create readback command buffer");
+        BOLT_RUNTIME_ASSERT(readbackResult == VK_SUCCESS, "Vulkan: Failed to create readback command buffer");
     }
 }
 
@@ -709,7 +709,7 @@ void VulkanRenderSystem::createSceneDescriptorSetLayout() {
     layoutInfo.bindingCount = uboLayoutBindings.size();
     layoutInfo.pBindings = uboLayoutBindings.data();
     VkResult setLayoutCreateResult = vkCreateDescriptorSetLayout(mDevice, &layoutInfo, nullptr, &mSceneDescriptorSetLayout);
-    RUNTIME_ASSERT(setLayoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create scene descriptor set layout");
+    BOLT_RUNTIME_ASSERT(setLayoutCreateResult == VK_SUCCESS, "Vulkan: Failed to create scene descriptor set layout");
 }
 
 void VulkanRenderSystem::createEmptyDescriptorSetLayout() {
@@ -718,7 +718,7 @@ void VulkanRenderSystem::createEmptyDescriptorSetLayout() {
     layoutInfo.bindingCount = 0;
     layoutInfo.pBindings = nullptr;
     VkResult result = vkCreateDescriptorSetLayout(mDevice, &layoutInfo, nullptr, &mEmptyDescriptorSetLayout);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create empty descriptor set layout");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to create empty descriptor set layout");
 }
 
 void VulkanRenderSystem::recreateSwapChain() {
@@ -774,7 +774,7 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, cons
     beginInfo.flags = 0; // Optional
     beginInfo.pInheritanceInfo = nullptr; // Optional
     VkResult result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
-    RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to begin recording command buffer");
+    BOLT_RUNTIME_ASSERT(result == VK_SUCCESS, "Vulkan: Failed to begin recording command buffer");
 
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = mClearColor.color;
@@ -811,7 +811,7 @@ void VulkanRenderSystem::recordCommandBuffer(VkCommandBuffer commandBuffer, cons
     // end drawing
     vkCmdEndRenderPass(commandBuffer);
     VkResult endCommandRes = vkEndCommandBuffer(commandBuffer);
-    RUNTIME_ASSERT(endCommandRes == VK_SUCCESS, "Vulkan: Failed to end command buffer");
+    BOLT_RUNTIME_ASSERT(endCommandRes == VK_SUCCESS, "Vulkan: Failed to end command buffer");
 }
 
 uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkMemoryPropertyFlags preferredExtra) const {
@@ -833,7 +833,7 @@ uint32_t VulkanRenderSystem::findMemoryType(uint32_t typeFilter, VkMemoryPropert
         }
     }
 
-    PANIC("Vulkan: Failed to find suitable memory type");
+    BOLT_PANIC("Vulkan: Failed to find suitable memory type");
 }
 
 void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, VkMemoryPropertyFlags preferredExtra) const {
@@ -843,7 +843,7 @@ void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     VkResult createRes = vkCreateBuffer(mDevice, &bufferInfo, nullptr, &buffer);
-    RUNTIME_ASSERT(createRes == VK_SUCCESS, "Vulkan: Failed to create buffer");
+    BOLT_RUNTIME_ASSERT(createRes == VK_SUCCESS, "Vulkan: Failed to create buffer");
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(mDevice, buffer, &memRequirements);
@@ -853,7 +853,7 @@ void VulkanRenderSystem::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, preferredExtra);
     VkResult allocRes = vkAllocateMemory(mDevice, &allocInfo, nullptr, &bufferMemory);
-    RUNTIME_ASSERT(allocRes == VK_SUCCESS, "Vulkan: Failed to allocate buffer memory");
+    BOLT_RUNTIME_ASSERT(allocRes == VK_SUCCESS, "Vulkan: Failed to allocate buffer memory");
 
     vkBindBufferMemory(mDevice, buffer, bufferMemory, 0);
 }
@@ -936,7 +936,7 @@ void VulkanRenderSystem::transitionImageLayout(VkImage image, VkFormat format, V
         sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
     } else {
-        PANIC("vulkan: unsupported layout transition");
+        BOLT_PANIC("vulkan: unsupported layout transition");
     }
 
     vkCmdPipelineBarrier(
@@ -1000,7 +1000,7 @@ void VulkanRenderSystem::createImage(uint32_t width, uint32_t height, VkFormat f
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     VkResult imageResult = vkCreateImage(mDevice, &imageInfo, nullptr, &image);
-    RUNTIME_ASSERT(imageResult == VK_SUCCESS, "vulkan: Failed to create image");
+    BOLT_RUNTIME_ASSERT(imageResult == VK_SUCCESS, "vulkan: Failed to create image");
 
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(mDevice, image, &memRequirements);
@@ -1010,7 +1010,7 @@ void VulkanRenderSystem::createImage(uint32_t width, uint32_t height, VkFormat f
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
     VkResult allocResult = vkAllocateMemory(mDevice, &allocInfo, nullptr, &imageMemory);
-    RUNTIME_ASSERT(allocResult == VK_SUCCESS, "vulkan: Failed to allocate image memory");
+    BOLT_RUNTIME_ASSERT(allocResult == VK_SUCCESS, "vulkan: Failed to allocate image memory");
 
     vkBindImageMemory(mDevice, image, imageMemory, 0);
 }
@@ -1117,7 +1117,7 @@ void VulkanRenderSystem::renderFrame() {
         recreateSwapChain();
         return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        PANIC("Vulkan: Failed to acquire swap chain image");
+        BOLT_PANIC("Vulkan: Failed to acquire swap chain image");
     }
 
     vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
@@ -1147,7 +1147,7 @@ void VulkanRenderSystem::renderFrame() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
     VkResult drawResult = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]);
-    RUNTIME_ASSERT(drawResult == VK_SUCCESS, "Vulkan: Failed to submit draw command buffer to queue");
+    BOLT_RUNTIME_ASSERT(drawResult == VK_SUCCESS, "Vulkan: Failed to submit draw command buffer to queue");
 
     // presentation
     VkPresentInfoKHR presentInfo{};
@@ -1191,7 +1191,7 @@ void VulkanRenderSystem::renderFrameHeadless() {
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &mCommandBuffers[frameIdx];
     VkResult drawResult = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[frameIdx]);
-    RUNTIME_ASSERT(drawResult == VK_SUCCESS, "Vulkan: Failed to submit draw command buffer to queue");
+    BOLT_RUNTIME_ASSERT(drawResult == VK_SUCCESS, "Vulkan: Failed to submit draw command buffer to queue");
 
     mLastRenderedImageIndex = frameIdx;
     mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -1229,7 +1229,7 @@ void VulkanRenderSystem::readFramebuffer() {
 
     vkResetFences(mDevice, 1, &mReadbackFence);
     VkResult submitResult = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mReadbackFence);
-    RUNTIME_ASSERT(submitResult == VK_SUCCESS, "Vulkan: Failed to submit readback command buffer to queue");
+    BOLT_RUNTIME_ASSERT(submitResult == VK_SUCCESS, "Vulkan: Failed to submit readback command buffer to queue");
 
     vkWaitForFences(mDevice, 1, &mReadbackFence, VK_TRUE, UINT64_MAX);
 }

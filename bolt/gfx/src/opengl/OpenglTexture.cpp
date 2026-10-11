@@ -36,7 +36,7 @@ OpenglTexture::OpenglTexture(const TextureDescriptor& desc) : mBinding(desc.bind
         else if (nrComponents == 4)
             format = GL_RGBA;
         else
-            PANIC("Unsupported number of texture channels %d", nrComponents);
+            BOLT_PANIC("Unsupported number of texture channels %d", nrComponents);
 
         glBindTexture(GL_TEXTURE_2D, mId);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
@@ -51,7 +51,7 @@ OpenglTexture::OpenglTexture(const TextureDescriptor& desc) : mBinding(desc.bind
             stbi_image_free(decoded);
         }
     } else {
-        PANIC("Failed to load texture: %s", desc.textureFile.c_str());
+        BOLT_PANIC("Failed to load texture: %s", desc.textureFile.c_str());
     }
 }
 

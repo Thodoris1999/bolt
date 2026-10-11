@@ -30,7 +30,7 @@ inline int sizeOfType(DataType type) {
     case BOLT_I32:
         return sizeof(int32_t);
     default: {
-        PANIC("Unknkown type %d", static_cast<int>(type));
+        BOLT_PANIC("Unknkown type %d", static_cast<int>(type));
         return 0; // unknown type
     }
     }
@@ -172,11 +172,11 @@ public:
     void setUniform(uint32_t id, const void* data, size_t size, size_t offset = 0) {
         const csp::UniformVar& uv = programDescriptor().uniform_vars[id];
         if (offset + size > uv.size) {
-            PANIC("Drawable::setUniform: offset %zu + size %zu exceeds reflected uniform size %u for id %u (\"%.*s\")",
+            BOLT_PANIC("Drawable::setUniform: offset %zu + size %zu exceeds reflected uniform size %u for id %u (\"%.*s\")",
                 offset, size, uv.size, id, (int)uv.name.size(), uv.name.data());
         }
         if (id >= mUniformData.size() || mUniformData[id] == nullptr) {
-            PANIC("Drawable::setUniform: no backing storage for uniform id %u — was load() called, and is set==2?", id);
+            BOLT_PANIC("Drawable::setUniform: no backing storage for uniform id %u — was load() called, and is set==2?", id);
         }
         mUniformData[id]->writeData(data, offset, size);
     }

@@ -99,7 +99,7 @@ static std::unordered_map<std::string, int32_t> buildBoneMapping(const aiMesh* m
         if (it == boneMapping.end()) {
             boneId = static_cast<int32_t>(boneMapping.size());
             if (boneId >= MAX_BONES) {
-                PANIC("AssimpModel: mesh has more than MAX_BONES (%d) distinct bones", MAX_BONES);
+                BOLT_PANIC("AssimpModel: mesh has more than MAX_BONES (%d) distinct bones", MAX_BONES);
             }
             boneMapping[boneName] = boneId;
         } else {
@@ -146,7 +146,93 @@ static MaterialColors extractMaterialColors(aiMaterial* material) {
     return colors;
 }
 
-AssimpModel::AssimpModel(const char* path) {
+// modelDirectory resolves texture files referenced by the model; modelPath only names embedded ones
+static std::vector<TextureDescriptor> loadMaterialTextures(const aiScene* scene, const std::string& modelDirectory,
+        const char* modelPath, aiMaterial* mat, aiTextureType type, uint32_t binding) {
+    std::vector<TextureDescriptor> textures;
+    for(unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
+        if (i > 0) {
+            // ignore textures other than the first
+            break;
+        }
+        aiString str;
+        mat->GetTexture(type, i, &str);
+
+        TextureDescriptor texture;
+        texture.binding = binding;
+
+        // A texture packed into the model file itself is named "*<index>" and has no file to
+        // read: its bytes travel with the descriptor instead.
+        const aiTexture* embedded = scene->GetEmbeddedTexture(str.C_Str());
+        if (embedded == nullptr) {
+            texture.textureFile = modelDirectory + '/' + str.C_Str();
+        } else {
+            BOLT_RUNTIME_ASSERT(embedded->mHeight == 0,
+                "AssimpModel: embedded textures must be in an encoded format, not raw texels");
+            const auto* bytes = reinterpret_cast<const unsigned char*>(embedded->pcData);
+            texture.textureFile = std::string(modelPath) + str.C_Str();
+            texture.encoded = std::make_shared<const std::vector<unsigned char>>(
+                bytes, bytes + embedded->mWidth);
+        }
+        textures.push_back(texture);
+    }
+    return textures;
+}
+
+/// One sampler of the standard material shader (textured.frag, shared by TexturedMesh and
+/// SkinnedMesh), and where its map comes from in an assimp material.
+struct StandardSampler {
+    uint32_t binding;
+    /// assimp texture type holding this map
+    aiTextureType type;
+    /// alternate type to try when \p type is absent, or aiTextureType_NONE if there is none
+    aiTextureType altType;
+    /// texel used when the material carries no such map at all
+    unsigned char defaultTexel[4];
+};
+
+// provide a default sampler for all common texxture fields
+static const StandardSampler STANDARD_SAMPLERS[] = {
+    {0, aiTextureType_AMBIENT,   aiTextureType_NONE,   {255, 255, 255, 255}},
+    {1, aiTextureType_DIFFUSE,   aiTextureType_NONE,   {255, 255, 255, 255}},
+    // no specular map means no specular contribution, so the default is black
+    {2, aiTextureType_SPECULAR,  aiTextureType_NONE,   {  0,   0,   0, 255}},
+    {3, aiTextureType_SHININESS, aiTextureType_NONE,   {255, 255, 255, 255}},
+    // glTF/VRM files a tangent-space normal map under NORMALS; OBJ files it under HEIGHT.
+    // The default is the flat tangent-space normal (0, 0, 1) encoded into [0, 1].
+    {4, aiTextureType_NORMALS,   aiTextureType_HEIGHT, {128, 128, 255, 255}},
+};
+
+static TextureDescriptor defaultTexture(const StandardSampler& sampler) {
+    TextureDescriptor texture;
+    texture.binding = sampler.binding;
+    // not a path: only an identifier, so that every material shares one default per binding
+    texture.textureFile = "<default sampler " + std::to_string(sampler.binding) + ">";
+    texture.raw = std::make_shared<const std::vector<unsigned char>>(
+        sampler.defaultTexel, sampler.defaultTexel + 4);
+    texture.rawWidth = 1;
+    texture.rawHeight = 1;
+    return texture;
+}
+
+static std::vector<TextureDescriptor> loadStandardMaterialTextures(const aiScene* scene,
+        const std::string& modelDirectory, const char* modelPath, aiMaterial* mat) {
+    std::vector<TextureDescriptor> textures;
+    for (const StandardSampler& sampler : STANDARD_SAMPLERS) {
+        std::vector<TextureDescriptor> maps =
+            loadMaterialTextures(scene, modelDirectory, modelPath, mat, sampler.type, sampler.binding);
+        if (maps.empty() && sampler.altType != aiTextureType_NONE) {
+            maps = loadMaterialTextures(scene, modelDirectory, modelPath, mat, sampler.altType, sampler.binding);
+        }
+        if (maps.empty()) {
+            maps.push_back(defaultTexture(sampler));
+        }
+        textures.insert(textures.end(), maps.begin(), maps.end());
+    }
+    return textures;
+}
+
+AssimpModel::AssimpModel(const char* path) : mImporter(std::make_unique<Assimp::Importer>()) {
     auto pathLength = strlen(path) + 1;
     mPath = (char*)malloc(pathLength * sizeof(char));
     memcpy(mPath, path, pathLength);
@@ -175,8 +261,13 @@ void AssimpModel::load() {
 void AssimpModel::loadModel(const char* path) {
     // aiProcess_FlipUVs: assimp hands back UVs with the origin at the lower-left corner, but both
     // backends upload the decoded image top row first and sample v=0 at that row.
-    mScene = mImporter.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights | aiProcess_FlipUVs);
-    RUNTIME_ASSERT(mScene && (mScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == 0 && mScene->mRootNode, mImporter.GetErrorString());
+    unsigned int flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights;
+#ifdef __linux__
+    // TODO: figure out why the flip is only needed on Linux.
+    flags |= aiProcess_FlipUVs;
+#endif
+    mScene = mImporter->ReadFile(path, flags);
+    BOLT_RUNTIME_ASSERT(mScene && (mScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == 0 && mScene->mRootNode, mImporter->GetErrorString());
 
     std::string strPath(path);
     mDirectory = strPath.substr(0, strPath.find_last_of('/'));
@@ -220,7 +311,7 @@ Drawable3d* AssimpModel::processSkinnedMesh(aiMesh *mesh, const aiScene *scene) 
     std::unordered_map<std::string, int32_t> boneMapping = buildBoneMapping(mesh, vertices, mBoneOffsets);
 
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<TextureDescriptor> textures = loadStandardMaterialTextures(material);
+    std::vector<TextureDescriptor> textures = loadStandardMaterialTextures(scene, mDirectory, mPath, material);
 
     SkinnedMesh* skinnedMesh = new SkinnedMesh(vertices, indices, textures, boneMapping);
     mSkinnedMeshes.push_back(skinnedMesh);
@@ -274,91 +365,9 @@ Drawable3d* AssimpModel::processTexturedMesh(aiMesh *mesh, const aiScene *scene)
     // specular: texture_specularN
     // normal: texture_normalN
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<TextureDescriptor> textures = loadStandardMaterialTextures(material);
+    std::vector<TextureDescriptor> textures = loadStandardMaterialTextures(scene, mDirectory, mPath, material);
 
     return new TexturedMesh(vertices, indices, textures);
-}
-
-std::vector<TextureDescriptor> AssimpModel::loadMaterialTextures(aiMaterial *mat, aiTextureType type, uint32_t binding) {
-    std::vector<TextureDescriptor> textures;
-    for(unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
-        if (i > 0) {
-            // ignore textures other than the first
-            break;
-        }
-        aiString str;
-        mat->GetTexture(type, i, &str);
-
-        TextureDescriptor texture;
-        texture.binding = binding;
-
-        // A texture packed into the model file itself is named "*<index>" and has no file to
-        // read: its bytes travel with the descriptor instead.
-        const aiTexture* embedded = mScene->GetEmbeddedTexture(str.C_Str());
-        if (embedded == nullptr) {
-            texture.textureFile = mDirectory + '/' + str.C_Str();
-        } else {
-            RUNTIME_ASSERT(embedded->mHeight == 0,
-                "AssimpModel: embedded textures must be in an encoded format, not raw texels");
-            const auto* bytes = reinterpret_cast<const unsigned char*>(embedded->pcData);
-            texture.textureFile = std::string(mPath) + str.C_Str();
-            texture.encoded = std::make_shared<const std::vector<unsigned char>>(
-                bytes, bytes + embedded->mWidth);
-        }
-        textures.push_back(texture);
-    }
-    return textures;
-}
-
-/// One sampler of the standard material shader (textured.frag, shared by TexturedMesh and
-/// SkinnedMesh), and where its map comes from in an assimp material.
-struct StandardSampler {
-    uint32_t binding;
-    /// assimp texture type holding this map
-    aiTextureType type;
-    /// alternate type to try when \p type is absent, or aiTextureType_NONE if there is none
-    aiTextureType altType;
-    /// texel used when the material carries no such map at all
-    unsigned char defaultTexel[4];
-};
-
-// provide a default sampler for all common texxture fields
-static const StandardSampler STANDARD_SAMPLERS[] = {
-    {0, aiTextureType_AMBIENT,   aiTextureType_NONE,   {255, 255, 255, 255}},
-    {1, aiTextureType_DIFFUSE,   aiTextureType_NONE,   {255, 255, 255, 255}},
-    // no specular map means no specular contribution, so the default is black
-    {2, aiTextureType_SPECULAR,  aiTextureType_NONE,   {  0,   0,   0, 255}},
-    {3, aiTextureType_SHININESS, aiTextureType_NONE,   {255, 255, 255, 255}},
-    // glTF/VRM files a tangent-space normal map under NORMALS; OBJ files it under HEIGHT.
-    // The default is the flat tangent-space normal (0, 0, 1) encoded into [0, 1].
-    {4, aiTextureType_NORMALS,   aiTextureType_HEIGHT, {128, 128, 255, 255}},
-};
-
-static TextureDescriptor defaultTexture(const StandardSampler& sampler) {
-    TextureDescriptor texture;
-    texture.binding = sampler.binding;
-    // not a path: only an identifier, so that every material shares one default per binding
-    texture.textureFile = "<default sampler " + std::to_string(sampler.binding) + ">";
-    texture.raw = std::make_shared<const std::vector<unsigned char>>(
-        sampler.defaultTexel, sampler.defaultTexel + 4);
-    texture.rawWidth = 1;
-    texture.rawHeight = 1;
-    return texture;
-}
-
-std::vector<TextureDescriptor> AssimpModel::loadStandardMaterialTextures(aiMaterial *mat) {
-    std::vector<TextureDescriptor> textures;
-    for (const StandardSampler& sampler : STANDARD_SAMPLERS) {
-        std::vector<TextureDescriptor> maps = loadMaterialTextures(mat, sampler.type, sampler.binding);
-        if (maps.empty() && sampler.altType != aiTextureType_NONE) {
-            maps = loadMaterialTextures(mat, sampler.altType, sampler.binding);
-        }
-        if (maps.empty()) {
-            maps.push_back(defaultTexture(sampler));
-        }
-        textures.insert(textures.end(), maps.begin(), maps.end());
-    }
-    return textures;
 }
 
 std::vector<std::string> AssimpModel::getAllAnimationNames() const {
@@ -386,7 +395,7 @@ AssimpAnimation* AssimpModel::createAnimation(const std::string& name) {
         }
     }
 
-    PANIC("AssimpModel: no animation named \"%s\"", name.c_str());
+    BOLT_PANIC("AssimpModel: no animation named \"%s\"", name.c_str());
     return nullptr;
 }
 
