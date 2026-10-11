@@ -12,7 +12,7 @@
 #include <unordered_map>
 
 #define MAX_VTX_WEIGHTS 4
-#define MAX_BONES 96
+#define MAX_BONES 200
 
 namespace bolt {
 namespace gfx {

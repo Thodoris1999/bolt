@@ -21,7 +21,7 @@ layout (set = 0, binding = 0, std140) uniform Matrices
     mat4 view;
 } ubo;
 
-const int MAX_BONES = 96;
+const int MAX_BONES = 200;
 const int MAX_VTX_WEIGHTS = 4;
 
 layout (set = 2, binding = 0, std140) uniform Bones
