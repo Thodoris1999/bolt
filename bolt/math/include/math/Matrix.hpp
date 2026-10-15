@@ -146,7 +146,7 @@ struct Matrix44f {
     /// If this matrix represents a rigid body transform in homogeneous coordinates, return its inverse
     Matrix44f rigidInverse() const;
 
-    static const Matrix44f IDENTITY;
+    BOLT_MATH_DATA static const Matrix44f IDENTITY;
 };
 
 } // math

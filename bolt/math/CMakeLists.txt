@@ -5,6 +5,8 @@ set(math_SRC
 
 add_library(math ${math_SRC})
 add_library(bolt::math ALIAS math)
+bolt_library(math)
+target_link_libraries(math PUBLIC bolt::util)
 target_include_directories(math
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

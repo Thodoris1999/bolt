@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gui/RenderBackend.hpp"
+#include "util/Export.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -11,7 +12,7 @@ struct SDLWindowOptions {
     RenderBackend renderBackend;
 };
 
-extern const SDLWindowOptions defaultWindowOptions;
+BOLT_GUI_DATA extern const SDLWindowOptions defaultWindowOptions;
 
 class SDLWindow {
 public:

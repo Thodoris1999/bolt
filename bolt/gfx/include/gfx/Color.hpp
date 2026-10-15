@@ -1,5 +1,7 @@
 #pragma once
 
+#include "util/Export.hpp"
+
 namespace bolt {
 namespace gfx {
 
@@ -13,11 +15,11 @@ struct Color {
     Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
 };
 
-extern const Color COLOR_WHITE;
-extern const Color COLOR_BLACK;
-extern const Color COLOR_RED;
-extern const Color COLOR_GREEN;
-extern const Color COLOR_BLUE;
+BOLT_GFX_DATA extern const Color COLOR_WHITE;
+BOLT_GFX_DATA extern const Color COLOR_BLACK;
+BOLT_GFX_DATA extern const Color COLOR_RED;
+BOLT_GFX_DATA extern const Color COLOR_GREEN;
+BOLT_GFX_DATA extern const Color COLOR_BLUE;
 
 } // gfx
 } // bolt

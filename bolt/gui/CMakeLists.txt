@@ -27,6 +27,7 @@ endif()
 
 add_library(gui ${gui_SRC})
 add_library(bolt::gui ALIAS gui)
+bolt_library(gui)
 target_include_directories(gui
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

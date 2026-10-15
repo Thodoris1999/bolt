@@ -8,6 +8,8 @@ add_subdirectory(vendored/csp)
 
 find_package(Vulkan REQUIRED)
 
+option(BOLT_GFX_VULKAN "Build the Vulkan render system" ON)
+
 set(gfx_SRC
     src/Drawable.cpp
     src/FlatDrawable.cpp
@@ -37,15 +39,19 @@ set(gfx_SRC
     src/opengl/OpenglFramebuffer.cpp
     src/opengl/GlUtils.cpp
     src/opengl/gl_defines.cpp
-
-    src/vulkan/VulkanRenderSystem.cpp
-    src/vulkan/VulkanDrawable.cpp
-    src/vulkan/VulkanDrawList.cpp
-    src/vulkan/VulkanProgram.cpp
-    src/vulkan/VulkanTexture.cpp
-    src/vulkan/VulkanMaterial.cpp
-    src/vulkan/VulkanUniformBuffer.cpp
 )
+
+if(BOLT_GFX_VULKAN)
+    list(APPEND gfx_SRC
+        src/vulkan/VulkanRenderSystem.cpp
+        src/vulkan/VulkanDrawable.cpp
+        src/vulkan/VulkanDrawList.cpp
+        src/vulkan/VulkanProgram.cpp
+        src/vulkan/VulkanTexture.cpp
+        src/vulkan/VulkanMaterial.cpp
+        src/vulkan/VulkanUniformBuffer.cpp
+    )
+endif()
 
 if(TARGET assimp::assimp)
     list(APPEND gfx_SRC src/AssimpModel.cpp src/AssimpAnimation.cpp)
@@ -75,6 +81,7 @@ csp_add_program(skinnedphong
 
 add_library(gfx ${gfx_SRC})
 add_library(bolt::gfx ALIAS gfx)
+bolt_library(gfx)
 target_include_directories(gfx
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -94,7 +101,9 @@ csp_shader_dependency(gfx PRIVATE textured)
 csp_shader_dependency(gfx PRIVATE skinned)
 csp_shader_dependency(gfx PRIVATE skinnedphong)
 
-target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
+if(BOLT_GFX_VULKAN)
+    target_link_libraries(gfx PUBLIC Vulkan::Vulkan)
+endif()
 
 if(TARGET assimp::assimp)
     target_compile_definitions(gfx PRIVATE HAVE_ASSIMP)

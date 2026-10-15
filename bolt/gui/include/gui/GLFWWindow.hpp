@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gui/RenderBackend.hpp"
+#include "util/Export.hpp"
 
 struct GLFWwindow;
 
@@ -11,7 +12,7 @@ struct GLFWWindowOptions {
     RenderBackend renderBackend;
 };
 
-extern const GLFWWindowOptions defaultGLFWWindowOptions;
+BOLT_GUI_DATA extern const GLFWWindowOptions defaultGLFWWindowOptions;
 
 class GLFWWindow {
 public:

@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "util/Export.hpp"
+
 namespace bolt {
 namespace math {
 
@@ -22,7 +24,7 @@ struct Vector3f {
     float y;
     float z;
 
-    static const Vector3f ZERO;
+    BOLT_MATH_DATA static const Vector3f ZERO;
 
     Vector3f() = default;
 

@@ -46,3 +46,6 @@ Renders a collection of objects specified by `assetFile` to an SDL window.
 ./build/examples/dumpFrame <assetFile>
 ```
 Renders a collection of objects specified by `assetFile` to a frame buffer and dumps it to `frame.bin`. You can visualize this image with `examples/disp_frame.py` (requires matplotlib and numpy)
+
+## License
+bolt is licensed under the GNU Lesser General Public License v3 (`COPYING.LESSER`), which supplements the GNU General Public License v3 (`COPYING`). Vendored third-party code under `vendored/` directories keeps its own license.
